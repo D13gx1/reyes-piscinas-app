@@ -1,0 +1,22 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Clientes</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-item *ngFor="let cliente of clientes">
+      <ion-label>
+        <h2>{{ cliente.nombre }}</h2>
+        <p>{{ cliente.direccion }}</p>
+        <p>
+          Medidas: {{ cliente.medidas.largo }}m x
+          {{ cliente.medidas.ancho }}m x {{ cliente.medidas.profundidad }}m
+        </p>
+        <p *ngIf="cliente.activo; else inactivo">🟢 Activo</p>
+        <ng-template #inactivo>🔴 Inactivo</ng-template>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
