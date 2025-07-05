@@ -4,19 +4,35 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <ion-list>
-    <ion-item *ngFor="let cliente of clientes">
-      <ion-label>
-        <h2>{{ cliente.nombre }}</h2>
-        <p>{{ cliente.direccion }}</p>
-        <p>
-          Medidas: {{ cliente.medidas.largo }}m x
-          {{ cliente.medidas.ancho }}m x {{ cliente.medidas.profundidad }}m
-        </p>
-        <p *ngIf="cliente.activo; else inactivo">🟢 Activo</p>
-        <ng-template #inactivo>🔴 Inactivo</ng-template>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+<ion-content>
+  <div class="content-wrapper">
+    <ion-list>
+      <ion-item *ngFor="let cliente of clientes">
+        <ion-label>
+          <div class="cliente-header">
+            <h2>{{ cliente.nombre }}</h2>
+            <ion-button fill="clear" size="large" (click)="$event.stopPropagation(); editarCliente(cliente)">
+              <ion-icon name="pencil" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+          <p>{{ cliente.direccion }}</p>
+          <p>
+            tamaño de piscina: {{ cliente.medidas.largo }}x{{ cliente.medidas.ancho }}x{{ cliente.medidas.profundidad }}m
+          </p>
+          <p>
+            <ion-badge [color]="cliente.activo ? 'success' : 'danger'">
+              {{ cliente.activo ? 'Activo' : 'Inactivo' }}
+            </ion-badge>
+          </p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <!-- Botón flotante para crear cliente -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="irACrearCliente()" color="primary">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>

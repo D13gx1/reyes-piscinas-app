@@ -1,40 +1,53 @@
 {
-    "clientes": [
-      {
-        "id": 1,
-        "nombre": "Juan Pérez",
-        "direccion": "Av. Las Palmas 123",
-        "telefono": "+56912345678",
-        "email": "juanperez@example.com",
-        "medidas": {
-          "largo": 8,
-          "ancho": 4,
-          "profundidad": 1.5
-        },
-        "historial": [
-          {
-            "fecha": "2025-07-01",
-            "servicio": "Mantención semanal",
-            "cloro": 2,
-            "ph": 7.2
-          }
-        ],
-        "activo": true
+  "clientes": [
+    {
+      "id": "1",
+      "nombre": "Juan Pérez",
+      "direccion": "Av. Las Palmas 123",
+      "telefono": "+56912345678",
+      "email": "juanperez@example.com",
+      "medidas": {
+        "largo": 8,
+        "ancho": 4,
+        "profundidad": 1.5
       },
-      {
-        "id": 2,
-        "nombre": "María López",
-        "direccion": "Calle Los Robles 45",
-        "telefono": "+56987654321",
-        "email": "marialopez@example.com",
-        "medidas": {
-          "largo": 6,
-          "ancho": 3,
-          "profundidad": 1.2
-        },
-        "historial": [],
-        "activo": true
-      }
-    ]
-  }
-  
+      "historial": [
+        {
+          "fecha": "2025-07-01",
+          "servicio": "Mantención semanal",
+          "cloro": 2,
+          "ph": 7.2
+        }
+      ],
+      "activo": true
+    },
+    {
+      "id": "2",
+      "nombre": "María López",
+      "direccion": "Calle Los Robles 45",
+      "telefono": "+56987654321",
+      "email": "marialopez@example.com",
+      "medidas": {
+        "largo": 6,
+        "ancho": 3,
+        "profundidad": 1.2
+      },
+      "historial": [],
+      "activo": true
+    },
+    {
+      "id": 0,
+      "nombre": "Gabriel",
+      "direccion": "Los Andes",
+      "telefono": "+56 9 8573 5865",
+      "email": "",
+      "medidas": {
+        "largo": 7,
+        "ancho": 5,
+        "profundidad": 1.8
+      },
+      "historial": [],
+      "activo": true
+    }
+  ]
+}

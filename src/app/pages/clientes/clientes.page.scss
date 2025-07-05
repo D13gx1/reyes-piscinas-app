@@ -1,5 +1,53 @@
-ion-item {
-    --border-radius: 8px;
+.content-wrapper {
+    padding: 16px;
+  }
+
+  .cliente-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 4px;
+
+    h2 {
+      margin: 0;
+      flex-grow: 1;
+    }
+
+    ion-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      --padding-top: 8px;
+      --padding-bottom: 8px;
+      --ripple-color: var(--ion-color-primary);
+    }
+  }
+
+  ion-item {
     margin-bottom: 10px;
+    --border-radius: 8px;
   }
   
+  ion-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  /* Estilos para el botón flotante */
+  ion-fab {
+    margin: 16px;
+    
+    ion-fab-button {
+      --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        --box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }

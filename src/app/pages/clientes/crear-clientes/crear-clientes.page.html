@@ -1,0 +1,132 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Crear Cliente</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form #clienteForm="ngForm" (ngSubmit)="crearCliente(clienteForm)">
+    <ion-list>
+      <!-- Nombre -->
+      <ion-item>
+        <ion-label position="floating">Nombre *</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.nombre"
+          name="nombre"
+          required
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && !nuevoCliente.nombre">
+        <p>El nombre es obligatorio</p>
+      </ion-text>
+
+      <!-- Dirección -->
+      <ion-item>
+        <ion-label position="floating">Dirección *</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.direccion"
+          name="direccion"
+          required
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && !nuevoCliente.direccion">
+        <p>La dirección es obligatoria</p>
+      </ion-text>
+
+      <!-- Teléfono -->
+      <ion-item>
+        <ion-label position="floating">Teléfono *</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.telefono"
+          name="telefono"
+          required
+          (ionInput)="formatearTelefono($event)"
+          maxlength="15"
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && !telefonoValido()">
+        <p>El teléfono debe ser como +56 9 1234 5678</p>
+      </ion-text>
+
+      <!-- Email (opcional) -->
+      <ion-item>
+        <ion-label position="floating">Email</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.email"
+          name="email"
+          type="email"
+          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && !emailValido()">
+        <p>El email no es válido</p>
+      </ion-text>
+
+      <!-- Largo -->
+      <ion-item>
+        <ion-label position="floating">Largo (m) *</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.medidas.largo"
+          name="largo"
+          required
+          type="number"
+          step="0.1"
+          min="0.1"
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && nuevoCliente.medidas.largo <= 0">
+        <p>El largo debe ser mayor a 0</p>
+      </ion-text>
+
+      <!-- Ancho -->
+      <ion-item>
+        <ion-label position="floating">Ancho (m) *</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.medidas.ancho"
+          name="ancho"
+          required
+          type="number"
+          step="0.1"
+          min="0.1"
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && nuevoCliente.medidas.ancho <= 0">
+        <p>El ancho debe ser mayor a 0</p>
+      </ion-text>
+
+      <!-- Profundidad -->
+      <ion-item>
+        <ion-label position="floating">Profundidad (m) *</ion-label>
+        <ion-input
+          [(ngModel)]="nuevoCliente.medidas.profundidad"
+          name="profundidad"
+          required
+          type="number"
+          step="0.1"
+          min="0.1"
+        ></ion-input>
+      </ion-item>
+      <ion-text color="danger" *ngIf="clienteForm.submitted && nuevoCliente.medidas.profundidad <= 0">
+        <p>La profundidad debe ser mayor a 0</p>
+      </ion-text>
+
+      <!-- Estado -->
+      <ion-item>
+        <ion-label>Estado</ion-label>
+        <ion-toggle
+          [(ngModel)]="nuevoCliente.activo"
+          name="activo"
+        ></ion-toggle>
+      </ion-item>
+    </ion-list>
+
+    <ion-button
+      expand="block"
+      type="submit"
+      color="primary"
+      [disabled]="clienteForm.invalid || !medidasValidas() || !telefonoValido() || !emailValido()"
+    >
+      Guardar Cliente
+    </ion-button>
+  </form>
+</ion-content>

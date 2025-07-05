@@ -34,4 +34,23 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Import Roboto Slab font */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
+
+/* Global styles for page titles */
+ion-title {
+  text-align: center;
+  font-weight: 700 !important;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 100%;
+  pointer-events: none;
+}
+
+ion-toolbar {
+  --min-height: 56px;
+}
+

@@ -13,8 +13,18 @@ export const routes: Routes = [
       },
       {
         path: 'clientes',
-        loadComponent: () =>
-          import('./pages/clientes/clientes.page').then((m) => m.ClientesPage),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/clientes/clientes.page').then((m) => m.ClientesPage),
+          },
+          {
+            path: 'crear-clientes',
+            loadComponent: () =>
+              import('./pages/clientes/crear-clientes/crear-clientes.page').then((m) => m.CrearClientesPage),
+          },
+        ],
       },
       {
         path: 'estadisticas',
@@ -38,4 +48,9 @@ export const routes: Routes = [
     redirectTo: '/tabs/home',
     pathMatch: 'full',
   },
+  {
+    path: 'crear-clientes',
+    loadComponent: () => import('./pages/clientes/crear-clientes/crear-clientes.page').then( m => m.CrearClientesPage)
+  },
+
 ];
