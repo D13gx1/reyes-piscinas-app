@@ -1,53 +1,187 @@
-<ion-header>
+<ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>Reyes Piscinas</ion-title>
-    <ion-buttons slot="end">
-      <ion-button fill="clear">
-        <ion-icon name="refresh-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
+    <ion-title>Inicio</ion-title>
+    <ion-button fill="clear" (click)="refrescarClientes()" [disabled]="isLoading">
+      <ion-icon name="refresh-outline"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <!-- Fecha actual -->
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>{{ fechaHoy }}</ion-card-title>
-      <ion-card-subtitle></ion-card-subtitle>
-    </ion-card-header>
-  </ion-card>
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Inicio</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-  <!-- Clientes con mantención hoy -->
-  <ion-list>
-    <ion-list-header>
-      <ion-label>Clientes pendientes</ion-label>
-    </ion-list-header>
+  <div class="container">
+    <div class="fecha-section">
+  <h2>{{ fechaHoy }}</h2>
+  </div>
+  
+  <!-- Calendario horizontal -->
+  <div class="calendario-horizontal">
+    <div class="calendario-header">
+      <h3>{{ mesAnioActual }}</h3>
+      <div class="calendario-nav">
+        <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" (click)="cambiarMes(1)">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </div>
+    
+    <div class="calendario-scroll" #calendarioScroll>
+      <div class="calendario-dias">
+        <div 
+          *ngFor="let dia of diasDelMes" 
+          class="calendario-dia"
+          [class.hoy]="dia.esHoy"
+          [class.activo]="dia.seleccionado"
+          [class.tiene-eventos]="dia.tieneEventos"
+          (click)="seleccionarDia(dia)">
+          
+          <div class="dia-semana">{{ dia.diaSemana }}</div>
+          <div class="dia-numero">{{ dia.numero }}</div>
+          <div class="dia-indicador"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <ion-item *ngFor="let cliente of clientesPendientes">
-      <ion-label>
-        <h2>{{ cliente.nombre }}</h2>
-        <p>{{ cliente.direccion }}</p>
-        <p>Horario: {{ cliente.horario }}</p>
-      </ion-label>
-      <ion-button color="success" (click)="marcarRealizado(cliente)">
-        Marcar realizado
-      </ion-button>
-    </ion-item>
-  </ion-list>
+    <!-- Spinner de carga -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando clientes del día...</p>
+    </div>
 
-  <!-- Clientes realizados -->
-  <ion-list *ngIf="clientesRealizados.length > 0">
-    <ion-list-header color="medium">
-      <ion-label>Clientes realizados</ion-label>
-    </ion-list-header>
+    <!-- Sección de clientes pendientes -->
+    <div *ngIf="!isLoading">
+      <div class="section-header">
+        <h3>
+          <ion-icon name="time-outline"></ion-icon>
+          Mantenimientos Pendientes
+        </h3>
+        <ion-badge color="secondary">{{ clientesPendientes.length }}</ion-badge>
+      </div>
 
-    <ion-item *ngFor="let cliente of clientesRealizados">
-      <ion-label>
-        <h2>{{ cliente.nombre }}</h2>
-        <p>{{ cliente.direccion }}</p>
-        <p>✔ Mantención completada</p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+      <div *ngIf="clientesPendientes.length === 0" class="empty-state">
+        <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
+        <h4>¡Excelente trabajo!</h4>
+        <p>No tienes mantenimientos pendientes para hoy</p>
+      </div>
+
+      <ion-card *ngFor="let cliente of clientesPendientes" class="cliente-card">
+        <ion-card-header class="header-container">
+          <div class="cliente-header">
+            <div class="cliente-info" style="display: flex; align-items: center; gap: 8px;">
+              <ion-card-title>{{ cliente.nombre }}</ion-card-title>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <ion-chip color="warning" style="height: 22px; font-size: 12px;">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <ion-label>Pendiente</ion-label>
+                </ion-chip>
+                <ion-chip color="success" style="height: 22px; font-size: 12px;">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  <ion-label>${{ formatearPrecio(cliente.precio) }}</ion-label>
+                </ion-chip>
+              </div>
+            </div>
+            <ion-card-subtitle>
+              <ion-icon name="location-outline"></ion-icon>
+              {{ cliente.direccion }}
+            </ion-card-subtitle>
+          </div>
+          <ion-card-content class="contenido-container">
+            <div class="detalles-cliente">
+              <p>
+                <strong>Teléfono:</strong> {{ cliente.telefono }}
+              </p>
+              <p>
+                <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
+              </p>
+            </div>
+      
+            <ion-button 
+              expand="block" 
+              (click)="marcarRealizado(cliente)"
+              class ="gradient-button">
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              Completar Mantención
+            </ion-button>
+          </ion-card-content>
+        </ion-card-header>
+      </ion-card>
+      
+    </div>
+
+    <!-- Sección de clientes realizados -->
+    <div *ngIf="clientesRealizados.length > 0" class="realizados-section">
+      <div class="section-header">
+        <h3>
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          Clientes Realizados
+        </h3>
+        <ion-badge color="success">{{ clientesRealizados.length }}</ion-badge>
+      </div>
+
+      <ion-card *ngFor="let cliente of clientesRealizados" class="cliente-card realizado">
+        <ion-card-header>
+          <div class="cliente-header">
+            <div class="cliente-info">
+              <ion-card-title>{{ cliente.nombre }}</ion-card-title>
+              <ion-card-subtitle>
+                <ion-icon name="location-outline"></ion-icon>
+                {{ cliente.direccion }}
+              </ion-card-subtitle>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <ion-chip color="success">
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                <ion-label>Completado</ion-label>
+              </ion-chip>
+              <ion-chip color="tertiary" style="height: 22px; font-size: 12px;">
+                <ion-icon name="cash-outline"></ion-icon>
+                <ion-label>${{ formatearPrecio(cliente.precio) }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <div class="mantenimiento-info" *ngIf="cliente.mantenimiento">
+            <h4>Detalles del Mantenimiento</h4>
+            <div class="detalles-mantenimiento">
+              <div class="detalle-item">
+                <strong>Hora:</strong> {{ cliente.mantenimiento.hora }}
+              </div>
+              <div class="detalle-item">
+                <strong>Estado Cloro:</strong> {{ cliente.mantenimiento.estadoCloro }}
+              </div>
+              <div class="detalle-item">
+                <strong>Estado pH:</strong> {{ cliente.mantenimiento.estadoPh }}
+              </div>
+              <div class="detalle-item">
+                <strong>Cloro agregado:</strong> {{ cliente.mantenimiento.cantidadCloro }} kg
+              </div>
+              <div class="detalle-item">
+                <strong>pH corregido:</strong> {{ cliente.mantenimiento.cantidadPh }} kg
+              </div>
+            </div>
+          </div>
+          
+          <ion-button 
+            fill="outline" 
+            size="small"
+            (click)="deshacerMantenimiento(cliente)"
+            color="medium">
+            <ion-icon name="arrow-undo-outline" slot="start"></ion-icon>
+            Deshacer
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
 </ion-content>

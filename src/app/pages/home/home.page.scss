@@ -1,8 +1,423 @@
-ion-card-title {
-  font-family: 'Roboto Slab', serif;
-  font-weight: 700; /* Bold */
-  color: #000000; /* Black color */
+.container {
+  padding: 16px;
+}
+
+.gradient-button {
+  --background: var(--ion-color-secondary);
+  --border-radius: 999px; /* redondeado máximo */
+  color: #fff; // texto blanco
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+// titulo de inicio
+h1 {
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+// fecha
+.fecha-section {
+  margin-bottom: 24px;
+  
+  h2 {
+    font-size: 1.4em;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--ion-color-dark);
+  }
+}
+
+// Estilos del calendario horizontal
+.calendario-horizontal {
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.calendario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+  }
+}
+
+.calendario-nav {
+  display: flex;
+  gap: 8px;
+
+  ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    --border-radius: 8px;
+    height: 36px;
+    width: 36px;
+  }
+}
+
+.calendario-scroll {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.calendario-dias {
+  display: flex;
+  gap: 8px;
+  min-width: min-content;
+  padding: 4px 0;
+}
+
+.calendario-dia {
+  flex: 0 0 auto;
+  min-width: 60px;
+  height: 80px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &.activo {
+    background: var(--ion-color-secondary);
+    color: white;
+    border-color: var(--ion-color-secondary);
+  }
+
+  &.hoy {
+    border-color: var(--ion-color-primary);
+    background: var(--ion-color-primary-tint);
+  }
+
+  &.hoy.activo {
+    background: var(--ion-color-secondary);
+    border-color: var(--ion-color-secondary);
+  }
+
+  .dia-semana {
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+
+  .dia-numero {
+    font-size: 1.1em;
+    font-weight: 600;
+  }
+
+  .dia-indicador {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ion-color-warning);
+    margin-top: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  &.tiene-eventos .dia-indicador {
+    opacity: 1;
+  }
+
+  &.activo .dia-indicador {
+    background: white;
+  }
+}
+
+// Barra de progreso
+.progreso-container {
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 8px;
+
+  .progreso-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    h3 {
+      margin: 0;
+      font-size: 1em;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.9em;
+      color: var(--ion-color-medium);
+    }
+  }
+
+  ion-progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+
+    // 🔥 Forzar a usar color secundario
+    --progress-background: var(--ion-color-secondary);
+    --background: var(--ion-color-light);
+  }
+
+  .progreso-text {
+    text-align: center;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+  }
+}
+
+// Carga de usuarios
+.loading-container {
   text-align: center;
-  font-size: 1.2rem;
-  padding: 10px 0;
+  padding: 40px 20px;
+  
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+}
+
+.header-container{
+  background: var(--ion-color-light);
+}
+
+.contenido-container{
+  background: var(--ion-color-light);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  
+  h3 {
+    margin: 0;
+    font-size: 1.0em;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    ion-icon {
+      font-size: 1.1em;
+    }
+  }
+  
+  ion-badge {
+    font-size: 0.9em;
+    padding: 4px 8px;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ion-color-medium);
+  
+  ion-icon {
+    color: var(--ion-color-success);
+    margin-bottom: 16px;
+  }
+  
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.9em;
+  }
+}
+
+.cliente-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  &.realizado {
+    border-left: 4px solid var(--ion-color-success);
+  }
+  
+  .cliente-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    
+    .cliente-info {
+      flex: 1;
+      
+      ion-card-title {
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      
+      ion-card-subtitle {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.9em;
+        color: var(--ion-color-medium);
+        
+        ion-icon {
+          font-size: 0.9em;
+        }
+      }
+    }
+    
+    ion-chip {
+      font-size: 0.8em;
+      height: 28px;
+      
+      ion-icon {
+        font-size: 0.9em;
+      }
+    }
+  }
+  
+  .detalles-cliente {
+    margin-bottom: 16px;
+    
+    p {
+      margin: 4px 0;
+      font-size: 0.9em;
+      color: var(--ion-color-dark);
+      
+      strong {
+        color: var(--ion-color-medium);
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .mantenimiento-info {
+    margin-bottom: 16px;
+    
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 1em;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+    
+    .detalles-mantenimiento {
+      background: var(--ion-color-light);
+      border-radius: 8px;
+      padding: 12px;
+      
+      .detalle-item {
+        margin-bottom: 6px;
+        font-size: 0.9em;
+        color: var(--ion-color-dark);
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        strong {
+          color: var(--ion-color-medium);
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  ion-button {
+    margin-top: 8px;
+    font-weight: 600;
+    --ion-color-text: white;
+    
+    &[size="small"] {
+      --padding-top: 8px;
+      --padding-bottom: 8px;
+      font-size: 0.85em;
+    }
+  }
+}
+
+.realizados-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ion-color-light-shade);
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+  
+  .progreso-container .progreso-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .cliente-header {
+    flex-direction: column;
+    gap: 8px;
+    
+    ion-chip {
+      align-self: flex-start;
+    }
+  }
+
+  // Calendario responsive
+  .calendario-dia {
+    min-width: 55px;
+    height: 75px;
+  }
+  
+  .calendario-nav ion-button {
+    height: 32px;
+    width: 32px;
+  }
 }

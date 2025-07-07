@@ -13,11 +13,22 @@ export interface Cliente {
     ancho: number;
     profundidad: number;
   };
+  precio: number;
+  programacion: {
+    frecuencia: string; // 'semanal', 'quincenal', 'mensual'
+    cantidadPorPeriodo: number; // cuántos servicios por período
+    diasSemana: string[]; // ['lunes', 'miercoles', 'viernes']
+    horaPreferida: string; // formato HH:mm
+    notas: string; // instrucciones adicionales
+  };
   historial: {
     fecha: string;
     servicio: string;
     cloro: number;
     ph: number;
+    estadoCloro?: string; // Nuevo campo para estado del cloro
+    estadoPh?: string; // Nuevo campo para estado del pH
+    hora?: string; // Nuevo campo para la hora del mantenimiento
   }[];
   activo: boolean;
 }
@@ -49,4 +60,24 @@ export class ClienteService {
   deleteCliente(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  // Método auxiliar para obtener clientes por día de la semana
+  getClientesPorDia(dia: string): Observable<Cliente[]> {
+    return new Observable(observer => {
+      this.getClientes().subscribe({
+        next: (clientes) => {
+          const clientesDelDia = clientes.filter(cliente => 
+            cliente.activo && 
+            cliente.programacion && 
+            cliente.programacion.diasSemana.includes(dia)
+          );
+          observer.next(clientesDelDia);
+          observer.complete();
+        },
+        error: (err) => observer.error(err)
+      });
+    });
+  }
+
+  
 }

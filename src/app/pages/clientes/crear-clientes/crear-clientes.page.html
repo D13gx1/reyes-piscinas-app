@@ -1,132 +1,328 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Crear Cliente</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ pageTitle }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <form #clienteForm="ngForm" (ngSubmit)="crearCliente(clienteForm)">
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner></ion-spinner>
+    <p>Cargando...</p>
+  </div>
+
+  <form #clienteForm="ngForm" (ngSubmit)="crearCliente(clienteForm)" *ngIf="!isLoading">
     <ion-list>
-      <!-- Nombre -->
-      <ion-item>
-        <ion-label position="floating">Nombre *</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.nombre"
-          name="nombre"
-          required
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && !nuevoCliente.nombre">
-        <p>El nombre es obligatorio</p>
-      </ion-text>
+      <!-- DATOS BÁSICOS DEL CLIENTE -->
+      <ion-item-group>
+        <ion-item-divider>
+          <ion-label>Información Personal</ion-label>
+        </ion-item-divider>
 
-      <!-- Dirección -->
-      <ion-item>
-        <ion-label position="floating">Dirección *</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.direccion"
-          name="direccion"
-          required
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && !nuevoCliente.direccion">
-        <p>La dirección es obligatoria</p>
-      </ion-text>
+        <!-- Nombre -->
+        <ion-item>
+          <ion-label position="floating">Nombre *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.nombre"
+            name="nombre"
+            required
+            #nombre="ngModel"
+            (ionInput)="onInputChange('nombre', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">
+          <p>El nombre es obligatorio</p>
+        </ion-text>
 
-      <!-- Teléfono -->
-      <ion-item>
-        <ion-label position="floating">Teléfono *</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.telefono"
-          name="telefono"
-          required
-          (ionInput)="formatearTelefono($event)"
-          maxlength="15"
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && !telefonoValido()">
-        <p>El teléfono debe ser como +56 9 1234 5678</p>
-      </ion-text>
+        <!-- Dirección -->
+        <ion-item>
+          <ion-label position="floating">Dirección *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.direccion"
+            name="direccion"
+            required
+            #direccion="ngModel"
+            (ionInput)="onInputChange('direccion', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="direccion.invalid && (direccion.dirty || direccion.touched)">
+          <p>La dirección es obligatoria</p>
+        </ion-text>
 
-      <!-- Email (opcional) -->
-      <ion-item>
-        <ion-label position="floating">Email</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.email"
-          name="email"
-          type="email"
-          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && !emailValido()">
-        <p>El email no es válido</p>
-      </ion-text>
+        <!-- Teléfono -->
+        <ion-item>
+          <ion-label position="floating">Teléfono *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.telefono"
+            name="telefono"
+            required
+            #telefono="ngModel"
+            (ionInput)="formatearTelefono($event)"
+            maxlength="15"
+            placeholder="+56 9 1234 5678"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="telefono.touched && !telefonoValido()">
+          <p>El teléfono debe ser como +56 9 1234 5678</p>
+        </ion-text>
 
-      <!-- Largo -->
-      <ion-item>
-        <ion-label position="floating">Largo (m) *</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.medidas.largo"
-          name="largo"
-          required
-          type="number"
-          step="0.1"
-          min="0.1"
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && nuevoCliente.medidas.largo <= 0">
-        <p>El largo debe ser mayor a 0</p>
-      </ion-text>
+        <!-- Email (opcional) -->
+        <ion-item>
+          <ion-label position="floating">Email</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.email"
+            name="email"
+            type="email"
+            #email="ngModel"
+            (ionInput)="onInputChange('email', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="email.touched && !emailValido() && nuevoCliente.email">
+          <p>El email no es válido</p>
+        </ion-text>
+      </ion-item-group>
 
-      <!-- Ancho -->
-      <ion-item>
-        <ion-label position="floating">Ancho (m) *</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.medidas.ancho"
-          name="ancho"
-          required
-          type="number"
-          step="0.1"
-          min="0.1"
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && nuevoCliente.medidas.ancho <= 0">
-        <p>El ancho debe ser mayor a 0</p>
-      </ion-text>
+      <!-- MEDIDAS DE LA PISCINA -->
+      <ion-item-group>
+        <ion-item-divider>
+          <ion-label>Medidas de la Piscina</ion-label>
+        </ion-item-divider>
 
-      <!-- Profundidad -->
-      <ion-item>
-        <ion-label position="floating">Profundidad (m) *</ion-label>
-        <ion-input
-          [(ngModel)]="nuevoCliente.medidas.profundidad"
-          name="profundidad"
-          required
-          type="number"
-          step="0.1"
-          min="0.1"
-        ></ion-input>
-      </ion-item>
-      <ion-text color="danger" *ngIf="clienteForm.submitted && nuevoCliente.medidas.profundidad <= 0">
-        <p>La profundidad debe ser mayor a 0</p>
-      </ion-text>
+        <!-- Largo -->
+        <ion-item>
+          <ion-label position="floating">Largo (m) *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.medidas.largo"
+            name="largo"
+            required
+            type="number"
+            step="0.1"
+            min="0.1"
+            #largo="ngModel"
+            (ionInput)="onInputChange('largo', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="largo.touched && nuevoCliente.medidas.largo <= 0">
+          <p>El largo debe ser mayor a 0</p>
+        </ion-text>
 
-      <!-- Estado -->
-      <ion-item>
-        <ion-label>Estado</ion-label>
-        <ion-toggle
-          [(ngModel)]="nuevoCliente.activo"
-          name="activo"
-        ></ion-toggle>
-      </ion-item>
+        <!-- Ancho -->
+        <ion-item>
+          <ion-label position="floating">Ancho (m) *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.medidas.ancho"
+            name="ancho"
+            required
+            type="number"
+            step="0.1"
+            min="0.1"
+            #ancho="ngModel"
+            (ionInput)="onInputChange('ancho', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="ancho.touched && nuevoCliente.medidas.ancho <= 0">
+          <p>El ancho debe ser mayor a 0</p>
+        </ion-text>
+
+        <!-- Profundidad -->
+        <ion-item>
+          <ion-label position="floating">Profundidad (m) *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.medidas.profundidad"
+            name="profundidad"
+            required
+            type="number"
+            step="0.1"
+            min="0.1"
+            #profundidad="ngModel"
+            (ionInput)="onInputChange('profundidad', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="profundidad.touched && nuevoCliente.medidas.profundidad <= 0">
+          <p>La profundidad debe ser mayor a 0</p>
+        </ion-text>
+      </ion-item-group>
+
+      <!-- PRECIOS DEL SERVICIO -->
+      <ion-item-group>
+        <ion-item-divider>
+          <ion-label>Precios del Servicio</ion-label>
+        </ion-item-divider>
+
+        <!-- Monto -->
+        <ion-item>
+          <ion-label position="floating">Monto (CLP) *</ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.precio"
+            name="monto"
+            required
+            type="number"
+            min="1"
+            step="1000"
+            #monto="ngModel"
+            (ionInput)="onInputChange('monto', $event.target.value)"
+            placeholder="Ej: 15000"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="monto.touched && nuevoCliente.precio <= 0">
+          <p>El monto debe ser mayor a 0</p>
+        </ion-text>
+      </ion-item-group>
+
+      <!-- PROGRAMACIÓN DE SERVICIOS -->
+      <ion-item-group>
+        <ion-item-divider>
+          <ion-label>Programación de Servicios</ion-label>
+        </ion-item-divider>
+
+        <!-- Frecuencia del servicio -->
+        <ion-item>
+          <ion-label>Frecuencia del Servicio *</ion-label>
+          <ion-select
+            [(ngModel)]="nuevoCliente.programacion.frecuencia"
+            name="frecuencia"
+            required
+            #frecuencia="ngModel"
+            (ionChange)="onFrecuenciaChange($event)"
+            placeholder="Selecciona la frecuencia"
+          >
+            <ion-select-option value="semanal">Semanal</ion-select-option>
+            <ion-select-option value="quincenal">Cada 15 días</ion-select-option>
+            <ion-select-option value="mensual">Mensual</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-text color="danger" *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">
+          <p>La frecuencia es obligatoria</p>
+        </ion-text>
+
+        <!-- Número de servicios por período -->
+        <ion-item *ngIf="nuevoCliente.programacion.frecuencia">
+          <ion-label position="floating">
+            Servicios por {{ getFrecuenciaText() }} *
+          </ion-label>
+          <ion-input
+            [(ngModel)]="nuevoCliente.programacion.cantidadPorPeriodo"
+            name="cantidadPorPeriodo"
+            required
+            type="number"
+            min="1"
+            max="{{ getMaxServicios() }}"
+            #cantidadPorPeriodo="ngModel"
+            (ionInput)="onInputChange('cantidadPorPeriodo', $event.target.value)"
+          ></ion-input>
+        </ion-item>
+        <ion-text color="danger" *ngIf="cantidadPorPeriodoRef?.touched && (nuevoCliente.programacion.cantidadPorPeriodo <= 0 || nuevoCliente.programacion.cantidadPorPeriodo > getMaxServicios())">
+          <p>Debe ser entre 1 y {{ getMaxServicios() }} servicios</p>
+        </ion-text>
+
+        <!-- Días de la semana -->
+        <ion-item *ngIf="nuevoCliente.programacion.frecuencia && nuevoCliente.programacion.cantidadPorPeriodo > 0">
+          <ion-label>Días de Servicio *</ion-label>
+        </ion-item>
+        
+        <div *ngIf="nuevoCliente.programacion.frecuencia && nuevoCliente.programacion.cantidadPorPeriodo > 0" class="dias-container">
+          <ion-item *ngFor="let dia of diasSemana" lines="none">
+            <ion-checkbox
+              [(ngModel)]="dia.seleccionado"
+              name="dia_{{dia.valor}}"
+              (ionChange)="onDiaChange(dia, $event)"
+            ></ion-checkbox>
+            <ion-label class="ion-margin-start">{{ dia.nombre }}</ion-label>
+          </ion-item>
+        </div>
+        
+        <ion-text color="danger" *ngIf="nuevoCliente.programacion.frecuencia && !diasSeleccionadosValidos()">
+          <p>Debes seleccionar exactamente {{ nuevoCliente.programacion.cantidadPorPeriodo }} día(s)</p>
+        </ion-text>
+
+        <!-- Hora preferida -->
+        <ion-item *ngIf="nuevoCliente.programacion.frecuencia">
+          <ion-label position="floating">Hora Preferida</ion-label>
+          <ion-datetime
+            [(ngModel)]="nuevoCliente.programacion.horaPreferida"
+            name="horaPreferida"
+            presentation="time"
+            [showDefaultButtons]="true"
+            (ionChange)="onInputChange('horaPreferida', $event.target.value)"
+          ></ion-datetime>
+        </ion-item>
+
+        <!-- Notas adicionales -->
+        <ion-item>
+          <ion-label position="floating">Notas Adicionales</ion-label>
+          <ion-textarea
+            [(ngModel)]="nuevoCliente.programacion.notas"
+            name="notas"
+            rows="3"
+            placeholder="Instrucciones especiales, acceso a la propiedad, etc."
+            (ionInput)="onInputChange('notas', $event.target.value)"
+          ></ion-textarea>
+        </ion-item>
+      </ion-item-group>
+
+      <!-- ESTADO DEL CLIENTE -->
+      <ion-item-group>
+        <ion-item-divider>
+          <ion-label>Estado</ion-label>
+        </ion-item-divider>
+
+        <ion-item>
+          <ion-label>Cliente Activo</ion-label>
+          <ion-toggle
+            [(ngModel)]="nuevoCliente.activo"
+            name="activo"
+            (ionChange)="onInputChange('activo', $event.target.checked)"
+          ></ion-toggle>
+        </ion-item>
+      </ion-item-group>
     </ion-list>
 
-    <ion-button
-      expand="block"
-      type="submit"
-      color="primary"
-      [disabled]="clienteForm.invalid || !medidasValidas() || !telefonoValido() || !emailValido()"
-    >
-      Guardar Cliente
-    </ion-button>
+    <!-- Información de depuración (remover en producción) -->
+    <div class="debug-info" *ngIf="isEditing">
+      <p><strong>Modo:</strong> {{ isEditing ? 'Editando' : 'Creando' }}</p>
+      <p><strong>ID Cliente:</strong> {{ nuevoCliente.id }}</p>
+      <p><strong>Formulario válido:</strong> {{ validarFormulario() }}</p>
+      <p><strong>Días seleccionados:</strong> {{ getDiasSeleccionados().join(', ') }}</p>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="button-container">
+      <ion-button
+        expand="block"
+        type="submit"
+        color="primary"
+        [disabled]="!validarFormulario() || isLoading"
+      >
+        <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+        {{ isLoading ? 'Procesando...' : (isEditing ? 'Actualizar Cliente' : 'Guardar Cliente') }}
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="medium"
+        type="button"
+        (click)="cancelar()"
+        [disabled]="isLoading"
+      >
+        Cancelar
+      </ion-button>
+
+      <!-- Botón de eliminar - solo se muestra en modo edición -->
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="danger"
+        type="button"
+        (click)="eliminarCliente()"
+        [disabled]="isLoading"
+        *ngIf="isEditing"
+      >
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        Eliminar Cliente
+      </ion-button>
+    </div>
   </form>
 </ion-content>

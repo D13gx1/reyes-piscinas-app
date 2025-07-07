@@ -1,37 +1,162 @@
-<ion-header>
+<ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Clientes</ion-title>
+    <ion-button fill="clear" (click)="refrescarClientes()" [disabled]="isLoading">
+      <ion-icon name="refresh-outline"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <div class="content-wrapper">
-    <ion-list>
-      <ion-item *ngFor="let cliente of clientes">
-        <ion-label>
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Clientes</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="container">
+    <!-- Sección de estadísticas -->
+    <div class="stats-section">
+      <div class="stats-container">
+        <div class="stat-item">
+          <div class="stat-number">{{ clientesActivos.length }}</div>
+          <div class="stat-label">Activos</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">{{ clientesInactivos.length }}</div>
+          <div class="stat-label">Inactivos</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">{{ clientes.length }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spinner de carga -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando clientes...</p>
+    </div>
+
+    <!-- Sección de clientes activos -->
+    <div *ngIf="!isLoading && clientesActivos.length > 0">
+
+
+      <ion-card *ngFor="let cliente of clientesActivos" class="cliente-card">
+        <ion-card-header class="header-container">
           <div class="cliente-header">
-            <h2>{{ cliente.nombre }}</h2>
-            <ion-button fill="clear" size="large" (click)="$event.stopPropagation(); editarCliente(cliente)">
-              <ion-icon name="pencil" slot="icon-only"></ion-icon>
-            </ion-button>
+            <div class="cliente-info">
+
+              <ion-card-title>{{ cliente.nombre }} <ion-chip color="success">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  <ion-label>Activo</ion-label>
+                </ion-chip></ion-card-title>
+
+              <ion-card-subtitle>
+                <ion-icon name="location-outline"></ion-icon>
+                {{ cliente.direccion }}
+              </ion-card-subtitle>
+            </div>
+            <div class="action-buttons">
+
+              <ion-button fill="clear" size="small" (click)="editarCliente(cliente)">
+                <ion-icon name="pencil-outline"></ion-icon>
+              </ion-button>
+            </div>
           </div>
-          <p>{{ cliente.direccion }}</p>
-          <p>
-            tamaño de piscina: {{ cliente.medidas.largo }}x{{ cliente.medidas.ancho }}x{{ cliente.medidas.profundidad }}m
-          </p>
-          <p>
-            <ion-badge [color]="cliente.activo ? 'success' : 'danger'">
-              {{ cliente.activo ? 'Activo' : 'Inactivo' }}
-            </ion-badge>
-          </p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+        </ion-card-header>
+
+        <ion-card-content class="contenido-container">
+          <div class="detalles-cliente">
+            <div class="detalle-item">
+              <ion-icon name="resize-outline"></ion-icon>
+              <strong>Piscina:</strong> {{ cliente.medidas.largo }}x{{ cliente.medidas.ancho }}x{{
+              cliente.medidas.profundidad }}m
+            </div>
+            <div class="detalle-item" *ngIf="cliente.telefono">
+              <ion-icon name="call-outline"></ion-icon>
+              <strong>Teléfono:</strong> {{ cliente.telefono }}
+            </div>
+            <div class="detalle-item" *ngIf="cliente.email">
+              <ion-icon name="mail-outline"></ion-icon>
+              <strong>Email:</strong> {{ cliente.email }}
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Sección de clientes inactivos -->
+    <div *ngIf="!isLoading && clientesInactivos.length > 0" class="inactivos-section">
+      <div class="section-header">
+        <h3>
+          <ion-icon name="pause-circle-outline"></ion-icon>
+          Clientes Inactivos
+        </h3>
+        <ion-badge color="danger">{{ clientesInactivos.length }}</ion-badge>
+      </div>
+
+      <ion-card *ngFor="let cliente of clientesInactivos" class="cliente-card inactivo">
+        <ion-card-header class="header-container">
+          <div class="cliente-header">
+            <div class="cliente-info">
+              <ion-card-title>{{ cliente.nombre }} <ion-chip color="danger">
+                  <ion-icon name="pause-circle-outline"></ion-icon>
+                  <ion-label>Inactivo</ion-label>
+                </ion-chip></ion-card-title>
+              <ion-card-subtitle>
+                <ion-icon name="location-outline"></ion-icon>
+                {{ cliente.direccion }}
+              </ion-card-subtitle>
+            </div>
+            <div class="action-buttons">
+              <ion-button fill="clear" size="small" (click)="editarCliente(cliente)">
+                <ion-icon name="pencil-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+        </ion-card-header>
+
+        <ion-card-content class="contenido-container">
+          <div class="detalles-cliente">
+            <div class="detalle-item">
+              <ion-icon name="resize-outline"></ion-icon>
+              <strong>Piscina:</strong> {{ cliente.medidas.largo }}x{{ cliente.medidas.ancho }}x{{
+              cliente.medidas.profundidad }}m
+            </div>
+            <div class="detalle-item" *ngIf="cliente.telefono">
+              <ion-icon name="call-outline"></ion-icon>
+              <strong>Teléfono:</strong> {{ cliente.telefono }}
+            </div>
+            <div class="detalle-item" *ngIf="cliente.email">
+              <ion-icon name="mail-outline"></ion-icon>
+              <strong>Email:</strong> {{ cliente.email }}
+            </div>
+          </div>
+
+          
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="!isLoading && clientes.length === 0" class="empty-state">
+      <ion-icon name="people-outline" size="large"></ion-icon>
+      <h4>No hay clientes registrados</h4>
+      <p>Comienza agregando tu primer cliente</p>
+      <ion-button (click)="irACrearCliente()" class="gradient-button">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Agregar Cliente
+      </ion-button>
+    </div>
   </div>
 
   <!-- Botón flotante para crear cliente -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="irACrearCliente()" color="primary">
+    <ion-fab-button (click)="irACrearCliente()" color="secondary">
       <ion-icon name="add-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
