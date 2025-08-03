@@ -221,6 +221,10 @@ export class ClientesPage implements OnInit {
   }
 
   procederEliminarCliente(cliente: Cliente) {
+    if (!cliente.id) {
+      this.showToast('Error: ID de cliente no válido ❌', 'danger');
+      return;
+    }
     this.clienteService.deleteCliente(cliente.id).subscribe({
       next: () => {
         this.cargarClientes();
@@ -285,7 +289,7 @@ export class ClientesPage implements OnInit {
   }
 
   // Método para trackear elementos en *ngFor para mejor rendimiento
-  trackByClienteId(index: number, cliente: Cliente): number {
-    return cliente.id;
+  trackByClienteId(index: number, cliente: Cliente): string {
+    return cliente.id || '';
   }
 }

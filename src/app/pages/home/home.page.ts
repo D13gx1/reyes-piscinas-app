@@ -15,7 +15,7 @@ import {
 import { ClienteService } from '../../services/cliente.service';
 
 interface ClienteDelDia {
-  id: number;
+  id: string;
   nombre: string;
   direccion: string;
   telefono: string;
@@ -227,7 +227,7 @@ export class HomePage implements OnInit {
 
         // Convertir a formato ClienteDelDia
         this.clientesPendientes = clientesDelDia.map(cliente => ({
-          id: cliente.id,
+          id: cliente.id || '',
           nombre: cliente.nombre,
           direccion: cliente.direccion,
           telefono: cliente.telefono,

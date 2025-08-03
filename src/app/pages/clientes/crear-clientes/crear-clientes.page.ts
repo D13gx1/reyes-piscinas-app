@@ -31,7 +31,6 @@ export class CrearClientesPage implements OnInit {
   @ViewChild('cantidadPorPeriodo') cantidadPorPeriodoRef?: NgModel;
   
   nuevoCliente: Cliente = {
-    id: 0,
     nombre: '',
     direccion: '',
     telefono: '',
@@ -64,7 +63,7 @@ export class CrearClientesPage implements OnInit {
   ];
 
   isEditing = false;
-  clienteId: number | null = null;
+  clienteId: string | null = null;
   pageTitle = 'Crear Cliente';
   isLoading = false;
 
@@ -77,11 +76,22 @@ export class CrearClientesPage implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Probar conexión con Firebase
+    this.clienteService.testFirebaseConnection().subscribe({
+      next: (success) => {
+        console.log('✅ Conexión con Firebase verificada');
+      },
+      error: (err) => {
+        console.error('❌ Error de conexión con Firebase:', err);
+        this.showToast('Error de conexión con Firebase ❌', 'danger');
+      }
+    });
+
     // Verificar si estamos editando (hay un ID en la ruta)
     this.route.params.subscribe(params => {
       const id = params['id'];
       if (id) {
-        this.clienteId = parseInt(id);
+        this.clienteId = id;
         this.isEditing = true;
         this.pageTitle = 'Editar Cliente';
         this.cargarDatosCliente();
