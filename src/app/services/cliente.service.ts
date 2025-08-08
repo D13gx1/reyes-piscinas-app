@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Firestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, query, where } from '@angular/fire/firestore';
+import { environment } from '../../environments/environment';
 
 export interface Cliente {
   id?: string; // Cambiado a string para Firestore
@@ -126,10 +127,16 @@ export class ClienteService {
   // Método de prueba para verificar la conexión con Firebase
   testFirebaseConnection(): Observable<boolean> {
     console.log('🧪 Probando conexión con Firebase...');
+    console.log('📁 Configuración de Firebase:', environment.firebaseConfig);
+    
     const clientesRef = collection(this.firestore, this.collectionName);
+    console.log('📂 Referencia a colección creada:', clientesRef);
+    
     return from(getDocs(clientesRef)).pipe(
       map(snapshot => {
-        console.log('✅ Conexión con Firebase exitosa. Documentos encontrados:', snapshot.size);
+        console.log('✅ Conexión con Firebase exitosa');
+        console.log('📊 Documentos encontrados:', snapshot.size);
+        console.log('📋 IDs de documentos:', snapshot.docs.map(doc => doc.id));
         return true;
       })
     );

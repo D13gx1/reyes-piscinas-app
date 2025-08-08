@@ -5,6 +5,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { IonicModule, ToastController, AlertController } from '@ionic/angular';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
+import { FirebaseTestService } from '../../../services/firebase-test.service';
 import { addIcons } from 'ionicons';
 import { trashOutline } from 'ionicons/icons';
 
@@ -69,6 +70,7 @@ export class CrearClientesPage implements OnInit {
 
   constructor(
     private clienteService: ClienteService,
+    private firebaseTestService: FirebaseTestService,
     private router: Router,
     private route: ActivatedRoute,
     private toastController: ToastController,
@@ -76,14 +78,25 @@ export class CrearClientesPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Probar conexión con Firebase
-    this.clienteService.testFirebaseConnection().subscribe({
-      next: (success) => {
-        console.log('✅ Conexión con Firebase verificada');
+    // Diagnóstico completo de permisos
+    this.firebaseTestService.diagnosePermissions().subscribe({
+      next: (result) => {
+        if (result.success) {
+          console.log('✅ Diagnóstico exitoso:', result.message);
+          this.showToast('Permisos de Firebase verificados ✅', 'success');
+        } else {
+          console.error('❌ Error en diagnóstico:', result.message);
+          this.showToast(`Error de permisos: ${result.message} ❌`, 'danger');
+          
+          // Mostrar detalles del error en consola
+          if (result.details) {
+            console.error('🔍 Detalles del error:', result.details);
+          }
+        }
       },
-      error: (err) => {
-        console.error('❌ Error de conexión con Firebase:', err);
-        this.showToast('Error de conexión con Firebase ❌', 'danger');
+      error: (err: any) => {
+        console.error('❌ Error en diagnóstico:', err);
+        this.showToast('Error en diagnóstico de Firebase ❌', 'danger');
       }
     });
 
