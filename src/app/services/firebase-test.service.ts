@@ -169,17 +169,21 @@ export class FirebaseTestService {
       // Paso 1: Verificar configuración
       console.log('📁 Configuración de Firebase:', environment.firebaseConfig);
       
-      // Paso 2: Probar lectura
-      const clientesRef = collection(this.firestore, 'clientes');
-      from(getDocs(clientesRef)).subscribe({
+      // Paso 2: Probar lectura en colección de prueba
+      const testRef = collection(this.firestore, 'test');
+      from(getDocs(testRef)).subscribe({
         next: (snapshot) => {
           console.log('✅ Lectura exitosa, documentos encontrados:', snapshot.size);
           
-          // Paso 3: Probar escritura
-          const testData = { test: true, timestamp: new Date().toISOString() };
-          from(addDoc(clientesRef, testData)).subscribe({
+          // Paso 3: Probar escritura en colección de prueba (NO en clientes)
+          const testData = { 
+            test: true, 
+            timestamp: new Date().toISOString(),
+            message: 'Documento de prueba para diagnóstico'
+          };
+          from(addDoc(testRef, testData)).subscribe({
             next: (docRef) => {
-              console.log('✅ Escritura exitosa, documento creado:', docRef.id);
+              console.log('✅ Escritura exitosa, documento de prueba creado:', docRef.id);
               observer.next({
                 success: true,
                 message: 'Permisos verificados correctamente',
@@ -221,5 +225,37 @@ export class FirebaseTestService {
         }
       });
     });
+  }
+
+  // Método simple para verificar solo la conexión sin crear documentos
+  simpleConnectionTest(): Observable<{ success: boolean; message: string; details?: any }> {
+    console.log('🔍 Verificando conexión simple...');
+    
+    const testRef = collection(this.firestore, 'test');
+    
+    return from(getDocs(testRef)).pipe(
+      map(snapshot => {
+        console.log('✅ Conexión exitosa, documentos de prueba encontrados:', snapshot.size);
+        return {
+          success: true,
+          message: 'Conexión con Firebase verificada',
+          details: {
+            documentsCount: snapshot.size,
+            projectId: environment.firebaseConfig.projectId
+          }
+        };
+      }),
+      catchError(error => {
+        console.error('❌ Error de conexión:', error);
+        return from(Promise.resolve({
+          success: false,
+          message: `Error de conexión: ${error.message}`,
+          details: {
+            error: error,
+            config: environment.firebaseConfig
+          }
+        }));
+      })
+    );
   }
 } 

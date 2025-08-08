@@ -78,15 +78,15 @@ export class CrearClientesPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Diagnóstico completo de permisos
-    this.firebaseTestService.diagnosePermissions().subscribe({
+    // Verificación simple de conexión (sin crear documentos)
+    this.firebaseTestService.simpleConnectionTest().subscribe({
       next: (result) => {
         if (result.success) {
-          console.log('✅ Diagnóstico exitoso:', result.message);
-          this.showToast('Permisos de Firebase verificados ✅', 'success');
+          console.log('✅ Conexión verificada:', result.message);
+          this.showToast('Conexión con Firebase verificada ✅', 'success');
         } else {
-          console.error('❌ Error en diagnóstico:', result.message);
-          this.showToast(`Error de permisos: ${result.message} ❌`, 'danger');
+          console.error('❌ Error de conexión:', result.message);
+          this.showToast(`Error de conexión: ${result.message} ❌`, 'danger');
           
           // Mostrar detalles del error en consola
           if (result.details) {
@@ -95,8 +95,8 @@ export class CrearClientesPage implements OnInit {
         }
       },
       error: (err: any) => {
-        console.error('❌ Error en diagnóstico:', err);
-        this.showToast('Error en diagnóstico de Firebase ❌', 'danger');
+        console.error('❌ Error en verificación:', err);
+        this.showToast('Error en verificación de Firebase ❌', 'danger');
       }
     });
 

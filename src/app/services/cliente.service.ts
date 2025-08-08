@@ -51,10 +51,33 @@ export class ClienteService {
     const clientesRef = collection(this.firestore, this.collectionName);
     return from(getDocs(clientesRef)).pipe(
       map(snapshot => 
-        snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Cliente))
+        snapshot.docs.map(doc => {
+          const data = doc.data();
+          // Asegurar que todos los campos estén correctamente inicializados
+          return {
+            id: doc.id,
+            nombre: data['nombre'] || '',
+            direccion: data['direccion'] || '',
+            telefono: data['telefono'] || '',
+            email: data['email'] || '',
+            medidas: {
+              largo: data['medidas']?.['largo'] || 0,
+              ancho: data['medidas']?.['ancho'] || 0,
+              profundidad: data['medidas']?.['profundidad'] || 0,
+            },
+            precio: data['precio'] || 0,
+            programacion: {
+              frecuencia: data['programacion']?.['frecuencia'] || '',
+              cantidadPorPeriodo: data['programacion']?.['cantidadPorPeriodo'] || 1,
+              diasSemana: data['programacion']?.['diasSemana'] || [],
+              horaPreferida: data['programacion']?.['horaPreferida'] || '',
+              notas: data['programacion']?.['notas'] || ''
+            },
+            historial: data['historial'] || [],
+            activo: data['activo'] !== undefined ? data['activo'] : true,
+          } as Cliente;
+        })
+        
       )
     );
   }
@@ -64,7 +87,30 @@ export class ClienteService {
     return from(getDoc(clienteRef)).pipe(
       map(doc => {
         if (doc.exists()) {
-          return { id: doc.id, ...doc.data() } as Cliente;
+          const data = doc.data();
+          // Asegurar que todos los campos estén correctamente inicializados
+          return {
+            id: doc.id,
+            nombre: data['nombre'] || '',
+            direccion: data['direccion'] || '',
+            telefono: data['telefono'] || '',
+            email: data['email'] || '',
+            medidas: {
+              largo: data['medidas']?.['largo'] || 0,
+              ancho: data['medidas']?.['ancho'] || 0,
+              profundidad: data['medidas']?.['profundidad'] || 0,
+            },
+            precio: data['precio'] || 0,
+            programacion: {
+              frecuencia: data['programacion']?.['frecuencia'] || '',
+              cantidadPorPeriodo: data['programacion']?.['cantidadPorPeriodo'] || 1,
+              diasSemana: data['programacion']?.['diasSemana'] || [],
+              horaPreferida: data['programacion']?.['horaPreferida'] || '',
+              notas: data['programacion']?.['notas'] || ''
+            },
+            historial: data['historial'] || [],
+            activo: data['activo'] !== undefined ? data['activo'] : true,
+          } as Cliente;
         } else {
           throw new Error('Cliente no encontrado');
         }
@@ -77,10 +123,35 @@ export class ClienteService {
     const clientesRef = collection(this.firestore, this.collectionName);
     console.log('📁 Referencia a colección creada:', clientesRef);
     
-    return from(addDoc(clientesRef, cliente)).pipe(
+    // Asegurar que todos los campos estén correctamente inicializados antes de guardar
+    const clienteParaGuardar = {
+      nombre: cliente.nombre || '',
+      direccion: cliente.direccion || '',
+      telefono: cliente.telefono || '',
+      email: cliente.email || '',
+      medidas: {
+        largo: cliente.medidas?.largo || 0,
+        ancho: cliente.medidas?.ancho || 0,
+        profundidad: cliente.medidas?.profundidad || 0,
+      },
+      precio: cliente.precio || 0,
+      programacion: {
+        frecuencia: cliente.programacion?.frecuencia || '',
+        cantidadPorPeriodo: cliente.programacion?.cantidadPorPeriodo || 1,
+        diasSemana: cliente.programacion?.diasSemana || [],
+        horaPreferida: cliente.programacion?.horaPreferida || '',
+        notas: cliente.programacion?.notas || ''
+      },
+      historial: cliente.historial || [],
+      activo: cliente.activo !== undefined ? cliente.activo : true,
+    };
+    
+    console.log('📋 Cliente preparado para guardar:', clienteParaGuardar);
+    
+    return from(addDoc(clientesRef, clienteParaGuardar)).pipe(
       map(docRef => {
         console.log('✅ Cliente creado exitosamente con ID:', docRef.id);
-        const clienteCreado = { id: docRef.id, ...cliente };
+        const clienteCreado = { id: docRef.id, ...clienteParaGuardar };
         console.log('📋 Cliente final:', clienteCreado);
         return clienteCreado;
       })
