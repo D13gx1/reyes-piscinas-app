@@ -1,13 +1,238 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>estadisticas</ion-title>
+    <ion-title>Estadísticas</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="refrescarEstadisticas()" [disabled]="isLoading">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">estadisticas</ion-title>
+      <ion-title size="large">Estadísticas</ion-title>
     </ion-toolbar>
   </ion-header>
+
+  <!-- Selector de período -->
+  <ion-card>
+    <ion-card-content>
+      <ion-segment [(ngModel)]="periodoSeleccionado" (ionChange)="onPeriodoChange()">
+        <ion-segment-button value="dia">
+          <ion-label>Día</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="mes">
+          <ion-label>Mes</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="anio">
+          <ion-label>Año</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <!-- Selectores de fecha según período -->
+      <div class="selectores-fecha">
+        <!-- Selector para día -->
+        <div *ngIf="periodoSeleccionado === 'dia'" class="selector-item">
+          <ion-label>Fecha:</ion-label>
+          <input type="date" [(ngModel)]="fechaSeleccionada" (change)="onFechaChange()">
+        </div>
+
+        <!-- Selectores para mes -->
+        <div *ngIf="periodoSeleccionado === 'mes'" class="selectores-mes">
+          <div class="selector-item">
+            <ion-label>Mes:</ion-label>
+            <ion-select [(ngModel)]="mesSeleccionado" (ionChange)="onMesChange()">
+              <ion-select-option *ngFor="let mes of meses" [value]="mes.valor">
+                {{ mes.nombre }}
+              </ion-select-option>
+            </ion-select>
+          </div>
+          <div class="selector-item">
+            <ion-label>Año:</ion-label>
+            <ion-select [(ngModel)]="anioSeleccionado" (ionChange)="onAnioChange()">
+              <ion-select-option *ngFor="let anio of anios" [value]="anio">
+                {{ anio }}
+              </ion-select-option>
+            </ion-select>
+          </div>
+        </div>
+
+        <!-- Selector para año -->
+        <div *ngIf="periodoSeleccionado === 'anio'" class="selector-item">
+          <ion-label>Año:</ion-label>
+          <ion-select [(ngModel)]="anioSeleccionado" (ionChange)="onAnioChange()">
+            <ion-select-option *ngFor="let anio of anios" [value]="anio">
+              {{ anio }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando estadísticas...</p>
+  </div>
+
+  <!-- Estadísticas de recaudación -->
+  <div *ngIf="!isLoading && estadisticas">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="cash-outline"></ion-icon>
+          Recaudación del {{ periodoSeleccionado }}
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-value">{{ formatearPrecio(estadisticas.total) }}</div>
+                <div class="stat-label">Total Recaudado</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-value">{{ estadisticas.cantidadMantenciones }}</div>
+                <div class="stat-label">Mantenciones</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="12">
+              <div class="stat-item">
+                <div class="stat-value">{{ formatearPrecio(estadisticas.promedioPorMantencion) }}</div>
+                <div class="stat-label">Promedio por Mantención</div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Estadísticas químicas -->
+    <ion-card *ngIf="estadisticasQuimicas">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="flask-outline"></ion-icon>
+          Estadísticas Químicas
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-value">{{ estadisticasQuimicas.promedioCloro.toFixed(1) }}</div>
+                <div class="stat-label">Promedio Cloro</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-value">{{ estadisticasQuimicas.promedioPh.toFixed(1) }}</div>
+                <div class="stat-label">Promedio pH</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-value">{{ estadisticasQuimicas.totalCloro.toFixed(1) }}</div>
+                <div class="stat-label">Total Cloro Usado</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="stat-item">
+                <div class="stat-value">{{ estadisticasQuimicas.totalPh.toFixed(1) }}</div>
+                <div class="stat-label">Total pH Medido</div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Historial de mantenciones -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="time-outline"></ion-icon>
+          Historial de Mantenciones
+          <ion-badge color="primary">{{ mantenciones.length }}</ion-badge>
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list *ngIf="mantenciones.length > 0; else noMantenciones">
+          <ion-item *ngFor="let mantencion of mantenciones" class="mantencion-item">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="12">
+                  <div class="mantencion-header">
+                    <h3>{{ mantencion.clienteNombre }}</h3>
+                    <ion-chip color="success">
+                      {{ formatearPrecio(mantencion.precio) }}
+                    </ion-chip>
+                  </div>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="6">
+                  <div class="mantencion-detail">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                    <span>{{ formatearFechaCorta(mantencion.fecha) }}</span>
+                  </div>
+                </ion-col>
+                <ion-col size="6" *ngIf="mantencion.hora">
+                  <div class="mantencion-detail">
+                    <ion-icon name="time-outline"></ion-icon>
+                    <span>{{ mantencion.hora }}</span>
+                  </div>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="6">
+                  <div class="mantencion-detail">
+                    <ion-icon name="water-outline"></ion-icon>
+                    <span>Cloro: {{ mantencion.cloro }}</span>
+                  </div>
+                </ion-col>
+                <ion-col size="6">
+                  <div class="mantencion-detail">
+                    <ion-icon name="flask-outline"></ion-icon>
+                    <span>pH: {{ mantencion.ph }}</span>
+                  </div>
+                </ion-col>
+              </ion-row>
+              <ion-row *ngIf="mantencion.servicio">
+                <ion-col size="12">
+                  <div class="mantencion-detail">
+                    <ion-icon name="analytics-outline"></ion-icon>
+                    <span>{{ mantencion.servicio }}</span>
+                  </div>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-item>
+        </ion-list>
+
+        <ng-template #noMantenciones>
+          <div class="no-data">
+            <ion-icon name="calendar-outline" size="large"></ion-icon>
+            <p>No hay mantenciones registradas en este período</p>
+          </div>
+        </ng-template>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Mensaje cuando no hay datos -->
+  <div *ngIf="!isLoading && !estadisticas" class="no-data">
+    <ion-icon name="analytics-outline" size="large"></ion-icon>
+    <p>No hay datos disponibles para el período seleccionado</p>
+  </div>
 </ion-content>
