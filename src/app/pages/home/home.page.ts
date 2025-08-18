@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController, ToastController } from '@ionic/angular';
+import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { 
   refreshOutline, 
@@ -55,7 +56,7 @@ addIcons({
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, IonicModule],
+  imports: [CommonModule, IonicModule, RouterModule],
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
@@ -277,21 +278,127 @@ export class HomePage implements OnInit {
 
   // Resto de métodos existentes...
   async marcarRealizado(cliente: ClienteDelDia) {
-    const alert = await this.alertController.create({
+    // Primero mostramos un alert para seleccionar el estado del cloro
+    const alertCloro = await this.alertController.create({
       header: 'Mantención de Piscina',
       subHeader: `Cliente: ${cliente.nombre}`,
-      message: 'Por favor, completa los datos del mantenimiento:',
+      message: 'Selecciona el estado actual del cloro:',
       inputs: [
         {
-          name: 'estadoCloro',
-          type: 'text',
-          placeholder: 'Estado actual del cloro (ej: Bajo, Normal, Alto)'
+          name: 'bajo',
+          type: 'radio',
+          label: 'Bajo: < 1.0 ppm',
+          value: 'bajo'
         },
         {
-          name: 'estadoPh',
-          type: 'text',
-          placeholder: 'Estado actual del pH (ej: 7.2, Ácido, Básico)'
+          name: 'ideal_bajo',
+          type: 'radio',
+          label: 'Ideal Bajo: 1.0 - 1.4 ppm',
+          value: 'ideal bajo'
         },
+        {
+          name: 'ideal',
+          type: 'radio',
+          label: 'Ideal: 1.5 - 2.0 ppm',
+          value: 'ideal',
+          checked: true
+        },
+        {
+          name: 'ideal_alto',
+          type: 'radio',
+          label: 'Ideal Alto: 2.1 - 3.0 ppm',
+          value: 'ideal alto'
+        },
+        {
+          name: 'alto',
+          type: 'radio',
+          label: 'Alto: > 3.0 ppm',
+          value: 'alto'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'secondary'
+        },
+        {
+          text: 'Siguiente',
+          handler: (estadoCloro) => {
+            this.mostrarAlertPh(cliente, estadoCloro);
+          }
+        }
+      ]
+    });
+
+    await alertCloro.present();
+  }
+
+  async mostrarAlertPh(cliente: ClienteDelDia, estadoCloro: string) {
+    // Luego mostramos un alert para seleccionar el estado del pH
+    const alertPh = await this.alertController.create({
+      header: 'Mantención de Piscina',
+      subHeader: `Cliente: ${cliente.nombre}`,
+      message: 'Selecciona el estado actual del pH:',
+      inputs: [
+        {
+          name: 'bajo',
+          type: 'radio',
+          label: 'Bajo: < 7.2',
+          value: 'bajo'
+        },
+        {
+          name: 'ideal_bajo',
+          type: 'radio',
+          label: 'Ideal Bajo: 7.2 - 7.3',
+          value: 'ideal bajo'
+        },
+        {
+          name: 'ideal',
+          type: 'radio',
+          label: 'Ideal: 7.4 - 7.6',
+          value: 'ideal',
+          checked: true
+        },
+        {
+          name: 'ideal_alto',
+          type: 'radio',
+          label: 'Ideal Alto: 7.7 - 7.8',
+          value: 'ideal alto'
+        },
+        {
+          name: 'alto',
+          type: 'radio',
+          label: 'Alto: > 7.8',
+          value: 'alto'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Atrás',
+          handler: () => {
+            this.marcarRealizado(cliente);
+          }
+        },
+        {
+          text: 'Siguiente',
+          handler: (estadoPh) => {
+            this.mostrarAlertCantidades(cliente, estadoCloro, estadoPh);
+          }
+        }
+      ]
+    });
+
+    await alertPh.present();
+  }
+
+  async mostrarAlertCantidades(cliente: ClienteDelDia, estadoCloro: string, estadoPh: string) {
+    // Finalmente mostramos un alert para ingresar las cantidades
+    const alertCantidades = await this.alertController.create({
+      header: 'Mantención de Piscina',
+      subHeader: `Cliente: ${cliente.nombre}`,
+      message: 'Ingresa las cantidades:',
+      inputs: [
         {
           name: 'cantidadCloro',
           type: 'text',
@@ -305,21 +412,29 @@ export class HomePage implements OnInit {
       ],
       buttons: [
         {
-          text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'secondary'
+          text: 'Atrás',
+          handler: () => {
+            this.mostrarAlertPh(cliente, estadoCloro);
+          }
         },
         {
           text: 'Completar Mantención',
           cssClass: 'primary',
           handler: (data) => {
-            return this.completarMantenimiento(cliente, data);
+            // Combinamos los datos de los tres alerts
+            const datosCompletos = {
+              estadoCloro: estadoCloro,
+              estadoPh: estadoPh,
+              cantidadCloro: data.cantidadCloro,
+              cantidadPh: data.cantidadPh
+            };
+            return this.completarMantenimiento(cliente, datosCompletos);
           }
         }
       ]
     });
 
-    await alert.present();
+    await alertCantidades.present();
   }
 
   completarMantenimiento(cliente: ClienteDelDia, data: any): boolean {
@@ -329,7 +444,11 @@ export class HomePage implements OnInit {
       return false;
     }
 
-    if (data.cantidadCloro < 0 || data.cantidadPh < 0) {
+    // Convertir a números y validar que no sean negativos
+    const cantidadCloro = parseFloat(data.cantidadCloro) || 0;
+    const cantidadPh = parseFloat(data.cantidadPh) || 0;
+    
+    if (cantidadCloro < 0 || cantidadPh < 0) {
       this.showToast('Las cantidades no pueden ser negativas ❌', 'danger');
       return false;
     }
@@ -339,8 +458,8 @@ export class HomePage implements OnInit {
     cliente.mantenimiento = {
       estadoCloro: data.estadoCloro,
       estadoPh: data.estadoPh,
-      cantidadCloro: parseFloat(data.cantidadCloro) || 0,
-      cantidadPh: parseFloat(data.cantidadPh) || 0,
+      cantidadCloro: cantidadCloro,
+      cantidadPh: cantidadPh,
       fecha: ahora.toISOString().split('T')[0],
       hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
     };

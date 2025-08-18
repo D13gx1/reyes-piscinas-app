@@ -106,11 +106,12 @@
       
             <ion-button 
               expand="block" 
-              (click)="marcarRealizado(cliente)"
+              [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
               class ="gradient-button">
               <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
               Completar Mantención
             </ion-button>
+            
           </ion-card-content>
         </ion-card-header>
       </ion-card>

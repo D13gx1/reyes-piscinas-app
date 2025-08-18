@@ -14,6 +14,7 @@ import {
   IonSegmentButton,
   IonLabel,
   IonButton,
+  IonButtons,
   IonIcon,
   IonList,
   IonItem,
@@ -25,9 +26,12 @@ import {
   IonCol,
   IonChip,
   IonSelect,
-  IonSelectOption
+  IonSelectOption,
+  AlertController,
+  ToastController
 } from '@ionic/angular/standalone';
 import { EstadisticasService, EstadisticasRecaudacion, Mantencion } from '../../services/estadisticas.service';
+import { ClienteService } from '../../services/cliente.service';
 import { addIcons } from 'ionicons';
 import { 
   calendarOutline, 
@@ -37,7 +41,8 @@ import {
   refreshOutline,
   trendingUpOutline,
   waterOutline,
-  flaskOutline
+  flaskOutline,
+  trashOutline
 } from 'ionicons/icons';
 
 addIcons({
@@ -49,6 +54,7 @@ addIcons({
   'trending-up-outline': trendingUpOutline,
   'water-outline': waterOutline,
   'flask-outline': flaskOutline,
+  'trash-outline': trashOutline
 });
 
 @Component({
@@ -71,6 +77,7 @@ addIcons({
     IonSegmentButton,
     IonLabel,
     IonButton,
+    IonButtons,
     IonIcon,
     IonList,
     IonItem,
@@ -115,7 +122,12 @@ export class EstadisticasPage implements OnInit {
 
   anios = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
-  constructor(private estadisticasService: EstadisticasService) { }
+  constructor(
+    private estadisticasService: EstadisticasService,
+    private clienteService: ClienteService,
+    private alertController: AlertController,
+    private toastController: ToastController
+  ) { }
 
   ngOnInit() {
     this.cargarEstadisticas();
@@ -270,5 +282,55 @@ export class EstadisticasPage implements OnInit {
     setTimeout(() => {
       this.cargarEstadisticas();
     }, 500);
+  }
+
+  async confirmarBorrado(mantencion: Mantencion) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar borrado',
+      message: `¿Está seguro que desea borrar el registro de mantención para ${mantencion.clienteNombre} del ${this.formatearFechaCorta(mantencion.fecha)}?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Borrar',
+          role: 'destructive',
+          handler: () => {
+            this.borrarRegistroHistorial(mantencion);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  borrarRegistroHistorial(mantencion: Mantencion) {
+    // Extraer el ID del cliente de la propiedad id de la mantención
+    const clienteId = mantencion.clienteId;
+    const fecha = mantencion.fecha;
+    const hora = mantencion.hora || '00:00';
+
+    this.clienteService.borrarRegistroHistorial(clienteId, fecha, hora).subscribe({
+      next: () => {
+        this.mostrarToast('Registro eliminado correctamente');
+        // Recargar las estadísticas para reflejar el cambio
+        this.cargarEstadisticas();
+      },
+      error: (error) => {
+        console.error('Error al borrar el registro:', error);
+        this.mostrarToast('Error al eliminar el registro');
+      }
+    });
+  }
+
+  async mostrarToast(mensaje: string) {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 2000,
+      position: 'bottom'
+    });
+    await toast.present();
   }
 }

@@ -106,22 +106,29 @@
   }
   
   .mantencion-detail {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--ion-color-medium);
-    margin-bottom: 0.25rem;
-    
-    ion-icon {
-      color: var(--ion-color-primary);
-      font-size: 1rem;
-    }
-    
-    span {
-      flex: 1;
-    }
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ion-color-medium);
+  margin-bottom: 0.25rem;
+  
+  ion-icon {
+    color: var(--ion-color-primary);
+    font-size: 1rem;
   }
+  
+  span {
+    flex: 1;
+  }
+}
+
+ion-button[color="danger"] {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  height: 30px;
+  margin-top: 5px;
+}
 }
 
 .no-data {

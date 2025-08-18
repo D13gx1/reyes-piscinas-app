@@ -8,8 +8,18 @@ export const routes: Routes = [
     children: [
       {
         path: 'home',
-        loadComponent: () =>
-          import('./pages/home/home.page').then((m) => m.HomePage),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/home/home.page').then((m) => m.HomePage),
+          },
+          {
+            path: 'completar_mantencion/:id',
+            loadComponent: () =>
+              import('./pages/home/completar_mantencion/completar_mantencion.page').then((m) => m.CompletarMantencionPage),
+          },
+        ],
       },
       {
         path: 'clientes',

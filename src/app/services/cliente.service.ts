@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap  } from 'rxjs/operators';
 import { Firestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, query, where } from '@angular/fire/firestore';
 import { environment } from '../../environments/environment';
 
@@ -176,6 +176,24 @@ export class ClienteService {
       })
     );
   }
+
+  // Método para borrar un registro específico del historial de un cliente
+  borrarRegistroHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
+  return this.getClienteById(clienteId).pipe(
+    switchMap(cliente => {
+      if (cliente && cliente.historial) {
+        cliente.historial = cliente.historial.filter(registro =>
+          !(registro.fecha === fecha && registro.hora === hora)
+        );
+
+        return this.updateCliente(cliente).pipe(
+          map(() => void 0) // devolvemos void para que coincida con la firma
+        );
+      }
+      throw new Error('Cliente no encontrado o sin historial');
+    })
+  );
+}
 
   deleteCliente(id: string): Observable<void> {
     const clienteRef = doc(this.firestore, this.collectionName, id);

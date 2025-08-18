@@ -1,0 +1,61 @@
+.gradient-button {
+  --background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  --color: white;
+  margin-top: 16px;
+}
+
+ion-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 16px;
+}
+
+ion-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+ion-card-subtitle {
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+ion-list-header {
+  margin-top: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+ion-button {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+ion-button[fill="outline"] {
+  --border-width: 1px;
+  --border-color: var(--ion-color-medium);
+  height: 40px;
+}
+
+ion-button[color="danger"] {
+  --border-color: var(--ion-color-danger);
+  --color: var(--ion-color-danger);
+}
+
+ion-button[color="warning"] {
+  --border-color: var(--ion-color-warning);
+  --color: var(--ion-color-warning);
+}
+
+ion-button[color="success"] {
+  --border-color: var(--ion-color-success);
+  --color: var(--ion-color-success);
+}
