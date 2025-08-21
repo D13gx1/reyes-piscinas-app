@@ -179,21 +179,23 @@ export class ClienteService {
 
   // Método para borrar un registro específico del historial de un cliente
   borrarRegistroHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
-  return this.getClienteById(clienteId).pipe(
-    switchMap(cliente => {
-      if (cliente && cliente.historial) {
-        cliente.historial = cliente.historial.filter(registro =>
-          !(registro.fecha === fecha && registro.hora === hora)
-        );
-
-        return this.updateCliente(cliente).pipe(
-          map(() => void 0) // devolvemos void para que coincida con la firma
-        );
-      }
-      throw new Error('Cliente no encontrado o sin historial');
-    })
-  );
-}
+    return this.getClienteById(clienteId).pipe(
+      switchMap(cliente => {
+        if (cliente && cliente.historial) {
+          // Filtrar el historial para eliminar el registro específico
+          cliente.historial = cliente.historial.filter(registro => 
+            !(registro.fecha === fecha && registro.hora === hora)
+          );
+          
+          // Actualizar el cliente con el historial modificado
+          return this.updateCliente(cliente).pipe(
+            map(() => void 0) // devolvemos void para que coincida con la firma
+          );
+        }
+        throw new Error('Cliente no encontrado o sin historial');
+      })
+    );
+  }
 
   deleteCliente(id: string): Observable<void> {
     const clienteRef = doc(this.firestore, this.collectionName, id);
