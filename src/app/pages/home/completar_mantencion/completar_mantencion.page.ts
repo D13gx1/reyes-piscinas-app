@@ -86,6 +86,8 @@ export class CompletarMantencionPage implements OnInit {
     this.mantencionForm = this.formBuilder.group({
       cloro: ['', [Validators.required, Validators.min(0), Validators.max(10)]],
       ph: ['', [Validators.required, Validators.min(0), Validators.max(14)]],
+      cantidadCloro: [0, [Validators.required, Validators.min(0)]],
+      cantidadPh: [0, [Validators.required, Validators.min(0)]],
       servicio: ['Mantenimiento general', Validators.required],
       notas: ['']
     });
@@ -146,6 +148,8 @@ export class CompletarMantencionPage implements OnInit {
       servicio: formValues.servicio,
       cloro: formValues.cloro,
       ph: formValues.ph,
+      cantidadCloro: formValues.cantidadCloro,
+      cantidadPh: formValues.cantidadPh,
       estadoCloro: this.cloroSeleccionado,
       estadoPh: this.phSeleccionado,
       notas: formValues.notas

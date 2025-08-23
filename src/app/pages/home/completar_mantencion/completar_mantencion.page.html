@@ -62,6 +62,11 @@
               Alto: &gt; 3.0
             </ion-button>
           </div>
+          
+          <ion-item>
+            <ion-label position="floating">Cantidad de cloro utilizada (gramos)</ion-label>
+            <ion-input type="number" formControlName="cantidadCloro" min="0"></ion-input>
+          </ion-item>
 
           <ion-list-header>
             <ion-label>Nivel de pH</ion-label>
@@ -83,6 +88,11 @@
               Alto: &gt; 7.8
             </ion-button>
           </div>
+          
+          <ion-item>
+            <ion-label position="floating">Cantidad de pH utilizada (gramos)</ion-label>
+            <ion-input type="number" formControlName="cantidadPh" min="0"></ion-input>
+          </ion-item>
           <ion-item>
             <ion-label position="floating">Servicio Realizado</ion-label>
             <ion-select formControlName="servicio">

@@ -20,6 +20,8 @@ export interface Mantencion {
   precio: number;
   cloro: number;
   ph: number;
+  cantidadCloro?: number;
+  cantidadPh?: number;
   servicio: string;
   hora?: string;
 }
@@ -171,4 +173,4 @@ export class EstadisticasService {
       })
     );
   }
-} 
+}
