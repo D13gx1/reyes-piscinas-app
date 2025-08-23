@@ -26,23 +26,51 @@ ion-list-header {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--ion-color-primary);
+  padding-left: 0;
 }
 
 ion-button {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* Layout containers */
+.levels-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.level-column {
+  flex: 1;
+  min-width: 280px;
 }
 
 .button-container {
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
+.quantities-container {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.quantities-container ion-item {
+  margin-bottom: 16px;
+}
+
+/* Button styles */
 ion-button[fill="outline"] {
   --border-width: 1px;
   --border-color: var(--ion-color-medium);
+  --border-radius: 8px;
   height: 40px;
+  margin: 4px 0;
+  --padding-start: 8px;
+  --padding-end: 8px;
 }
 
 ion-button[color="danger"] {
@@ -58,4 +86,100 @@ ion-button[color="warning"] {
 ion-button[color="success"] {
   --border-color: var(--ion-color-success);
   --color: var(--ion-color-success);
+}
+
+/* Color styles */
+/* Cloro */
+.cloro-alto {
+  --background: #E9DC72; /* Rojo claro */
+  --color: #000;
+  --border-color: #FF6666;
+}
+
+.cloro-ideal-alto {
+  --background:#EDE68E; /* Naranja claro */
+  --color: #000;
+  --border-color: #FFB466;
+}
+
+.cloro-ideal {
+  --background: #F1E9A8; /* Verde claro */
+  --color: #000;
+  --border-color: #64C864;
+}
+
+.cloro-ideal-bajo {
+  --background: #F2EAB8; /* Azul claro */
+  --color: #000;
+  --border-color: #64B4FF;
+}
+
+.cloro-bajo {
+  --background: #F1ECCE; /* Morado claro */
+  --color: #000;
+  --border-color: #C896FF;
+}
+
+/* pH */
+.ph-bajo {
+  --background: #F0D198; /* Rosa claro */
+  --color: #000;
+  --border-color: #FF64C8;
+}
+
+.ph-ideal-bajo {
+  --background: #F2BCA3; /* Celeste claro */
+  --color: #000;
+  --border-color: #64DCFF;
+}
+
+.ph-ideal {
+  --background: #EF8D96; /* Verde brillante */
+  --color: #000;
+  --border-color: #64FF64;
+}
+
+.ph-ideal-alto {
+  --background:#F2748D; /* Amarillo claro */
+  --color: #000;
+  --border-color: #FFFF64;
+}
+
+.ph-alto {
+  --background: #EC639D; /* Melón claro */
+  --color: #000;
+  --border-color: #FF9664;
+}
+
+/* Selected state - only increase margins */
+ion-button.selected {
+  margin: 8px 0;
+  --border-width: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .levels-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .level-column {
+    min-width: calc(50% - 4px);
+    flex: 1 1 calc(50% - 4px);
+  }
+  
+  .button-container ion-button {
+    height: 36px;
+    font-size: 0.8rem;
+    --padding-start: 4px;
+    --padding-end: 4px;
+  }
+  
+  ion-list-header {
+    font-size: 0.9rem;
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
 }
