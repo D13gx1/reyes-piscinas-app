@@ -11,4 +11,5 @@
     </ion-toolbar>
   </ion-header>
   <button (click)="loginWithGoogle()">OÑA</button>
+  <h1 *ngIf="errorMessage">{{ errorMessage }}</h1>
 </ion-content>

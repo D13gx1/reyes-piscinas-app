@@ -11,13 +11,14 @@ import { AuthService } from 'src/app/services/auth.service';
   standalone: true,
   imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
-export class LoginPage implements OnInit {
+export class LoginPage {
   private readonly auth = inject(AuthService);
 
-  ngOnInit() {
-  }
+  errorMessage: string | null = null;
 
   async loginWithGoogle(): Promise<void> {
-    await this.auth.googleLogin();
+    const error = await this.auth.googleLogin();
+    if (error)
+      this.errorMessage = error.message;
   }
 }
