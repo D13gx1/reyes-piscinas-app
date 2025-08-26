@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ToastController, AlertController } from '@ionic/angular';
 import { 
+  IonNav,
   IonHeader, 
   IonToolbar, 
   IonTitle, 
@@ -29,6 +30,7 @@ import {
 import { addIcons } from 'ionicons';
 import { saveOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
+import { HomePage } from '../home.page';
 
 addIcons({
   'save-outline': saveOutline,
