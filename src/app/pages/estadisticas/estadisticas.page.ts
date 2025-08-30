@@ -81,7 +81,6 @@ addIcons({
     IonIcon,
     IonList,
     IonItem,
-    IonItemDivider,
     IonBadge,
     IonSpinner,
     IonGrid,

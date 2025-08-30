@@ -21,6 +21,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/home/completar_mantencion/completar_mantencion.page').then((m) => m.CompletarMantencionPage),
           },
+          {
+            path: 'completar_mantencion',
+            loadComponent: () =>
+              import('./pages/home/completar_mantencion/completar_mantencion.page').then((m) => m.CompletarMantencionPage),
+          },
         ],
       },
       {
@@ -51,7 +56,7 @@ export const routes: Routes = [
       {
         path: 'perfil',
         loadComponent: () =>
-          import('./pages/perfil/perfil.page').then((m) => m.PerfilPage),
+          import('./pages/perfil/perfil.page').then(m => m.PerfilPage),
       },
       {
         path: '',

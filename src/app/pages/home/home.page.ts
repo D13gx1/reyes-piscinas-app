@@ -96,20 +96,26 @@ export class HomePage implements OnInit {
   }
 
   configurarFecha() {
+    const today = new Date();
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
-      year: 'numeric',
+      day: 'numeric',
       month: 'long',
-      day: 'numeric'
+      year: 'numeric'
     };
     
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString('es-ES', options)
+    // Formatear la fecha en español
+    const formatter = new Intl.DateTimeFormat('es-ES', options);
+    let formattedDate = formatter.format(today);
+    
+    // Capitalizar la primera letra de cada palabra
+    formattedDate = formattedDate
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
     
-    this.fechaHoy = formattedDate;
+    // Reemplazar la coma por un salto de línea para mejor presentación
+    this.fechaHoy = formattedDate.replace(',', '\n');
     
     // Obtener el día de la semana para filtrar clientes
     const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -8,6 +8,7 @@ import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { FirebaseTestService } from '../../../services/firebase-test.service';
 import { addIcons } from 'ionicons';
 import { trashOutline } from 'ionicons/icons';
+import { Auth } from '@angular/fire/auth';
 
 // Registrar el icono
 addIcons({
@@ -31,7 +32,10 @@ interface DiaSemana {
 export class CrearClientesPage implements OnInit {
   @ViewChild('cantidadPorPeriodo') cantidadPorPeriodoRef?: NgModel;
   
+  private auth = inject(Auth);
+  
   nuevoCliente: Cliente = {
+    userId: this.auth.currentUser?.uid || '',
     nombre: '',
     direccion: '',
     telefono: '',
