@@ -46,6 +46,7 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/clientes/crear-clientes/crear-clientes.page').then((m) => m.CrearClientesPage),
           },
+          
         ],
       },
       {
@@ -69,9 +70,9 @@ export const routes: Routes = [
     path: '',
     redirectTo: '/tabs/home',
     pathMatch: 'full',
-  },  {
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/login/login.page').then( m => m.LoginPage)
-  },
-
+  }
 ];

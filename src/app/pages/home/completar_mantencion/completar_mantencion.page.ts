@@ -30,7 +30,6 @@ import {
 import { addIcons } from 'ionicons';
 import { saveOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
-import { HomePage } from '../home.page';
 
 addIcons({
   'save-outline': saveOutline,
@@ -89,7 +88,8 @@ export class CompletarMantencionPage implements OnInit {
       cloro: ['', [Validators.required, Validators.min(0), Validators.max(10)]],
       ph: ['', [Validators.required, Validators.min(0), Validators.max(14)]],
       cantidadCloro: [0, [Validators.required, Validators.min(0)]],
-      cantidadPh: [0, [Validators.required, Validators.min(0)]],
+      cantidadBajaPh: [0, [Validators.required, Validators.min(0)]],
+      cantidadSubePh: [0, [Validators.required, Validators.min(0)]],
       servicio: ['Mantenimiento general', Validators.required],
       notas: ['']
     });
@@ -151,7 +151,8 @@ export class CompletarMantencionPage implements OnInit {
       cloro: formValues.cloro,
       ph: formValues.ph,
       cantidadCloro: formValues.cantidadCloro,
-      cantidadPh: formValues.cantidadPh,
+      cantidadBajaPh: formValues.cantidadBajaPh,
+      cantidadSubePh: formValues.cantidadSubePh,
       estadoCloro: this.cloroSeleccionado,
       estadoPh: this.phSeleccionado,
       notas: formValues.notas

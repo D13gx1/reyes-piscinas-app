@@ -90,25 +90,28 @@
                 <ion-button expand="block" fill="outline" class="ph-bajo" [class.selected]="phSeleccionado === 'bajo'" (click)="seleccionarPh('bajo', 7.0)">
                   Bajo: &lt; 7.2
                 </ion-button>
-                
-                
-                
-                
               </div>
             </div>
           </div>
           
           <!-- Cantidades debajo -->
           <div class="quantities-container">
+
             <ion-item>
               <ion-label position="floating">Cantidad de cloro utilizada (gramos)</ion-label>
               <ion-input type="number" formControlName="cantidadCloro" min="0"></ion-input>
             </ion-item>
             
             <ion-item>
-              <ion-label position="floating">Cantidad de pH utilizada (gramos)</ion-label>
-              <ion-input type="number" formControlName="cantidadPh" min="0"></ion-input>
+              <ion-label position="floating">Cantidad de baja pH utilizada (gramos)</ion-label>
+              <ion-input type="number" formControlName="cantidadSubePh" min="0"></ion-input>
             </ion-item>
+
+            <ion-item>
+              <ion-label position="floating">Cantidad de sube pH utilizada (gramos)</ion-label>
+              <ion-input type="number" formControlName="cantidadBajaPh" min="0"></ion-input>
+            </ion-item>
+
           </div>
           <ion-item>
             <ion-label position="floating">Servicio Realizado</ion-label>

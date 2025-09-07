@@ -60,12 +60,6 @@
                 {{ cliente.direccion }}
               </ion-card-subtitle>
             </div>
-            <div class="action-buttons">
-
-              <ion-button fill="clear" size="small" (click)="editarCliente(cliente)">
-                <ion-icon name="pencil-outline"></ion-icon>
-              </ion-button>
-            </div>
           </div>
         </ion-card-header>
 
@@ -83,6 +77,14 @@
             <div class="detalle-item" *ngIf="cliente.email">
               <ion-icon name="mail-outline"></ion-icon>
               <strong>Email:</strong> {{ cliente.email }}
+            </div>
+            <div class="action-buttons">
+              <ion-button fill="clear" size="medium" (click)="editarCliente(cliente)">
+                <ion-icon name="pencil-outline"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" size="medium" (click)="verHistorial(cliente)">
+                <ion-icon name="time-outline"></ion-icon>
+              </ion-button>
             </div>
           </div>
         </ion-card-content>
@@ -112,11 +114,6 @@
                 {{ cliente.direccion }}
               </ion-card-subtitle>
             </div>
-            <div class="action-buttons">
-              <ion-button fill="clear" size="small" (click)="editarCliente(cliente)">
-                <ion-icon name="pencil-outline"></ion-icon>
-              </ion-button>
-            </div>
           </div>
         </ion-card-header>
 
@@ -135,6 +132,19 @@
               <ion-icon name="mail-outline"></ion-icon>
               <strong>Email:</strong> {{ cliente.email }}
             </div>
+           <div class="buttons">
+            <div class="action-buttons">
+
+              <ion-button fill="clear" size="medium" (click)="editarCliente(cliente)">
+                <ion-icon name="pencil-outline"></ion-icon>
+              </ion-button>
+
+              <ion-button fill="clear" size="medium" (click)="verHistorial(cliente)">
+                <ion-icon name="time-outline"></ion-icon>
+              </ion-button>
+
+            </div>
+           </div>
           </div>
         </ion-card-content>
 

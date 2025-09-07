@@ -23,7 +23,7 @@ import { Auth, user } from '@angular/fire/auth';
 import { environment } from '../../environments/environment';
 
 export interface Cliente {
-  id?: string; // Cambiado a string para Firestore
+  id?: string; // string para Firestore
   userId: string; // ID del usuario propietario
   nombre: string;
   direccion: string;

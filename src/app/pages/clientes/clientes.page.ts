@@ -104,6 +104,15 @@ export class ClientesPage implements OnInit {
     }
   }
 
+  verHistorial(cliente: Cliente){
+    try{
+      this.router.navigate(['/tabs/clientes/historial-cliente', cliente])
+    } catch (error){
+      console.error('❌ Error en navegación:', error);
+      this.showToast('Error al navegar al historial ❌', 'danger');
+    }
+  }
+
   irACrearCliente() {
     console.log('Botón presionado - irACrearCliente()');
     try {
@@ -111,33 +120,10 @@ export class ClientesPage implements OnInit {
       console.log('✅ Navegación exitosa');
     } catch (error) {
       console.error('❌ Error en navegación:', error);
-      this.showToast('Error al navegar a crear cliente ❌', 'danger');
+      this.showToast('Error al navegar al crear cliente ❌', 'danger');
     }
   }
-
-  async activarCliente(cliente: Cliente) {
-    const alert = await this.alertController.create({
-      header: 'Activar Cliente',
-      message: `¿Estás seguro de que quieres activar a ${cliente.nombre}?`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'secondary'
-        },
-        {
-          text: 'Activar',
-          cssClass: 'primary',
-          handler: () => {
-            this.procederActivarCliente(cliente);
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
+  
   procederActivarCliente(cliente: Cliente) {
     cliente.activo = true;
     
@@ -196,29 +182,8 @@ export class ClientesPage implements OnInit {
     });
   }
 
-  async eliminarCliente(cliente: Cliente) {
-    const alert = await this.alertController.create({
-      header: 'Eliminar Cliente',
-      message: `¿Estás seguro de que quieres eliminar a ${cliente.nombre}?`,
-      subHeader: 'Esta acción no se puede deshacer.',
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'secondary'
-        },
-        {
-          text: 'Eliminar',
-          cssClass: 'danger',
-          handler: () => {
-            this.procederEliminarCliente(cliente);
-          }
-        }
-      ]
-    });
 
-    await alert.present();
-  }
+  
 
   procederEliminarCliente(cliente: Cliente) {
     if (!cliente.id) {
@@ -293,3 +258,4 @@ export class ClientesPage implements OnInit {
     return cliente.id || '';
   }
 }
+
