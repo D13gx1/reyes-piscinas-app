@@ -106,7 +106,7 @@ export class ClientesPage implements OnInit {
 
   verHistorial(cliente: Cliente){
     try{
-      this.router.navigate(['/tabs/clientes/historial-cliente', cliente])
+      this.router.navigate(['/tabs/clientes/historial-cliente', cliente.id])
     } catch (error){
       console.error('❌ Error en navegación:', error);
       this.showToast('Error al navegar al historial ❌', 'danger');
@@ -258,4 +258,3 @@ export class ClientesPage implements OnInit {
     return cliente.id || '';
   }
 }
-

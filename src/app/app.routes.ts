@@ -46,6 +46,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/clientes/crear-clientes/crear-clientes.page').then((m) => m.CrearClientesPage),
           },
+          {
+            path: 'historial-cliente/:id',
+            loadComponent: () =>
+              import('./pages/clientes/historial-cliente/historial-cliente.page').then( m => m.HistorialClientePage)
+          },
           
         ],
       },
@@ -74,5 +79,9 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login.page').then( m => m.LoginPage)
+  },
+  {
+    path: 'historial-cliente',
+    loadComponent: () => import('./pages/clientes/historial-cliente/historial-cliente.page').then( m => m.HistorialClientePage)
   }
 ];

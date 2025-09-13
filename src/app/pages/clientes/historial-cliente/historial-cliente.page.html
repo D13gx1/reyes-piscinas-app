@@ -1,0 +1,122 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/clientes"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Historial - {{ cliente?.nombre || 'Cliente' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Historial - {{ cliente?.nombre || 'Cliente' }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="container">
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span>Cargando historial...</span>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="!isLoading && error" class="error">
+      {{ error }}
+    </div>
+
+    <!-- Historial -->
+    <ng-container *ngIf="!isLoading && !error">
+      <div *ngIf="(historialOrdenado?.length || 0) > 0; else emptyState">
+        <ion-card class="historial-card" *ngFor="let item of historialOrdenado; let i = index">
+          <ion-card-header class="header-container">
+            <div class="historial-header">
+              <div class="historial-info">
+                <ion-card-title>
+                  <div class="fecha-row">
+                    <div class="fecha-pill">{{ item.fecha }}</div>
+                    <ion-chip color="medium" *ngIf="item.hora" class="chip-hora">
+                      <ion-icon name="time-outline"></ion-icon>
+                      <ion-label>{{ item.hora }}</ion-label>
+                    </ion-chip>
+                  </div>
+                </ion-card-title>
+              </div>
+            </div>
+          </ion-card-header>
+
+          <ion-card-content class="contenido-container">
+            <div class="detalles-historial">
+              <div class="detalle-item">
+                <ion-icon name="construct-outline"></ion-icon>
+                <strong>Servicio:</strong>
+                <span>{{ item.servicio || 'Mantenimiento' }}</span>
+              </div>
+
+              <div class="quimicos-section">
+                <h3>Químicos utilizados</h3>
+                <div class="quimicos-grid">
+                  <!-- Cloro (izquierda) -->
+                  <div class="quimico-card cloro-card">
+                    <div class="q-header">
+                      <ion-icon name="beaker-outline"></ion-icon>
+                      <span>Cloro</span>
+                    </div>
+                    <div class="q-row">
+                      <span class="label">Medido:</span>
+                      <span class="value">{{ item.cloro }}</span>
+                    </div>
+                    <div class="q-row" *ngIf="item.estadoCloro">
+                      <span class="label">Estado:</span>
+                      <ion-badge [color]="item.estadoCloro === 'Alto' ? 'warning' : item.estadoCloro === 'Bajo' ? 'danger' : 'success'">
+                        {{ item.estadoCloro }}
+                      </ion-badge>
+                    </div>
+                    <div class="q-row" *ngIf="item.cantidadCloro">
+                      <span class="label">Ajuste:</span>
+                      <span class="value">{{ item.cantidadCloro > 0 ? '+' : '' }}{{ item.cantidadCloro }} g</span>
+                    </div>
+                  </div>
+
+                  <!-- pH (derecha) -->
+                  <div class="quimico-card ph-card">
+                    <div class="q-header">
+                      <ion-icon name="flask-outline"></ion-icon>
+                      <span>pH</span>
+                    </div>
+                    <div class="q-row">
+                      <span class="label">Medido:</span>
+                      <span class="value">{{ item.ph }}</span>
+                    </div>
+                    <div class="q-row" *ngIf="item.estadoPh">
+                      <span class="label">Estado:</span>
+                      <ion-badge [color]="item.estadoPh === 'Alto' ? 'warning' : item.estadoPh === 'Bajo' ? 'danger' : 'success'">
+                        {{ item.estadoPh }}
+                      </ion-badge>
+                    </div>
+                    <div class="q-row" *ngIf="item.cantidadPh">
+                      <span class="label">Ajuste:</span>
+                      <span class="value">
+                        {{ item.cantidadPh > 0 ? 'Subir' : 'Bajar' }}
+                        <span class="cantidad">{{ abs(item.cantidadPh) }} g</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <ion-icon name="time-outline" size="large"></ion-icon>
+          <h4>Sin mantenciones registradas</h4>
+          <p>Cuando registres mantenciones para este cliente, aparecerán aquí.</p>
+        </div>
+      </ng-template>
+    </ng-container>
+  </div>
+</ion-content>
