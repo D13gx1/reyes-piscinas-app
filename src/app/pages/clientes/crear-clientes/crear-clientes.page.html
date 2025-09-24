@@ -1,4 +1,4 @@
-<ion-header>
+<ion-header [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button></ion-back-button>
@@ -7,19 +7,29 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <div *ngIf="isLoading" class="loading-container">
-    <ion-spinner></ion-spinner>
-    <p>Cargando...</p>
-  </div>
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">{{ pageTitle }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-  <form #clienteForm="ngForm" (ngSubmit)="crearCliente(clienteForm)" *ngIf="!isLoading">
-    <ion-list>
+  <div class="container">
+    <!-- Spinner de carga -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando...</p>
+    </div>
+
+    <form #clienteForm="ngForm" (ngSubmit)="crearCliente(clienteForm)" *ngIf="!isLoading">
       <!-- DATOS BÁSICOS DEL CLIENTE -->
-      <ion-item-group>
-        <ion-item-divider>
-          <ion-label>Información Personal</ion-label>
-        </ion-item-divider>
+      <ion-card class="form-section">
+        <ion-card-header>
+          <ion-card-title>Información Personal
+            <ion-icon name="person-outline"></ion-icon>
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
 
         <!-- Nombre -->
         <ion-item>
@@ -45,7 +55,25 @@
             required
             #direccion="ngModel"
             (ionInput)="onInputChange('direccion', $event.target.value)"
+            [placeholder]="isDevelopment ? 'Ingresa dirección o usa GPS (modo desarrollo)' : 'Ingresa la dirección o usa GPS'"
           ></ion-input>
+          <ion-button
+            fill="clear"
+            slot="end"
+            (click)="obtenerUbicacionActual()"
+            [disabled]="isLoadingUbicacion"
+          >
+            <ion-icon
+              *ngIf="!isLoadingUbicacion"
+              name="location-outline"
+              color="secondary"
+            ></ion-icon>
+            <ion-spinner
+              *ngIf="isLoadingUbicacion"
+              name="crescent"
+              color="primary"
+            ></ion-spinner>
+          </ion-button>
         </ion-item>
         <ion-text color="danger" *ngIf="direccion.invalid && (direccion.dirty || direccion.touched)">
           <p>La dirección es obligatoria</p>
@@ -82,13 +110,17 @@
         <ion-text color="danger" *ngIf="email.touched && !emailValido() && nuevoCliente.email">
           <p>El email no es válido</p>
         </ion-text>
-      </ion-item-group>
+        </ion-card-content>
+      </ion-card>
 
       <!-- MEDIDAS DE LA PISCINA -->
-      <ion-item-group>
-        <ion-item-divider>
-          <ion-label>Medidas de la Piscina</ion-label>
-        </ion-item-divider>
+      <ion-card class="form-section">
+        <ion-card-header>
+          <ion-card-title>Medidas de la Piscina
+            <ion-icon name="resize-outline"></ion-icon>
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
 
         <!-- Largo -->
         <ion-item>
@@ -143,13 +175,18 @@
         <ion-text color="danger" *ngIf="profundidad.touched && nuevoCliente.medidas.profundidad <= 0">
           <p>La profundidad debe ser mayor a 0</p>
         </ion-text>
-      </ion-item-group>
+        </ion-card-content>
+      </ion-card>
 
       <!-- PRECIOS DEL SERVICIO -->
-      <ion-item-group>
-        <ion-item-divider>
-          <ion-label>Precios del Servicio</ion-label>
-        </ion-item-divider>
+      <ion-card class="form-section">
+        <ion-card-header>
+          
+          <ion-card-title>Precios del Servicio
+            <ion-icon name="cash-outline"></ion-icon>
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
 
         <!-- Monto -->
         <ion-item>
@@ -169,13 +206,17 @@
         <ion-text color="danger" *ngIf="monto.touched && nuevoCliente.precio <= 0">
           <p>El monto debe ser mayor a 0</p>
         </ion-text>
-      </ion-item-group>
+        </ion-card-content>
+      </ion-card>
 
       <!-- PROGRAMACIÓN DE SERVICIOS -->
-      <ion-item-group>
-        <ion-item-divider>
-          <ion-label>Programación de Servicios</ion-label>
-        </ion-item-divider>
+      <ion-card class="form-section">
+        <ion-card-header>
+          <ion-card-title>Programación de Servicios
+            <ion-icon name="calendar-outline"></ion-icon>
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
 
         <!-- Frecuencia del servicio -->
         <ion-item>
@@ -260,13 +301,16 @@
             (ionInput)="onInputChange('notas', $event.target.value)"
           ></ion-textarea>
         </ion-item>
-      </ion-item-group>
+        </ion-card-content>
+      </ion-card>
 
       <!-- ESTADO DEL CLIENTE -->
-      <ion-item-group>
-        <ion-item-divider>
-          <ion-label>Estado</ion-label>
-        </ion-item-divider>
+      <ion-card class="form-section">
+        <ion-card-header>
+          <ion-icon name="toggle-outline"></ion-icon>
+          <ion-card-title>Estado</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
 
         <ion-item>
           <ion-label>Cliente Activo</ion-label>
@@ -276,8 +320,9 @@
             (ionChange)="onInputChange('activo', $event.target.checked)"
           ></ion-toggle>
         </ion-item>
-      </ion-item-group>
-    </ion-list>
+        </ion-card-content>
+      </ion-card>
+    </form>
 
     <!-- Información de depuración (remover en producción) -->
     <div class="debug-info" *ngIf="isEditing">
@@ -291,9 +336,9 @@
     <div class="button-container">
       <ion-button
         expand="block"
-        type="submit"
         color="primary"
         [disabled]="!validarFormulario() || isLoading"
+        (click)="crearClienteSinParametros()"
       >
         <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
         {{ isLoading ? 'Procesando...' : (isEditing ? 'Actualizar Cliente' : 'Guardar Cliente') }}
@@ -303,7 +348,6 @@
         expand="block"
         fill="outline"
         color="medium"
-        type="button"
         (click)="cancelar()"
         [disabled]="isLoading"
       >
@@ -315,7 +359,6 @@
         expand="block"
         fill="outline"
         color="danger"
-        type="button"
         (click)="eliminarCliente()"
         [disabled]="isLoading"
         *ngIf="isEditing"
@@ -324,5 +367,5 @@
         Eliminar Cliente
       </ion-button>
     </div>
-  </form>
+  </div>
 </ion-content>

@@ -49,8 +49,7 @@
           <ion-card-content class="contenido-container">
             <div class="detalles-historial">
               <div class="detalle-item">
-                <ion-icon name="construct-outline"></ion-icon>
-                <strong>Servicio:</strong>
+                <strong>Servicio: </strong>
                 <span>{{ item.servicio || 'Mantenimiento' }}</span>
               </div>
 
@@ -95,12 +94,13 @@
                         {{ item.estadoPh }}
                       </ion-badge>
                     </div>
-                    <div class="q-row" *ngIf="item.cantidadPh">
-                      <span class="label">Ajuste:</span>
-                      <span class="value">
-                        {{ item.cantidadPh > 0 ? 'Subir' : 'Bajar' }}
-                        <span class="cantidad">{{ abs(item.cantidadPh) }} g</span>
-                      </span>
+                    <div class="q-row" *ngIf="item.cantidadBajaPh && item.cantidadBajaPh > 0">
+                      <span class="label">Sube pH:</span>
+                      <span class="value">{{ item.cantidadBajaPh }} g</span>
+                    </div>
+                    <div class="q-row" *ngIf="item.cantidadSubePh && item.cantidadSubePh > 0">
+                      <span class="label">Baja pH:</span>
+                      <span class="value">{{ item.cantidadSubePh }} g</span>
                     </div>
                   </div>
                 </div>

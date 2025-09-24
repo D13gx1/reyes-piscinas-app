@@ -7,12 +7,13 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { FirebaseTestService } from '../../../services/firebase-test.service';
 import { addIcons } from 'ionicons';
-import { trashOutline } from 'ionicons/icons';
+import { trashOutline, locationOutline } from 'ionicons/icons';
 import { Auth } from '@angular/fire/auth';
 
-// Registrar el icono
+// Registrar los iconos
 addIcons({
   'trash-outline': trashOutline,
+  'location-outline': locationOutline,
 });
 
 // Interfaz para los días de la semana
@@ -71,6 +72,8 @@ export class CrearClientesPage implements OnInit {
   clienteId: string | null = null;
   pageTitle = 'Crear Cliente';
   isLoading = false;
+  isLoadingUbicacion = false;
+  isDevelopment = false; // Bandera para modo desarrollo
 
   constructor(
     private clienteService: ClienteService,
@@ -82,6 +85,9 @@ export class CrearClientesPage implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Detectar si estamos en modo desarrollo
+    this.isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
     // Verificación simple de conexión (sin crear documentos)
     this.firebaseTestService.simpleConnectionTest().subscribe({
       next: (result) => {
@@ -91,7 +97,7 @@ export class CrearClientesPage implements OnInit {
         } else {
           console.error('❌ Error de conexión:', result.message);
           this.showToast(`Error de conexión: ${result.message} ❌`, 'danger');
-          
+
           // Mostrar detalles del error en consola
           if (result.details) {
             console.error('🔍 Detalles del error:', result.details);
@@ -171,8 +177,8 @@ export class CrearClientesPage implements OnInit {
     }
   }
 
-  async crearCliente(form: NgForm) {
-    console.log('Formulario válido:', form.valid);
+  async crearCliente(form?: NgForm) {
+    console.log('Formulario válido:', form?.valid || 'Sin formulario');
     console.log('Datos del cliente:', this.nuevoCliente);
 
     // Validaciones paso a paso
@@ -244,6 +250,10 @@ export class CrearClientesPage implements OnInit {
         },
       });
     }
+  }
+
+  async crearClienteSinParametros() {
+    await this.crearCliente();
   }
 
   cancelar() {
@@ -429,6 +439,20 @@ export class CrearClientesPage implements OnInit {
            this.precioValido();
   }
 
+  // Método para forzar la detección de cambios en el formulario
+  private triggerFormValidation() {
+    // Forzar validación del formulario después de autocompletar
+    setTimeout(() => {
+      if (this.nuevoCliente.direccion.trim() !== '') {
+        // Trigger validation for address field
+        const direccionControl = document.querySelector('ion-input[name="direccion"]') as any;
+        if (direccionControl) {
+          direccionControl.value = this.nuevoCliente.direccion;
+        }
+      }
+    }, 100);
+  }
+
   // Método para eliminar cliente
   async eliminarCliente() {
     if (!this.isEditing || !this.clienteId) {
@@ -460,10 +484,10 @@ export class CrearClientesPage implements OnInit {
 
   private confirmarEliminacion() {
     if (!this.clienteId) return;
-    
+
     this.isLoading = true;
     console.log('Eliminando cliente con ID:', this.clienteId);
-    
+
     this.clienteService.deleteCliente(this.clienteId).subscribe({
       next: () => {
         console.log('Cliente eliminado exitosamente');
@@ -477,5 +501,150 @@ export class CrearClientesPage implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  // Método para obtener la ubicación actual
+  async obtenerUbicacionActual() {
+    // Verificar si estamos en un navegador que soporta geolocalización
+    if (!navigator.geolocation) {
+      this.showToast('Geolocalización no soportada en este navegador ❌', 'danger');
+      return;
+    }
+
+    // Verificar si estamos en HTTPS (requerido para geolocalización en la mayoría de navegadores)
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      this.showToast('Se requiere HTTPS para acceder a la ubicación GPS ❌', 'danger');
+      return;
+    }
+
+    this.isLoadingUbicacion = true;
+
+    try {
+      let latitude: number, longitude: number, accuracy: number;
+
+      if (this.isDevelopment) {
+        // Coordenadas simuladas para Santiago, Chile (modo desarrollo)
+        latitude = -33.4489;
+        longitude = -70.6693;
+        accuracy = 10; // Precisión perfecta para simulación
+
+        console.log('Modo desarrollo: Usando coordenadas simuladas de Santiago, Chile');
+        this.showToast('Modo desarrollo: Ubicación simulada obtenida', 'primary');
+      } else {
+        // Mostrar mensaje informativo
+        this.showToast('Obteniendo ubicación GPS...', 'primary');
+
+        const position = await this.getCurrentPosition();
+        ({ latitude, longitude, accuracy } = position.coords);
+
+        console.log('Ubicación obtenida:', { latitude, longitude, accuracy });
+
+        // Verificar precisión (si es muy baja, advertir al usuario)
+        if (accuracy > 100) {
+          this.showToast('Ubicación obtenida (precisión baja)', 'warning');
+        }
+      }
+
+      // Obtener dirección usando geocodificación inversa
+      await this.geocodificarCoordenadas(latitude, longitude);
+
+    } catch (error: any) {
+      console.error('Error obteniendo ubicación:', error);
+
+      let mensaje = 'Error al obtener ubicación ❌';
+      let sugerencia = '';
+
+      if (this.isDevelopment) {
+        mensaje = 'Modo desarrollo: GPS no disponible ❌';
+        sugerencia = 'Usando coordenadas simuladas de Santiago, Chile';
+        // Intentar usar coordenadas simuladas como fallback
+        console.log('Modo desarrollo: Intentando usar coordenadas simuladas');
+        await this.geocodificarCoordenadas(-33.4489, -70.6693);
+        return;
+      } else {
+        if (error.code === 1) {
+          mensaje = 'Permiso de ubicación denegado ❌';
+          sugerencia = 'Activa GPS en configuración del navegador/dispositivo';
+        } else if (error.code === 2) {
+          mensaje = 'Posición no disponible ❌';
+          sugerencia = 'Verifica que GPS esté activado y tengas señal';
+        } else if (error.code === 3) {
+          mensaje = 'Tiempo agotado ❌';
+          sugerencia = 'Verifica conexión a internet y señal GPS';
+        }
+      }
+
+      this.showToast(`${mensaje}\n${sugerencia}`, 'danger');
+    } finally {
+      this.isLoadingUbicacion = false;
+    }
+  }
+
+  // Promesa para obtener posición actual
+  private getCurrentPosition(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      // Configuración más permisiva para mejor compatibilidad
+      const options: PositionOptions = {
+        enableHighAccuracy: false, // Cambiar a false para mejor compatibilidad
+        timeout: 15000, // Aumentar timeout
+        maximumAge: 600000 // 10 minutos de cache
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('GPS exitoso:', {
+            accuracy: position.coords.accuracy,
+            altitude: position.coords.altitude,
+            timestamp: position.timestamp
+          });
+          resolve(position);
+        },
+        (error) => {
+          console.error('GPS error:', error);
+          reject(error);
+        },
+        options
+      );
+    });
+  }
+
+  // Geocodificación inversa usando Nominatim (OpenStreetMap)
+  private async geocodificarCoordenadas(lat: number, lon: number) {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=es`
+      );
+
+      if (!response.ok) {
+        throw new Error('Error en la geocodificación');
+      }
+
+      const data = await response.json();
+
+      if (data && data.display_name) {
+        // Limpiar y formatear la dirección
+        let direccion = data.display_name;
+
+        // Remover información de país si es Chile
+        if (direccion.includes(', Chile')) {
+          direccion = direccion.replace(', Chile', '');
+        }
+
+        // Remover códigos postales y otros detalles innecesarios
+        direccion = direccion.split(',')[0] + ', ' + (data.address?.city || data.address?.town || data.address?.village || '');
+
+        this.nuevoCliente.direccion = direccion.trim();
+        this.triggerFormValidation();
+        this.showToast('Dirección obtenida exitosamente ✅', 'success');
+
+        console.log('Dirección geocodificada:', direccion);
+      } else {
+        throw new Error('No se pudo obtener la dirección');
+      }
+
+    } catch (error) {
+      console.error('Error en geocodificación:', error);
+      this.showToast('Error al obtener dirección. Intenta nuevamente ❌', 'danger');
+    }
   }
 }

@@ -1,472 +1,268 @@
-// Variables de tema claro minimalista
-$primary-color: #6366f1;
-$secondary-color: #64748b;
-$success-color: #10b981;
-$warning-color: #f59e0b;
-$danger-color: #ef4444;
-$white: #ffffff;
-$gray-50: #f8fafc;
-$gray-100: #f1f5f9;
-$gray-200: #e2e8f0;
-$gray-300: #cbd5e1;
-$gray-400: #94a3b8;
-$gray-500: #64748b;
-$gray-600: #475569;
-$gray-700: #334155;
-$gray-800: #1e293b;
-$gray-900: #0f172a;
-
-// Espaciado y dimensiones
-$border-radius: 8px;
-$border-radius-lg: 12px;
-$spacing-xs: 4px;
-$spacing-sm: 8px;
-$spacing-md: 16px;
-$spacing-lg: 24px;
-$spacing-xl: 32px;
-
-// Tipografía
-$font-size-xs: 12px;
-$font-size-sm: 14px;
-$font-size-base: 16px;
-$font-size-lg: 18px;
-$font-size-xl: 20px;
-
 // Contenedor principal
-ion-content {
-  --background: #{$gray-50};
-  
-  .ion-padding {
-    padding: $spacing-lg;
-    max-width: 640px;
-    margin: 0 auto;
-  }
+.container {
+  padding: 16px;
 }
 
-// Header limpio
-ion-header {
-  ion-toolbar {
-    --background: #{$white};
-    --color: #{$gray-900};
-    --border-color: #{$gray-200};
-    --border-width: 0 0 1px 0;
-    
-    ion-title {
-      font-weight: 600;
-      font-size: $font-size-lg;
-      color: $gray-900;
-    }
-    
-    ion-back-button {
-      --color: #{$primary-color};
-      --icon-font-size: 20px;
-    }
-  }
-}
-
-// Estado de carga
+// Loading container
 .loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-xl 0;
-  
+  text-align: center;
+  padding: 40px 20px;
+
   ion-spinner {
-    --color: #{$primary-color};
-    width: 32px;
-    height: 32px;
-    margin-bottom: $spacing-md;
+    margin-bottom: 16px;
   }
-  
+
   p {
-    color: $gray-600;
-    font-size: $font-size-base;
+    color: var(--ion-color-medium);
     margin: 0;
   }
 }
 
-// Formulario
-form {
-  ion-list {
-    background: transparent;
-    padding: 0;
+// Form sections
+.form-section {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  ion-card-header {
+    background: var(--ion-color-light);
+    padding: 16px;
+
+    ion-icon {
+      font-size: 1.2em;
+      color: var(--ion-color-secondary);
+      margin-right: 8px;
+    }
+
+    ion-card-title {
+      font-size: 1.1em;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+      margin: 0;
+    }
+  }
+
+  ion-card-content {
+    background: var(--ion-color-light);
+    padding: 16px;
   }
 }
 
-// Secciones del formulario
-ion-item-group {
-  background: $white;
-  border-radius: $border-radius-lg;
-  margin-bottom: $spacing-lg;
-  border: 1px solid $gray-200;
-  overflow: hidden;
-}
-
-// Encabezados de sección
-ion-item-divider {
-  --background: #{$gray-100};
-  --color: #{$gray-700};
-  font-weight: 600;
-  font-size: $font-size-sm;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: $spacing-sm $spacing-md;
-  
-  ion-label {
-    font-weight: 600;
-    color: $gray-700;
-  }
-}
-
-// Items del formulario
+// Form items
 ion-item {
-  --background: #{$white};
-  --border-color: #{$gray-200};
+  --background: var(--ion-color-light);
+  --border-color: var(--ion-color-light-shade);
   --border-width: 0 0 1px 0;
-  --inner-padding-end: #{$spacing-md};
-  --inner-padding-start: #{$spacing-md};
+  --inner-padding-end: 16px;
+  --inner-padding-start: 16px;
   --padding-start: 0;
   --padding-end: 0;
   --min-height: 56px;
-  
+
   &:last-child {
     --border-width: 0;
   }
-  
-  // Labels
+
   ion-label {
     font-weight: 500;
-    font-size: $font-size-base;
-    color: $gray-700;
-    margin-bottom: $spacing-xs;
-    
+    font-size: 0.9em;
+    color: var(--ion-color-dark);
+    margin-bottom: 4px;
+
     &[position="floating"] {
-      font-size: $font-size-sm;
-      color: $gray-500;
+      font-size: 0.8em;
+      color: var(--ion-color-medium);
       font-weight: 500;
     }
   }
-  
-  // Inputs
-  ion-input {
-    --background: transparent;
-    --color: #{$gray-900};
-    --placeholder-color: #{$gray-400};
-    --padding-start: 0;
-    --padding-end: 0;
-    font-size: $font-size-base;
-    
-    &.has-focus {
-      --color: #{$gray-900};
-    }
-  }
-  
-  // Textarea
-  ion-textarea {
-    --background: transparent;
-    --color: #{$gray-900};
-    --placeholder-color: #{$gray-400};
-    --padding-start: 0;
-    --padding-end: 0;
-    font-size: $font-size-base;
-    min-height: 100px;
-    resize: vertical;
-  }
-  
-  // Select
-  ion-select {
-    --background: transparent;
-    --color: #{$gray-900};
-    --placeholder-color: #{$gray-400};
-    --padding-start: 0;
-    --padding-end: 0;
-    font-size: $font-size-base;
-    
-    &::part(icon) {
-      color: $gray-400;
-    }
-  }
-  
-  // DateTime
+
+  ion-input,
+  ion-textarea,
+  ion-select,
   ion-datetime {
     --background: transparent;
-    --color: #{$gray-900};
-    font-size: $font-size-base;
+    --color: var(--ion-color-dark);
+    --placeholder-color: var(--ion-color-medium);
+    --padding-start: 0;
+    --padding-end: 0;
+    font-size: 0.9em;
   }
-  
-  // Toggle
+
   ion-toggle {
-    --background: #{$gray-300};
-    --background-checked: #{$primary-color};
-    --handle-background: #{$white};
-    --handle-background-checked: #{$white};
-    --handle-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    
-    &.toggle-checked {
-      --background-checked: #{$primary-color};
-    }
+    --background: var(--ion-color-medium);
+    --background-checked: var(--ion-color-secondary);
+    --handle-background: var(--ion-color-light);
+    --handle-background-checked: var(--ion-color-light);
   }
-  
-  // Checkbox
+
   ion-checkbox {
     --background: transparent;
-    --background-checked: #{$primary-color};
-    --border-color: #{$gray-300};
-    --border-color-checked: #{$primary-color};
-    --checkmark-color: #{$white};
+    --background-checked: var(--ion-color-secondary);
+    --border-color: var(--ion-color-medium);
+    --border-color-checked: var(--ion-color-secondary);
+    --checkmark-color: var(--ion-color-light);
     --size: 20px;
     --border-radius: 4px;
     --border-width: 2px;
-    margin-right: $spacing-sm;
-    
-    &.checkbox-checked {
-      --background-checked: #{$primary-color};
+    margin-right: 8px;
+  }
+
+  // Botón de ubicación
+  ion-button[slot="end"] {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --color: var(--ion-color-secondary);
+
+    ion-icon {
+      font-size: 1.2em;
+    }
+
+    &:hover:not(:disabled) {
+      --background-hover: rgba(var(--ion-color-secondary-rgb), 0.1);
     }
   }
 }
 
-// Estados de focus
-ion-item.item-has-focus {
-  --background: #{$gray-50};
-  
-  ion-label[position="floating"] {
-    color: $primary-color;
-  }
-}
-
-// Mensajes de error
+// Error messages
 ion-text[color="danger"] {
   p {
-    font-size: $font-size-sm;
-    color: $danger-color;
-    margin: $spacing-xs $spacing-md $spacing-sm;
+    font-size: 0.8em;
+    color: var(--ion-color-danger);
+    margin: 4px 16px 8px;
     font-weight: 500;
   }
 }
 
-// Contenedor de días
+// Days container
 .dias-container {
-  background: $gray-50;
-  border-radius: $border-radius;
-  padding: $spacing-sm;
-  margin: $spacing-sm;
-  
+  background: var(--ion-color-light-shade);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 8px;
+
   ion-item {
     --background: transparent;
     --border-color: transparent;
     --min-height: 48px;
-    
+
     ion-label {
-      margin-left: $spacing-sm;
+      margin-left: 8px;
       font-weight: 500;
-      color: $gray-700;
+      color: var(--ion-color-dark);
     }
   }
 }
 
-// Información de debug
+// Debug info
 .debug-info {
-  background: $gray-100;
-  border: 1px solid $gray-200;
-  border-radius: $border-radius;
-  padding: $spacing-md;
-  margin: $spacing-lg 0;
-  
+  background: var(--ion-color-light);
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 24px 0;
+
   p {
-    margin: $spacing-xs 0;
-    font-size: $font-size-sm;
-    color: $gray-600;
-    
+    margin: 4px 0;
+    font-size: 0.8em;
+    color: var(--ion-color-medium);
+
     strong {
-      color: $gray-800;
+      color: var(--ion-color-dark);
       font-weight: 600;
     }
   }
 }
 
-// Botones
+// Button container
 .button-container {
-  margin-top: $spacing-xl;
+  margin-top: 32px;
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  
+  gap: 8px;
+
   ion-button {
     height: 48px;
     font-weight: 600;
-    font-size: $font-size-base;
-    border-radius: $border-radius;
+    font-size: 0.9em;
+    border-radius: 8px;
     margin: 0;
-    
-    // Botón principal
+
     &[color="primary"] {
-      --background: #{$primary-color};
-      --color: #{$white};
-      
-      &:hover:not(.button-disabled) {
-        --background: #{darken($primary-color, 8%)};
-      }
-      
-      &.button-disabled {
-        --background: #{$gray-300};
-        --color: #{$gray-500};
-      }
+      --background: var(--ion-color-secondary);
+      --color: var(--ion-color-light);
     }
-    
-    // Botón secundario
+
     &[fill="outline"][color="medium"] {
-      --border-color: #{$gray-300};
-      --color: #{$gray-700};
-      --background: #{$white};
+      --border-color: var(--ion-color-medium);
+      --color: var(--ion-color-dark);
+      --background: var(--ion-color-light);
       --border-width: 1px;
-      
-      &:hover:not(.button-disabled) {
-        --background: #{$gray-50};
-        --border-color: #{$gray-400};
-      }
     }
-    
-    // Botón de eliminar
+
     &[color="danger"] {
-      --color: #{$danger-color};
-      --background: #{$white};
-      --border-color: #{$danger-color};
+      --color: var(--ion-color-danger);
+      --background: var(--ion-color-light);
+      --border-color: var(--ion-color-danger);
       --border-width: 1px;
-      
-      &:hover:not(.button-disabled) {
-        --background: #{rgba($danger-color, 0.05)};
-      }
-      
+
       ion-icon {
-        margin-right: $spacing-xs;
+        margin-right: 4px;
       }
     }
-    
-    // Spinner
+
     ion-spinner {
-      --color: #{$white};
+      --color: var(--ion-color-light);
       width: 20px;
       height: 20px;
-      margin-right: $spacing-xs;
+      margin-right: 4px;
     }
   }
 }
 
 // Responsive
 @media (max-width: 768px) {
-  ion-content .ion-padding {
-    padding: $spacing-md;
+  .container {
+    padding: 12px;
   }
-  
-  ion-item-group {
-    margin-bottom: $spacing-md;
+
+  .form-section {
+    margin-bottom: 12px;
+
+    ion-card-header,
+    ion-card-content {
+      padding: 12px;
+    }
   }
-  
+
   ion-item {
     --min-height: 52px;
   }
-  
+
   .button-container {
-    margin-top: $spacing-lg;
+    margin-top: 24px;
   }
 }
 
-// Estados de validación
-ion-item {
-  &.item-has-error {
-    --border-color: #{$danger-color};
-    
-    ion-label {
-      color: $danger-color;
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .form-section {
+    ion-card-header,
+    ion-card-content {
+      background: var(--ion-color-light);
     }
   }
-  
-  &.item-has-success {
-    --border-color: #{$success-color};
-    
-    ion-label {
-      color: $success-color;
-    }
+
+  ion-item {
+    --background: var(--ion-color-light);
+    --border-color: var(--ion-color-light-shade);
   }
-}
 
-// Mejoras de accesibilidad
-ion-button:focus,
-ion-item:focus,
-ion-checkbox:focus,
-ion-toggle:focus,
-ion-select:focus,
-ion-input:focus,
-ion-textarea:focus {
-  outline: 2px solid $primary-color;
-  outline-offset: 2px;
-}
-
-// Placeholder personalizado
-ion-input::placeholder,
-ion-textarea::placeholder {
-  color: $gray-400;
-  opacity: 1;
-}
-
-// Transiciones suaves
-ion-item,
-ion-button,
-ion-toggle,
-ion-checkbox {
-  transition: all 0.2s ease;
-}
-
-// Hover states para desktop
-@media (hover: hover) {
-  ion-item:hover {
-    --background: #{$gray-50};
+  .dias-container {
+    background: var(--ion-color-light-shade);
   }
-  
-  ion-button:hover {
-    transform: translateY(-1px);
-  }
-}
 
-// Estados activos
-ion-button:active {
-  transform: scale(0.98);
-}
-
-// Mejoras visuales
-ion-item-group {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-// Separadores más sutiles
-ion-item {
-  --border-style: solid;
-  --border-color: #{rgba($gray-200, 0.6)};
-}
-
-// Espaciado interno mejorado
-ion-item ion-label {
-  margin-bottom: 2px;
-}
-
-// Campos de entrada más definidos
-ion-input.has-focus,
-ion-textarea.has-focus,
-ion-select.has-expanded {
-  --background: #{rgba($primary-color, 0.02)};
-}
-
-// Mejora visual de checkboxes en lista
-.dias-container ion-item {
-  border-radius: 6px;
-  margin-bottom: 2px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-  
-  &:hover {
-    --background: #{rgba($primary-color, 0.04)};
+  .debug-info {
+    background: var(--ion-color-light);
+    border-color: var(--ion-color-light-shade);
   }
 }

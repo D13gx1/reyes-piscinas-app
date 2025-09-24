@@ -21,9 +21,11 @@ export interface Mantencion {
   cloro: number;
   ph: number;
   cantidadCloro?: number;
-  cantidadPh?: number;
+  cantidadBajaPh?: number;
+  cantidadSubePh?: number;
   servicio: string;
   hora?: string;
+  tipoPh?: 'Sube pH' | 'Baja pH';
 }
 
 @Injectable({
@@ -82,7 +84,11 @@ export class EstadisticasService {
                 cloro: mantencion.cloro || 0,
                 ph: mantencion.ph || 0,
                 servicio: mantencion.servicio || 'Mantención',
-                hora: mantencion.hora
+                hora: mantencion.hora,
+                cantidadCloro: mantencion.cantidadCloro || 0,
+                cantidadBajaPh: mantencion.cantidadBajaPh || 0,
+                cantidadSubePh: mantencion.cantidadSubePh || 0,
+                tipoPh: mantencion.tipoPh
               });
             }
           });
@@ -116,7 +122,11 @@ export class EstadisticasService {
                 cloro: mantencion.cloro || 0,
                 ph: mantencion.ph || 0,
                 servicio: mantencion.servicio || 'Mantención',
-                hora: mantencion.hora
+                hora: mantencion.hora,
+                cantidadCloro: mantencion.cantidadCloro || 0,
+                cantidadBajaPh: mantencion.cantidadBajaPh || 0,
+                cantidadSubePh: mantencion.cantidadSubePh || 0,
+                tipoPh: mantencion.tipoPh
               });
             }
           });
@@ -159,15 +169,19 @@ export class EstadisticasService {
   getEstadisticasQuimicas(fechaInicio: string, fechaFin: string): Observable<any> {
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => {
-        const totalCloro = mantenciones.reduce((sum, mantencion) => sum + mantencion.cloro, 0);
-        const totalPh = mantenciones.reduce((sum, mantencion) => sum + mantencion.ph, 0);
+        const totalCloro = mantenciones.reduce((sum, m) => sum + (m.cantidadCloro || 0), 0);
+        const totalPh = mantenciones.reduce((sum, m) => sum + m.ph, 0);
+        const totalSubePh = mantenciones.reduce((sum, m) => sum + (m.cantidadSubePh || 0), 0);
+        const totalBajaPh = mantenciones.reduce((sum, m) => sum + (m.cantidadBajaPh || 0), 0);
         const cantidad = mantenciones.length;
 
         return {
-          promedioCloro: cantidad > 0 ? totalCloro / cantidad : 0,
+          promedioCloro: cantidad > 0 ? mantenciones.reduce((sum, m) => sum + m.cloro, 0) / cantidad : 0,
           promedioPh: cantidad > 0 ? totalPh / cantidad : 0,
           totalCloro,
           totalPh,
+          totalSubePh,
+          totalBajaPh,
           cantidadMantenciones: cantidad
         };
       })

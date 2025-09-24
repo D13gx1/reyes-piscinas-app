@@ -120,7 +120,7 @@
       <ion-card-header>
         <ion-card-title>
           <ion-icon name="flask-outline"></ion-icon>
-          Estadísticas Químicas
+          Promedio Quimicos
         </ion-card-title>
       </ion-card-header>
       <ion-card-content>
@@ -139,17 +139,30 @@
               </div>
             </ion-col>
           </ion-row>
+          <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="flask-outline"></ion-icon>
+          Quimicos usados
+        </ion-card-title>
+      </ion-card-header>
           <ion-row>
+            
             <ion-col size="6">
               <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.totalCloro.toFixed(1) }}</div>
-                <div class="stat-label">Total Cloro Usado</div>
+                <div class="stat-value">{{ estadisticasQuimicas.totalBajaPh.toFixed(1) }}</div>
+                <div class="stat-label">Total baja pH usado</div>
               </div>
             </ion-col>
             <ion-col size="6">
               <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.totalPh.toFixed(1) }}</div>
-                <div class="stat-label">Total pH Medido</div>
+                <div class="stat-value">{{ estadisticasQuimicas.totalSubePh.toFixed(1) }}</div>
+                <div class="stat-label">Total sube pH usado</div>
+              </div>
+            </ion-col>
+            <ion-col size="12">
+              <div class="stat-item">
+                <div class="stat-value">{{ estadisticasQuimicas.totalCloro.toFixed(1) }}</div>
+                <div class="stat-label">Total Cloro Usado</div>
               </div>
             </ion-col>
           </ion-row>
@@ -195,18 +208,34 @@
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="6">
-                  <div class="mantencion-detail">
-                    <ion-icon name="water-outline"></ion-icon>
-                    <span>Cloro: {{ mantencion.cloro }}</span>
-                    <span *ngIf="mantencion.cantidadCloro"> ({{ mantencion.cantidadCloro }}g)</span>
+                <ion-col size="12">
+                  <div class="chemical-levels">
+                    <span class="level-item">
+                      <ion-icon name="water-outline"></ion-icon>
+                      <strong>Cloro:</strong> <ion-chip [color]="getColorNivel(getNivelCloro(mantencion.cloro))" size="small">{{ getNivelCloro(mantencion.cloro) }}</ion-chip>
+                    </span>
+                    <span class="level-item">
+                      <ion-icon name="flask-outline"></ion-icon>
+                      <strong>pH:</strong> <ion-chip [color]="getColorNivel(getNivelPh(mantencion.ph))" size="small">{{ getNivelPh(mantencion.ph) }}</ion-chip>
+                    </span>
                   </div>
                 </ion-col>
-                <ion-col size="6">
-                  <div class="mantencion-detail">
-                    <ion-icon name="flask-outline"></ion-icon>
-                    <span>pH: {{ mantencion.ph }}</span>
-                    <span *ngIf="mantencion.cantidadPh"> ({{ mantencion.cantidadPh }}g)</span>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <div class="chemical-amounts">
+                    <span *ngIf="mantencion.cantidadCloro" class="amount-item">
+                      <ion-icon name="water-outline"></ion-icon>
+                      Cloro usado: {{ mantencion.cantidadCloro }}g
+                    </span>
+                    <span *ngIf="mantencion.cantidadSubePh" class="amount-item">
+                      <ion-icon name="flask-outline"></ion-icon>
+                      Sube pH usado: {{ mantencion.cantidadSubePh }}g
+                    </span>
+                    <span *ngIf="mantencion.cantidadBajaPh" class="amount-item">
+                      <ion-icon name="flask-outline"></ion-icon>
+                      Baja pH usado: {{ mantencion.cantidadBajaPh }}g
+                    </span>
                   </div>
                 </ion-col>
               </ion-row>

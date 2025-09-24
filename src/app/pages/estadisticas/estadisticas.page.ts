@@ -332,4 +332,32 @@ export class EstadisticasPage implements OnInit {
     });
     await toast.present();
   }
+
+  // Funciones para categorizar niveles químicos
+  getNivelCloro(cloro: number): string {
+    if (cloro < 1.0) return 'Bajo';
+    if (cloro < 1.5) return 'Ideal Bajo';
+    if (cloro < 2.0) return 'Ideal';
+    if (cloro < 2.5) return 'Ideal Alto';
+    return 'Alto';
+  }
+
+  getNivelPh(ph: number): string {
+    if (ph < 7.2) return 'Bajo';
+    if (ph < 7.4) return 'Ideal Bajo';
+    if (ph < 7.6) return 'Ideal';
+    if (ph < 7.8) return 'Ideal Alto';
+    return 'Alto';
+  }
+
+  getColorNivel(nivel: string): string {
+    switch (nivel) {
+      case 'Bajo': return 'danger';
+      case 'Ideal Bajo': return 'warning';
+      case 'Ideal': return 'success';
+      case 'Ideal Alto': return 'warning';
+      case 'Alto': return 'danger';
+      default: return 'medium';
+    }
+  }
 }
