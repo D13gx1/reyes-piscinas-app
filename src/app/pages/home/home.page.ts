@@ -488,6 +488,23 @@ export class HomePage implements OnInit {
   actualizarHistorialCliente(cliente: ClienteDelDia) {
     if (!cliente.mantenimiento) return;
 
+    // Determinar el tipo de ajuste de pH basado en el estado seleccionado
+    let cantidadSubePh = 0;
+    let cantidadBajaPh = 0;
+    let tipoPh: 'Sube pH' | 'Baja pH' | undefined;
+
+    const estadoPh = cliente.mantenimiento.estadoPh;
+    const cantidadPh = cliente.mantenimiento.cantidadPh;
+
+    if (estadoPh === 'bajo' || estadoPh === 'ideal_bajo') {
+      cantidadSubePh = cantidadPh;
+      tipoPh = 'Sube pH';
+    } else if (estadoPh === 'alto' || estadoPh === 'ideal_alto') {
+      cantidadBajaPh = cantidadPh;
+      tipoPh = 'Baja pH';
+    }
+    // Si es 'ideal', no se asigna cantidad ni tipo
+
     this.clienteService.getClienteById(cliente.id).subscribe({
       next: (clienteCompleto) => {
         const nuevoRegistro = {
@@ -495,6 +512,10 @@ export class HomePage implements OnInit {
           servicio: `Mantención ${this.getServicioTipo(clienteCompleto.programacion?.frecuencia || 'semanal')}`,
           cloro: cliente.mantenimiento!.cantidadCloro,
           ph: cliente.mantenimiento!.cantidadPh,
+          cantidadCloro: cliente.mantenimiento!.cantidadCloro,
+          cantidadSubePh: cantidadSubePh,
+          cantidadBajaPh: cantidadBajaPh,
+          tipoPh: tipoPh,
           estadoCloro: cliente.mantenimiento!.estadoCloro,
           estadoPh: cliente.mantenimiento!.estadoPh,
           hora: cliente.mantenimiento!.hora
@@ -598,6 +619,28 @@ export class HomePage implements OnInit {
     if (!hora || hora === 'Sin horario específico') {
       return 'Sin horario específico';
     }
-    return hora;
+
+    // Extraer la hora del string (manejar diferentes formatos)
+    let horaFormateada = hora;
+
+    // Si es un string ISO completo, extraer solo la hora
+    if (hora.includes('T')) {
+      try {
+        const fecha = new Date(hora);
+        horaFormateada = fecha.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
+      } catch (e) {
+        // Si falla el parseo, usar el string original
+        horaFormateada = hora;
+      }
+    }
+
+    // Obtener la fecha actual en formato DD/MM/AAAA
+    const today = new Date();
+    const dia = today.getDate().toString().padStart(2, '0');
+    const mes = (today.getMonth() + 1).toString().padStart(2, '0');
+    const anio = today.getFullYear();
+    const fechaFormateada = `${dia}/${mes}/${anio}`;
+
+    return `${fechaFormateada} a las ${horaFormateada}`;
   }
 }
