@@ -3,6 +3,11 @@
   padding: 16px;
 }
 
+// Ajuste para tabs flotantes
+ion-content {
+  --padding-bottom: 100px;
+}
+
 // Loading container
 .loading-container {
   text-align: center;

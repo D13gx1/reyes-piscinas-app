@@ -31,8 +31,9 @@
         <span>O</span>
       </div>
 
-      <!-- Botón de Google -->
+      <!-- Botón de Google para Móvil -->
       <ion-button
+        *ngIf="isMobile"
         expand="block"
         fill="outline"
         (click)="loginWithGoogle()"
@@ -40,7 +41,20 @@
       >
         <img *ngIf="!isLoading" src="assets/google-icon.svg" alt="Google" class="google-icon" />
         <ion-spinner *ngIf="isLoading" name="crescent" color="primary"></ion-spinner>
-        <span>{{ isLoading ? 'Conectando...' : 'Continuar con Google' }}</span>
+        <span>{{ isLoading ? 'Conectando...' : 'Continuar con Google ' }}</span>
+      </ion-button>
+
+      <!-- Botón de Google para Web -->
+      <ion-button
+        *ngIf="!isMobile"
+        expand="block"
+        fill="outline"
+        (click)="loginWithGoogle()"
+        [disabled]="isLoading"
+      >
+        <img *ngIf="!isLoading" src="assets/google-icon.svg" alt="Google" class="google-icon" />
+        <ion-spinner *ngIf="isLoading" name="crescent" color="primary"></ion-spinner>
+        <span>{{ isLoading ? 'Conectando...' : 'Continuar con Google (Web)' }}</span>
       </ion-button>
 
       <!-- Mensaje de error -->

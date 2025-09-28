@@ -1,51 +1,86 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>Inicio</ion-title>
-    <ion-button fill="clear" (click)="refrescarClientes()" [disabled]="isLoading">
-      <ion-icon name="refresh-outline"></ion-icon>
-    </ion-button>
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar class="custom-toolbar">
+    <ion-title class="custom-title">Inicio</ion-title>
+    <ion-buttons slot="end">
+      <ion-button 
+        fill="clear" 
+        (click)="refrescarClientes()" 
+        [disabled]="isLoading"
+        class="refresh-button">
+        <ion-icon 
+          name="refresh-outline" 
+          [class.spinning]="isLoading">
+        </ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Inicio</ion-title>
+<ion-content [fullscreen]="true" class="modern-content">
+  <ion-header collapse="condense" class="condensed-header">
+    <ion-toolbar class="condensed-toolbar">
+      <ion-title size="large" class="large-title">Inicio</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <div class="container">
     <div class="fecha-section">
-  <h2>{{ fechaHoy }}</h2>
-  </div>
-  
-  <!-- Calendario horizontal -->
-  <div class="calendario-horizontal">
-    <div class="calendario-header">
-      <h3>{{ mesAnioActual }}</h3>
-      <div class="calendario-nav">
-        <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
-          <ion-icon name="chevron-back-outline"></ion-icon>
-        </ion-button>
-        <ion-button fill="clear" size="small" (click)="cambiarMes(1)">
-          <ion-icon name="chevron-forward-outline"></ion-icon>
-        </ion-button>
+      <div class="fecha-display">
+        <div class="day-section">
+          <div class="day-number">{{ dayNumber }}</div>
+          <div class="day-short">{{ dayShort }}</div>
+        </div>
+        <div class="maintenance-info">
+          tienes {{ maintenanceCount }} {{ maintenanceWord }} {{ isToday ? 'hoy' : 'este dia' }}
+        </div>
       </div>
     </div>
-    
-    <div class="calendario-scroll" #calendarioScroll>
-      <div class="calendario-dias">
-        <div 
-          *ngFor="let dia of diasDelMes" 
-          class="calendario-dia"
-          [class.hoy]="dia.esHoy"
-          [class.activo]="dia.seleccionado"
-          [class.tiene-eventos]="dia.tieneEventos"
-          (click)="seleccionarDia(dia)">
-          
-          <div class="dia-semana">{{ dia.diaSemana }}</div>
-          <div class="dia-numero">{{ dia.numero }}</div>
-          <div class="dia-indicador"></div>
+  
+  <!-- Calendario completo del mes -->
+  <div class="calendario-completo">
+    <div class="calendario-header">
+      <div class="mes-selector-header">
+        <div
+        
+          class="mes-button-custom"
+          (click)="mostrarSelectorMes()">
+          <ion-icon name="calendar-outline"></ion-icon> {{ meses[mesSeleccionado].nombre || 'Mes' }}
+        </div>
+        <div class="nav-buttons">
+          <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" size="small" (click)="cambiarMes(1)">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Días de la semana -->
+    <div class="dias-semana">
+      <div class="dia-semana-header">Dom</div>
+      <div class="dia-semana-header">Lun</div>
+      <div class="dia-semana-header">Mar</div>
+      <div class="dia-semana-header">Mié</div>
+      <div class="dia-semana-header">Jue</div>
+      <div class="dia-semana-header">Vie</div>
+      <div class="dia-semana-header">Sáb</div>
+    </div>
+
+    <!-- Grid del calendario -->
+    <div class="calendario-grid">
+      <div
+        *ngFor="let dia of diasDelMes"
+        class="calendario-dia"
+        [class.hoy]="dia.esHoy"
+        [class.activo]="dia.seleccionado"
+        [class.vacio]="dia.numero === 0"
+        (click)="dia.numero !== 0 && seleccionarDia(dia)">
+
+        <div class="dia-numero" *ngIf="dia.numero !== 0">{{ dia.numero }}</div>
+        <div class="dia-indicador" *ngIf="dia.numero !== 0 && dia.cantidadPiscinas > 0">
+          <div class="piscina-dot" *ngFor="let dot of [].constructor(dia.cantidadPiscinas)"></div>
         </div>
       </div>
     </div>
@@ -103,86 +138,55 @@
                 <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
               </p>
             </div>
-      
-            <ion-button 
-              expand="block" 
-              [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
-              class ="gradient-button">
-              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-              Completar Mantención
-            </ion-button>
-            
+
+            <div class="button-container">
+              <ion-button
+                expand="block"
+                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
+                class ="gradient-button">
+                <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                Completar Mantención
+              </ion-button>
+
+              <ion-button
+                fill="clear"
+                color="danger"
+                (click)="borrarMantenimiento(cliente)"
+                class="trash-button">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+
           </ion-card-content>
         </ion-card-header>
       </ion-card>
       
     </div>
 
-    <!-- Sección de clientes realizados -->
+    <!-- Sección de mantenciones realizadas -->
     <div *ngIf="clientesRealizados.length > 0" class="realizados-section">
       <div class="section-header">
         <h3>
           <ion-icon name="checkmark-circle-outline"></ion-icon>
-          Clientes Realizados
+          Mantenciones Realizadas
         </h3>
         <ion-badge color="success">{{ clientesRealizados.length }}</ion-badge>
       </div>
 
-      <ion-card *ngFor="let cliente of clientesRealizados" class="cliente-card realizado">
-        <ion-card-header>
-          <div class="cliente-header">
-            <div class="cliente-info">
-              <ion-card-title>{{ cliente.nombre }}</ion-card-title>
-              <ion-card-subtitle>
-                <ion-icon name="location-outline"></ion-icon>
-                {{ cliente.direccion }}
-              </ion-card-subtitle>
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <ion-chip color="success">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                <ion-label>Completado</ion-label>
-              </ion-chip>
-              <ion-chip color="tertiary" style="height: 22px; font-size: 12px;">
-                <ion-icon name="cash-outline"></ion-icon>
-                <ion-label>${{ formatearPrecio(cliente.precio) }}</ion-label>
-              </ion-chip>
-            </div>
-          </div>
-        </ion-card-header>
-        
-        <ion-card-content>
-          <div class="mantenimiento-info" *ngIf="cliente.mantenimiento">
-            <h4>Detalles del Mantenimiento</h4>
-            <div class="detalles-mantenimiento">
-              <div class="detalle-item">
-                <strong>Hora:</strong> {{ cliente.mantenimiento.hora }}
-              </div>
-              <div class="detalle-item">
-                <strong>Estado Cloro:</strong> {{ cliente.mantenimiento.estadoCloro }}
-              </div>
-              <div class="detalle-item">
-                <strong>Estado pH:</strong> {{ cliente.mantenimiento.estadoPh }}
-              </div>
-              <div class="detalle-item">
-                <strong>Cloro agregado:</strong> {{ cliente.mantenimiento.cantidadCloro }} kg
-              </div>
-              <div class="detalle-item">
-                <strong>pH corregido:</strong> {{ cliente.mantenimiento.cantidadPh }} kg
-              </div>
-            </div>
-          </div>
-          
-          <ion-button 
-            fill="outline" 
-            size="small"
-            (click)="deshacerMantenimiento(cliente)"
-            color="medium">
-            <ion-icon name="arrow-undo-outline" slot="start"></ion-icon>
-            Deshacer
-          </ion-button>
-        </ion-card-content>
-      </ion-card>
+      <ion-list class="realizados-list">
+        <ion-item *ngFor="let cliente of clientesRealizados" class="realizado-item" (click)="deshacerMantenimiento(cliente)">
+          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+          <ion-label>
+            <h3>{{ cliente.nombre }}</h3>
+            <p>{{ cliente.direccion }}</p>
+            <p *ngIf="cliente.mantenimiento" class="mantenimiento-hora">
+              <small>Completado a las {{ cliente.mantenimiento.hora }}</small>
+            </p>
+          </ion-label>
+          <ion-note slot="end" class="precio-note">${{ formatearPrecio(cliente.precio) }}</ion-note>
+          <ion-icon name="arrow-undo" slot="end" color="medium" class="undo-icon"></ion-icon>
+        </ion-item>
+      </ion-list>
     </div>
   </div>
 </ion-content>

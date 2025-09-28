@@ -1,17 +1,19 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, AlertController, ToastController } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
+import { IonicModule, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { 
-  refreshOutline, 
-  checkmarkCircleOutline, 
-  timeOutline, 
+import {
+  refreshOutline,
+  checkmarkCircleOutline,
+  timeOutline,
   locationOutline,
   chevronBackOutline,
   chevronForwardOutline,
   cashOutline,
-  arrowUndoOutline
+  arrowUndoOutline,
+  trashOutline
 } from 'ionicons/icons';
 import { ClienteService } from '../../services/cliente.service';
 
@@ -39,7 +41,7 @@ interface DiaCalendario {
   diaSemana: string;
   esHoy: boolean;
   seleccionado: boolean;
-  tieneEventos: boolean;
+  cantidadPiscinas: number;
 }
 
 addIcons({
@@ -50,21 +52,26 @@ addIcons({
   'chevron-back-outline': chevronBackOutline,
   'chevron-forward-outline': chevronForwardOutline,
   'cash-outline': cashOutline,
-  'arrow-undo-outline': arrowUndoOutline
+  'arrow-undo-outline': arrowUndoOutline,
+  'trash-outline': trashOutline
 });
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterModule],
+  imports: [CommonModule, FormsModule, IonicModule, RouterModule],
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  @ViewChild('calendarioScroll') calendarioScroll!: ElementRef;
-  
+
   fechaHoy!: string;
   diaHoy!: string;
+  dayNumber!: number;
+  dayShort!: string;
+  maintenanceCount = 0;
+  maintenanceWord = 'mantenciones';
+  isToday = true;
   clientesPendientes: ClienteDelDia[] = [];
   clientesRealizados: ClienteDelDia[] = [];
   isLoading = false;
@@ -76,11 +83,28 @@ export class HomePage implements OnInit {
   mesVista = new Date();
   diasDelMes: DiaCalendario[] = [];
   mesAnioActual = '';
-  diasConEventos: number[] = []; // Días que tienen mantenimientos programados
+
+  // Selector de mes
+  mesSeleccionado: number = this.fechaActual.getMonth();
+  meses = [
+    { value: 0, nombre: 'Enero' },
+    { value: 1, nombre: 'Febrero' },
+    { value: 2, nombre: 'Marzo' },
+    { value: 3, nombre: 'Abril' },
+    { value: 4, nombre: 'Mayo' },
+    { value: 5, nombre: 'Junio' },
+    { value: 6, nombre: 'Julio' },
+    { value: 7, nombre: 'Agosto' },
+    { value: 8, nombre: 'Septiembre' },
+    { value: 9, nombre: 'Octubre' },
+    { value: 10, nombre: 'Noviembre' },
+    { value: 11, nombre: 'Diciembre' }
+  ];
 
   constructor(
     private alertController: AlertController,
     private toastController: ToastController,
+    private actionSheetController: ActionSheetController,
     private clienteService: ClienteService
   ) {
     this.configurarFecha();
@@ -89,10 +113,6 @@ export class HomePage implements OnInit {
 
   ngOnInit() {
     this.cargarClientesDelDia();
-    // Scroll al día actual después de que se inicialice la vista
-    setTimeout(() => {
-      this.scrollAlDiaActual();
-    }, 500);
   }
 
   configurarFecha() {
@@ -103,24 +123,28 @@ export class HomePage implements OnInit {
       month: 'long',
       year: 'numeric'
     };
-    
+
     // Formatear la fecha en español
     const formatter = new Intl.DateTimeFormat('es-ES', options);
     let formattedDate = formatter.format(today);
-    
+
     // Capitalizar la primera letra de cada palabra
     formattedDate = formattedDate
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-    
+
     // Reemplazar la coma por un salto de línea para mejor presentación
     this.fechaHoy = formattedDate.replace(',', '\n');
-    
+
     // Obtener el día de la semana para filtrar clientes
     const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     this.diaHoy = diasSemana[today.getDay()];
-    
+
+    // Set day number and short day name
+    this.dayNumber = today.getDate();
+    this.dayShort = this.diaHoy.substring(0, 3).toUpperCase();
+
     // Configurar fechas del calendario
     this.fechaActual = new Date(today);
     this.fechaSeleccionada = new Date(today);
@@ -129,7 +153,7 @@ export class HomePage implements OnInit {
 
   generarCalendario() {
     this.diasDelMes = [];
-    
+
     // Actualizar header del mes
     const mesAnio = this.mesVista.toLocaleDateString('es-ES', {
       month: 'long',
@@ -137,21 +161,51 @@ export class HomePage implements OnInit {
     });
     this.mesAnioActual = mesAnio.charAt(0).toUpperCase() + mesAnio.slice(1);
 
-    // Generar días del mes
+    // Generar días del mes con grid layout
     const primerDia = new Date(this.mesVista.getFullYear(), this.mesVista.getMonth(), 1);
     const ultimoDia = new Date(this.mesVista.getFullYear(), this.mesVista.getMonth() + 1, 0);
-    
+
+    // Día de la semana del primer día (0 = Domingo, 1 = Lunes, etc.)
+    const diaSemanaPrimerDia = primerDia.getDay();
+
+    // Agregar celdas vacías antes del primer día para alinear con el día de la semana
+    for (let i = 0; i < diaSemanaPrimerDia; i++) {
+      this.diasDelMes.push({
+        fecha: new Date(), // Fecha dummy
+        numero: 0, // Indica celda vacía
+        diaSemana: '',
+        esHoy: false,
+        seleccionado: false,
+        cantidadPiscinas: 0
+      });
+    }
+
+    // Generar días del mes
     for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
       const fecha = new Date(this.mesVista.getFullYear(), this.mesVista.getMonth(), dia);
       const diaSemana = fecha.toLocaleDateString('es-ES', { weekday: 'short' });
-      
+
       this.diasDelMes.push({
         fecha: fecha,
         numero: dia,
         diaSemana: diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1),
         esHoy: this.esMismaFecha(fecha, this.fechaActual),
         seleccionado: this.esMismaFecha(fecha, this.fechaSeleccionada),
-        tieneEventos: this.diasConEventos.includes(dia) && this.esMesActual()
+        cantidadPiscinas: 0 // Will be set later in actualizarEventosCalendario
+      });
+    }
+
+    // Agregar celdas vacías al final para completar la última fila (opcional, pero mantiene consistencia)
+    const totalCeldas = this.diasDelMes.length;
+    const celdasFaltantes = (7 - (totalCeldas % 7)) % 7;
+    for (let i = 0; i < celdasFaltantes; i++) {
+      this.diasDelMes.push({
+        fecha: new Date(), // Fecha dummy
+        numero: 0, // Indica celda vacía
+        diaSemana: '',
+        esHoy: false,
+        seleccionado: false,
+        cantidadPiscinas: 0
       });
     }
   }
@@ -160,56 +214,97 @@ export class HomePage implements OnInit {
     // Actualizar selección
     this.diasDelMes.forEach(d => d.seleccionado = false);
     dia.seleccionado = true;
-    
+
     this.fechaSeleccionada = new Date(dia.fecha);
-    
+
     // Actualizar día seleccionado para filtrar clientes
     const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     this.diaHoy = diasSemana[dia.fecha.getDay()];
-    
+
+    // Update display properties
+    this.dayNumber = dia.fecha.getDate();
+    this.dayShort = this.diaHoy.substring(0, 3).toUpperCase();
+    this.isToday = this.esMismaFecha(this.fechaSeleccionada, this.fechaActual);
+
     // Recargar clientes para el día seleccionado
     this.cargarClientesDelDia();
+
     
-    this.showToast(`Día seleccionado: ${dia.numero} de ${this.mesAnioActual}`, 'primary');
   }
 
   cambiarMes(direccion: number) {
     this.mesVista.setMonth(this.mesVista.getMonth() + direccion);
+    this.mesSeleccionado = this.mesVista.getMonth();
     this.generarCalendario();
+    this.actualizarEventosCalendario();
   }
 
-  scrollAlDiaActual() {
-    if (this.calendarioScroll && this.esMesActual()) {
-      const diaActualIndex = this.diasDelMes.findIndex(dia => dia.esHoy);
-      if (diaActualIndex !== -1) {
-        const scrollElement = this.calendarioScroll.nativeElement;
-        const diaWidth = 68; // Ancho aproximado de cada día (60px + 8px gap)
-        const scrollLeft = (diaActualIndex * diaWidth) - (scrollElement.offsetWidth / 2) + (diaWidth / 2);
-        
-        scrollElement.scrollTo({
-          left: Math.max(0, scrollLeft),
-          behavior: 'smooth'
-        });
-      }
-    }
+  cambiarMesSeleccionado() {
+    this.mesVista.setMonth(this.mesSeleccionado);
+    this.generarCalendario();
+    this.actualizarEventosCalendario();
   }
+
+  async mostrarSelectorMes() {
+    const buttons = this.meses.map(mes => ({
+      text: mes.nombre,
+      handler: () => {
+        this.mesSeleccionado = mes.value;
+        this.cambiarMesSeleccionado();
+      }
+    }));
+
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Seleccionar Mes',
+      buttons: [
+        ...buttons,
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        }
+      ]
+    });
+
+    await actionSheet.present();
+  }
+
 
   actualizarEventosCalendario() {
-    // Simular días con eventos basados en los clientes pendientes
-    // En tu implementación real, esto vendría de tus datos de clientes
-    this.diasConEventos = [];
-    
-    if (this.esMesActual()) {
-      // Agregar días con mantenimientos programados
-      for (let i = 0; i < 7; i++) {
-        const dia = this.fechaActual.getDate() + i;
-        if (dia <= new Date(this.fechaActual.getFullYear(), this.fechaActual.getMonth() + 1, 0).getDate()) {
-          this.diasConEventos.push(dia);
-        }
+    // Obtener todos los clientes
+    this.clienteService.getClientes().subscribe({
+      next: (clientes) => {
+        // Para cada día del mes actual en diasDelMes
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        this.diasDelMes.forEach(dia => {
+          if (dia.numero === 0) return; // Skip empty cells
+
+          const fechaDia = new Date(dia.fecha);
+          fechaDia.setHours(0, 0, 0, 0);
+          const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][fechaDia.getDay()];
+
+          // Contar clientes con mantenimiento programado para este día y pendiente
+          let count = 0;
+          clientes.forEach(cliente => {
+            if (!cliente.activo || !cliente.programacion) return;
+            const diasProgramados = cliente.programacion.diasSemana || [];
+            if (!diasProgramados.includes(diaSemana)) return;
+            // Verificar si no hay historial para esta fecha (mantenimiento pendiente)
+            const fechaStr = fechaDia.toISOString().split('T')[0];
+            const hasHistorial = cliente.historial.some(h => h.fecha === fechaStr);
+            if (!hasHistorial && fechaDia >= hoy) {
+              count++;
+            }
+          });
+
+          dia.cantidadPiscinas = Math.min(count, 3); // Cap at 3
+        });
+      },
+      error: (err) => {
+        console.error('Error al cargar eventos del calendario:', err);
       }
-    }
-    
-    this.generarCalendario();
+    });
   }
 
   cargarClientesDelDia() {
@@ -220,16 +315,22 @@ export class HomePage implements OnInit {
         console.log('Clientes cargados:', clientes);
         console.log('Día seleccionado:', this.diaHoy);
         
-        // Filtrar clientes que tienen mantenimiento en el día seleccionado
+        // Fecha seleccionada en formato string
+        const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
+
+        // Filtrar clientes que tienen mantenimiento en el día seleccionado y no han sido completados
         const clientesDelDia = clientes.filter(cliente => {
           if (!cliente.activo || !cliente.programacion) {
             return false;
           }
-          
+
           const diasProgramados = cliente.programacion.diasSemana || [];
           const tieneMantenimientoHoy = diasProgramados.includes(this.diaHoy);
-          
-          return tieneMantenimientoHoy;
+
+          // Verificar que no haya un registro de mantenimiento para el día seleccionado
+          const yaCompletado = cliente.historial.some(h => h.fecha === fechaSeleccionadaStr);
+
+          return tieneMantenimientoHoy && !yaCompletado;
         });
 
         // Convertir a formato ClienteDelDia
@@ -243,11 +344,36 @@ export class HomePage implements OnInit {
           realizado: false
         }));
 
-        this.clientesRealizados = [];
+        // Cargar clientes realizados (que tienen historial para el día seleccionado)
+        this.clientesRealizados = clientes.filter(cliente => {
+          return cliente.historial.some(h => h.fecha === fechaSeleccionadaStr);
+        }).map(cliente => {
+          const historialDia = cliente.historial.find(h => h.fecha === fechaSeleccionadaStr);
+          return {
+            id: cliente.id || '',
+            nombre: cliente.nombre,
+            direccion: cliente.direccion,
+            telefono: cliente.telefono,
+            horaPreferida: cliente.programacion?.horaPreferida || 'Sin horario específico',
+            precio: cliente.precio || 0,
+            realizado: true,
+            mantenimiento: historialDia ? {
+              estadoCloro: historialDia.estadoCloro || '',
+              estadoPh: historialDia.estadoPh || '',
+              cantidadCloro: historialDia.cantidadCloro || 0,
+              cantidadPh: (historialDia.cantidadBajaPh || 0) + (historialDia.cantidadSubePh || 0),
+              fecha: fechaSeleccionadaStr,
+              hora: historialDia.hora || ''
+            } : undefined
+          };
+        });
+
+        this.maintenanceCount = this.clientesPendientes.length;
+        this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
         this.calcularProgreso();
         this.actualizarEventosCalendario();
         this.isLoading = false;
-        
+
         console.log('Clientes para el día seleccionado:', this.clientesPendientes);
       },
       error: (err) => {
@@ -466,7 +592,7 @@ export class HomePage implements OnInit {
       estadoPh: data.estadoPh,
       cantidadCloro: cantidadCloro,
       cantidadPh: cantidadPh,
-      fecha: ahora.toISOString().split('T')[0],
+      fecha: this.fechaSeleccionada.toISOString().split('T')[0],
       hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
     };
 
@@ -593,10 +719,13 @@ export class HomePage implements OnInit {
           handler: () => {
             cliente.realizado = false;
             cliente.mantenimiento = undefined;
-            
+
+            // Remover la entrada del historial para la fecha seleccionada
+            this.removeHistorialEntry(cliente.id, this.fechaSeleccionada.toISOString().split('T')[0]);
+
             this.clientesPendientes.push(cliente);
             this.clientesRealizados = this.clientesRealizados.filter(c => c.id !== cliente.id);
-            
+
             this.calcularProgreso();
             this.showToast('Mantención deshecha ✅', 'success');
           }
@@ -605,6 +734,98 @@ export class HomePage implements OnInit {
     });
 
     await alert.present();
+  }
+
+  // Método para borrar una mantención pendiente
+  async borrarMantenimiento(cliente: ClienteDelDia) {
+    const alert = await this.alertController.create({
+      header: 'Borrar Mantención',
+      message: `¿Estás seguro de que quieres borrar la mantención de ${cliente.nombre} para hoy?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Borrar',
+          cssClass: 'danger',
+          handler: () => {
+            // Agregar registro de "saltada" al historial para evitar que reaparezca
+            this.agregarRegistroSaltado(cliente);
+
+            this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
+
+            this.maintenanceCount = this.clientesPendientes.length;
+            this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
+            this.calcularProgreso();
+            this.actualizarEventosCalendario();
+            this.showToast(`Mantención de ${cliente.nombre} borrada ❌`, 'danger');
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  removeHistorialEntry(clienteId: string, fecha: string) {
+    this.clienteService.getClienteById(clienteId).subscribe({
+      next: (clienteCompleto) => {
+        if (clienteCompleto.historial) {
+          clienteCompleto.historial = clienteCompleto.historial.filter(h => h.fecha !== fecha);
+        }
+
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            console.log('Entrada del historial removida para cliente:', clienteId, 'fecha:', fecha);
+          },
+          error: (err) => {
+            console.error('Error al remover entrada del historial:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error al obtener cliente completo para remover historial:', err);
+      }
+    });
+  }
+
+  agregarRegistroSaltado(cliente: ClienteDelDia) {
+    const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
+    const ahora = new Date();
+
+    this.clienteService.getClienteById(cliente.id).subscribe({
+      next: (clienteCompleto) => {
+        const nuevoRegistro = {
+          fecha: fechaSeleccionadaStr,
+          servicio: `Mantención ${this.getServicioTipo(clienteCompleto.programacion?.frecuencia || 'semanal')} - Saltada`,
+          cloro: 0,
+          ph: 0,
+          cantidadCloro: 0,
+          cantidadSubePh: 0,
+          cantidadBajaPh: 0,
+          tipoPh: undefined,
+          estadoCloro: 'saltada',
+          estadoPh: 'saltada',
+          hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
+        };
+
+        clienteCompleto.historial = clienteCompleto.historial || [];
+        clienteCompleto.historial.push(nuevoRegistro);
+
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            console.log('Registro de mantención saltada agregado para cliente:', cliente.nombre);
+          },
+          error: (err) => {
+            console.error('Error al agregar registro saltado:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error al obtener cliente completo para registro saltado:', err);
+      }
+    });
   }
 
   // Método para obtener el color del progreso
