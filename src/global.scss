@@ -54,3 +54,113 @@ ion-toolbar {
   --min-height: 56px;
 }
 
+/* ==================== */
+/* Estilos comunes globales */
+/* ==================== */
+
+/* Contenedor principal común */
+.container {
+  padding: 16px;
+}
+
+/* Contenedor de carga */
+.loading-container {
+  text-align: center;
+  padding: 40px 20px;
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  p {
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+}
+
+/* Estado vacío */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    color: var(--ion-color-secondary);
+    margin-bottom: 16px;
+  }
+
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+  }
+
+  p {
+    margin: 0 0 20px 0;
+    font-size: 0.9em;
+  }
+}
+
+/* Header de sección */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.0em;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon {
+      font-size: 1.1em;
+    }
+  }
+
+  ion-badge {
+    font-size: 0.9em;
+    padding: 4px 8px;
+  }
+}
+
+/* Botón gradiente */
+.gradient-button {
+  --background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  --border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* Animaciones comunes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+

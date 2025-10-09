@@ -1,17 +1,9 @@
-.container {
-  padding: 16px;
-}
 
 // Ajuste para tabs flotantes
 ion-content {
   --padding-bottom: 100px;
 }
 
-.gradient-button {
-  --background: var(--ion-color-secondary);
-  --border-radius: 999px;
-  color: #fff;
-}
 
 .header-content {
   display: flex;
@@ -66,20 +58,6 @@ h1 {
   }
 }
 
-// Carga de clientes
-.loading-container {
-  text-align: center;
-  padding: 40px 20px;
-  
-  ion-spinner {
-    margin-bottom: 16px;
-  }
-  
-  p {
-    color: var(--ion-color-medium);
-    margin: 0;
-  }
-}
 
 .header-container {
   background: var(--ion-color-light);
@@ -89,54 +67,7 @@ h1 {
   background: var(--ion-color-light);
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  
-  h3 {
-    margin: 0;
-    font-size: 1.0em;
-    font-weight: 600;
-    color: var(--ion-color-dark);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    ion-icon {
-      font-size: 1.1em;
-    }
-  }
-  
-  ion-badge {
-    font-size: 0.9em;
-    padding: 4px 8px;
-  }
-}
 
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--ion-color-medium);
-  
-  ion-icon {
-    color: var(--ion-color-secondary);
-    margin-bottom: 16px;
-  }
-  
-  h4 {
-    margin: 0 0 8px 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--ion-color-dark);
-  }
-  
-  p {
-    margin: 0 0 20px 0;
-    font-size: 0.9em;
-  }
-}
 
 .cliente-card {
   margin-bottom: 16px;

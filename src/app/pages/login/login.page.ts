@@ -43,6 +43,15 @@ export class LoginPage implements OnInit, OnDestroy {
   isMobile: boolean = false;
 
   ngOnInit() {
+    // AGREGAR LOGS
+    console.log('Platform detection:', {
+      isMobile: this.platform.is('mobile'),
+      isTablet: this.platform.is('tablet'),
+      isCapacitor: this.platform.is('capacitor'),
+      isAndroid: this.platform.is('android'),
+      platforms: this.platform.platforms()
+    });
+
     // Detectar si es móvil
     this.isMobile = this.platform.is('mobile') || this.platform.is('tablet');
 
@@ -56,29 +65,28 @@ export class LoginPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Limpiar suscripción
     if (this.loadingSubscription) {
       this.loadingSubscription.unsubscribe();
     }
   }
 
-  /*
-  async login(): Promise<void> {
-    if (!this.email || !this.password) {
-      this.errorMessage = 'Por favor complete todos los campos';
-      return;
-    }
-
-    const error = await this.auth.loginWithEmail(this.email, this.password);
-    if (error) {
-      this.errorMessage = error.message;
-    }
-  }
-  */
   async loginWithGoogle(): Promise<void> {
-    const error = await this.auth.googleLogin();
-    if (error) {
-      this.errorMessage = error.message;
-    }
+  // ALERT TEMPORAL PARA DEBUG
+  const platformInfo = {
+    isCapacitor: this.platform.is('capacitor'),
+    isAndroid: this.platform.is('android'),
+    isMobile: this.platform.is('mobile'),
+    platforms: this.platform.platforms()
+  };
+  
+  alert('Platform Info: ' + JSON.stringify(platformInfo, null, 2));
+  
+  console.log('Login button clicked');
+  const error = await this.auth.googleLogin();
+  if (error) {
+    this.errorMessage = error.message;
+    console.error('Login error:', error);
   }
+}
+
 }

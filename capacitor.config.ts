@@ -1,9 +1,15 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'reyes-piscinas-app',
-  webDir: 'www'
+  appId: 'com.reyespiscinas.app',
+  appName: 'Reyes Piscinas',
+  webDir: 'www',
+  plugins: {
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ['google.com']
+    },
+  },
 };
 
 export default config;

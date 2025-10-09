@@ -13,7 +13,6 @@ import {
   IonList,
   IonLabel,
   IonToggle,
-  IonAvatar
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 

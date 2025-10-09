@@ -5,23 +5,6 @@ ion-content {
   --padding-bottom: 100px;
 }
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  text-align: center;
-  
-  ion-spinner {
-    margin-bottom: 1rem;
-  }
-  
-  p {
-    color: var(--ion-color-medium);
-    margin: 0;
-  }
-}
 
 .selectores-fecha {
   margin-top: 1rem;
@@ -185,25 +168,6 @@ ion-button[color="danger"] {
 }
 }
 
-.no-data {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  text-align: center;
-  
-  ion-icon {
-    color: var(--ion-color-medium);
-    margin-bottom: 1rem;
-  }
-  
-  p {
-    color: var(--ion-color-medium);
-    margin: 0;
-    font-size: 1rem;
-  }
-}
 
 // Estilos para las tarjetas
 ion-card {

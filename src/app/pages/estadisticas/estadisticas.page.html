@@ -259,7 +259,7 @@
         </ion-list>
 
         <ng-template #noMantenciones>
-          <div class="no-data">
+          <div class="empty-state">
             <ion-icon name="calendar-outline" size="large"></ion-icon>
             <p>No hay mantenciones registradas en este período</p>
           </div>
@@ -269,7 +269,7 @@
   </div>
 
   <!-- Mensaje cuando no hay datos -->
-  <div *ngIf="!isLoading && !estadisticas" class="no-data">
+  <div *ngIf="!isLoading && !estadisticas" class="empty-state">
     <ion-icon name="analytics-outline" size="large"></ion-icon>
     <p>No hay datos disponibles para el período seleccionado</p>
   </div>

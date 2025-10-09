@@ -1,27 +1,9 @@
-// Contenedor principal
-.container {
-  padding: 16px;
-}
 
 // Ajuste para tabs flotantes
 ion-content {
   --padding-bottom: 100px;
 }
 
-// Loading container
-.loading-container {
-  text-align: center;
-  padding: 40px 20px;
-
-  ion-spinner {
-    margin-bottom: 16px;
-  }
-
-  p {
-    color: var(--ion-color-medium);
-    margin: 0;
-  }
-}
 
 // Form sections
 .form-section {
