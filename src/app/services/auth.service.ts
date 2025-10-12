@@ -1,13 +1,24 @@
 import { inject, Injectable } from "@angular/core";
-import { Auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, User, user } from "@angular/fire/auth";
+import { 
+  Auth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  signInWithCredential,  
+  getRedirectResult, 
+  User, 
+  user 
+} from "@angular/fire/auth";
 import { Router } from "@angular/router";
 import { Platform } from "@ionic/angular";
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { BehaviorSubject, Observable, map } from "rxjs";
 
+
 @Injectable({
   providedIn: 'root'
 })
+
 export class AuthService {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
@@ -64,45 +75,75 @@ export class AuthService {
     }
   }
 
-  // Autenticación nativa para iOS/Android
-  private async nativeGoogleLogin(): Promise<void> {
-    try {
-      console.log('🚀 Iniciando autenticación nativa');
+// Autenticación nativa para iOS/Android
+private async nativeGoogleLogin(): Promise<void> {
+  try {
+    console.log('🚀 Iniciando autenticación nativa');
 
-      // Verificar que el plugin esté disponible
-      if (!FirebaseAuthentication) {
-        throw new Error('Plugin FirebaseAuthentication no disponible');
-      }
-
-      // Autenticación con Google usando el plugin
-      const result = await FirebaseAuthentication.signInWithGoogle();
-
-      console.log('✅ Autenticación nativa exitosa:', {
-        email: result.user?.email,
-        displayName: result.user?.displayName,
-        uid: result.user?.uid
-      });
-
-      // El usuario ya está autenticado en Firebase automáticamente
-      // Navegar al home
-      await this.router.navigateByUrl('/tabs/home');
-      
-    } catch (error: any) {
-      console.error('❌ Error en autenticación nativa:', error);
-
-      // Manejar códigos de error específicos
-      if (error.code === '12501' || error.message?.includes('12501')) {
-        throw new Error('Inicio de sesión cancelado por el usuario');
-      }
-      
-      if (error.code === '10' || error.message?.includes('Developer Error')) {
-        console.error('⚠️ ERROR 10: Verifica que el SHA-1 esté configurado en Firebase Console');
-        throw new Error('Error de configuración. Contacta al desarrollador.');
-      }
-
-      throw error;
+    if (!FirebaseAuthentication) {
+      throw new Error('Plugin FirebaseAuthentication no disponible');
     }
+
+    // Autenticar con el plugin
+    const result = await FirebaseAuthentication.signInWithGoogle();
+
+    console.log('✅ Resultado del plugin:', {
+      email: result.user?.email,
+      displayName: result.user?.displayName,
+      uid: result.user?.uid
+    });
+
+    // ⭐ OBTENER EL ID TOKEN Y SINCRONIZAR CON FIREBASE AUTH ⭐
+    console.log('🔑 Obteniendo ID token...');
+    const tokenResult = await FirebaseAuthentication.getIdToken();
+    
+    if (!tokenResult || !tokenResult.token) {
+      throw new Error('No se pudo obtener el ID token');
+    }
+
+    console.log('✅ ID token obtenido');
+
+    // Crear credencial de Google y autenticar en Firebase Auth
+    const credential = GoogleAuthProvider.credential(tokenResult.token);
+    
+    console.log('🔐 Autenticando en Firebase Auth...');
+    await signInWithCredential(this.auth, credential);
+
+    console.log('✅ Usuario autenticado en Firebase Auth');
+
+    // Esperar un momento para asegurar la sincronización
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Verificar que el usuario esté disponible
+    const currentUser = this.auth.currentUser;
+    console.log('👤 Usuario actual:', {
+      email: currentUser?.email,
+      uid: currentUser?.uid
+    });
+
+    if (!currentUser) {
+      throw new Error('Usuario no disponible después de autenticar');
+    }
+
+    // Navegar al home
+    console.log('🚀 Navegando a /tabs/home');
+    await this.router.navigateByUrl('/tabs/home', { replaceUrl: true });
+    
+  } catch (error: any) {
+    console.error('❌ Error en autenticación nativa:', error);
+
+    if (error.code === '12501' || error.message?.includes('12501')) {
+      throw new Error('Inicio de sesión cancelado por el usuario');
+    }
+    
+    if (error.code === '10' || error.message?.includes('Developer Error')) {
+      console.error('⚠️ ERROR 10: Verifica que el SHA-1 esté configurado en Firebase Console');
+      throw new Error('Error de configuración. Contacta al desarrollador.');
+    }
+
+    throw error;
   }
+}
 
   // Método para manejar el resultado de la redirección (solo web)
   async handleRedirectResult(): Promise<void> {
