@@ -4,7 +4,6 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signInWithRedirect, 
-  signInWithCredential,  
   getRedirectResult, 
   User, 
   user 
@@ -76,74 +75,57 @@ export class AuthService {
   }
 
 // Autenticación nativa para iOS/Android
+// Autenticación nativa para iOS/Android
 private async nativeGoogleLogin(): Promise<void> {
   try {
     console.log('🚀 Iniciando autenticación nativa');
 
-    if (!FirebaseAuthentication) {
-      throw new Error('Plugin FirebaseAuthentication no disponible');
-    }
-
-    // Autenticar con el plugin
+    // 1️⃣ Iniciar sesión con el plugin nativo
     const result = await FirebaseAuthentication.signInWithGoogle();
 
-    console.log('✅ Resultado del plugin:', {
-      email: result.user?.email,
-      displayName: result.user?.displayName,
-      uid: result.user?.uid
-    });
-
-    // ⭐ OBTENER EL ID TOKEN Y SINCRONIZAR CON FIREBASE AUTH ⭐
-    console.log('🔑 Obteniendo ID token...');
-    const tokenResult = await FirebaseAuthentication.getIdToken();
-    
-    if (!tokenResult || !tokenResult.token) {
-      throw new Error('No se pudo obtener el ID token');
+    if (!result?.credential?.idToken) {
+      throw new Error('No se obtuvo el idToken del usuario');
     }
 
-    console.log('✅ ID token obtenido');
+    console.log('✅ Token obtenido:', result.credential.idToken.substring(0, 10) + '...');
 
-    // Crear credencial de Google y autenticar en Firebase Auth
-    const credential = GoogleAuthProvider.credential(tokenResult.token);
-    
-    console.log('🔐 Autenticando en Firebase Auth...');
-    await signInWithCredential(this.auth, credential);
+    // 2️⃣ Crear credencial de Firebase con el token de Google
+    const { GoogleAuthProvider, signInWithCredential } = await import('@angular/fire/auth');
+    const credential = GoogleAuthProvider.credential(result.credential.idToken);
 
-    console.log('✅ Usuario autenticado en Firebase Auth');
+    // 3️⃣ Iniciar sesión en Firebase JS SDK con esa credencial
+    const userCredential = await signInWithCredential(this.auth, credential);
+    const user = userCredential.user;
 
-    // Esperar un momento para asegurar la sincronización
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Verificar que el usuario esté disponible
-    const currentUser = this.auth.currentUser;
-    console.log('👤 Usuario actual:', {
-      email: currentUser?.email,
-      uid: currentUser?.uid
+    console.log('👤 Usuario autenticado:', {
+      name: user.displayName,
+      email: user.email,
+      uid: user.uid,
+      photo: user.photoURL
     });
 
-    if (!currentUser) {
-      throw new Error('Usuario no disponible después de autenticar');
-    }
+    // 4️⃣ Actualizar el BehaviorSubject (esto refresca getUserName())
+    this._currentUser.next(user);
 
-    // Navegar al home
-    console.log('🚀 Navegando a /tabs/home');
+    // 5️⃣ Navegar al home
     await this.router.navigateByUrl('/tabs/home', { replaceUrl: true });
-    
+
   } catch (error: any) {
     console.error('❌ Error en autenticación nativa:', error);
 
     if (error.code === '12501' || error.message?.includes('12501')) {
       throw new Error('Inicio de sesión cancelado por el usuario');
     }
-    
+
     if (error.code === '10' || error.message?.includes('Developer Error')) {
-      console.error('⚠️ ERROR 10: Verifica que el SHA-1 esté configurado en Firebase Console');
+      console.error('⚠️ ERROR 10: Verifica el SHA-1/256 en Firebase Console');
       throw new Error('Error de configuración. Contacta al desarrollador.');
     }
 
     throw error;
   }
 }
+
 
   // Método para manejar el resultado de la redirección (solo web)
   async handleRedirectResult(): Promise<void> {

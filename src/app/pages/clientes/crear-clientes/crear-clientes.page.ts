@@ -8,7 +8,7 @@ import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { FirebaseTestService } from '../../../services/firebase-test.service';
 import { addIcons } from 'ionicons';
 import { trashOutline, locationOutline } from 'ionicons/icons';
-import { Auth } from '@angular/fire/auth';
+import { Auth, onAuthStateChanged } from '@angular/fire/auth';
 
 // Registrar los iconos
 addIcons({
@@ -35,8 +35,12 @@ export class CrearClientesPage implements OnInit {
   
   private auth = inject(Auth);
   
+  // ⭐ VARIABLE PARA MANTENER EL USER ID SEGURO
+  private currentUserId: string = '';
+  private authStateSubscription: any;
+  
   nuevoCliente: Cliente = {
-    userId: this.auth.currentUser?.uid || '',
+    userId: '',
     nombre: '',
     direccion: '',
     telefono: '',
@@ -73,7 +77,7 @@ export class CrearClientesPage implements OnInit {
   pageTitle = 'Crear Cliente';
   isLoading = false;
   isLoadingUbicacion = false;
-  isDevelopment = false; // Bandera para modo desarrollo
+  isDevelopment = false;
 
   constructor(
     private clienteService: ClienteService,
@@ -84,33 +88,48 @@ export class CrearClientesPage implements OnInit {
     private alertController: AlertController
   ) {}
 
-  ngOnInit() {
-    // Detectar si estamos en modo desarrollo
+  async ngOnInit() {
     this.isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-    // Verificación simple de conexión (sin crear documentos)
+    // ⭐ MONITOREAR CAMBIOS EN EL ESTADO DE AUTENTICACIÓN
+    this.authStateSubscription = onAuthStateChanged(this.auth, (user) => {
+      if (user) {
+        console.log('✅ Usuario autenticado detectado:', user.uid);
+        this.currentUserId = user.uid;
+        this.nuevoCliente.userId = user.uid;
+      } else {
+        console.error('❌ No hay usuario autenticado');
+        this.showToast('Sesión perdida. Redirigiendo al login...', 'danger');
+        this.router.navigate(['/login']);
+      }
+    });
+
+    // Esperar a que el usuario esté disponible
+    const usuarioListo = await this.esperarUsuario();
+    
+    if (!usuarioListo) {
+      console.error('❌ No se pudo obtener el usuario');
+      this.showToast('Error: No se pudo verificar la autenticación', 'danger');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Verificación de conexión
     this.firebaseTestService.simpleConnectionTest().subscribe({
       next: (result) => {
         if (result.success) {
           console.log('✅ Conexión verificada:', result.message);
-          this.showToast('Conexión con Firebase verificada ✅', 'success');
         } else {
           console.error('❌ Error de conexión:', result.message);
-          this.showToast(`Error de conexión: ${result.message} ❌`, 'danger');
-
-          // Mostrar detalles del error en consola
-          if (result.details) {
-            console.error('🔍 Detalles del error:', result.details);
-          }
+          this.showToast(`Error de conexión: ${result.message}`, 'warning');
         }
       },
       error: (err: any) => {
         console.error('❌ Error en verificación:', err);
-        this.showToast('Error en verificación de Firebase ❌', 'danger');
       }
     });
 
-    // Verificar si estamos editando (hay un ID en la ruta)
+    // Verificar si estamos editando
     this.route.params.subscribe(params => {
       const id = params['id'];
       if (id) {
@@ -122,15 +141,88 @@ export class CrearClientesPage implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    // ⭐ LIMPIAR SUBSCRIPCIÓN
+    if (this.authStateSubscription) {
+      this.authStateSubscription();
+    }
+  }
+
+  // ⭐ MÉTODO MEJORADO PARA ESPERAR AL USUARIO
+  private async esperarUsuario(): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Si ya hay un usuario, resolver inmediatamente
+      if (this.auth.currentUser) {
+        console.log('✅ Usuario disponible:', this.auth.currentUser.uid);
+        this.currentUserId = this.auth.currentUser.uid;
+        this.nuevoCliente.userId = this.currentUserId;
+        resolve(true);
+        return;
+      }
+
+      console.log('⏳ Esperando autenticación...');
+      
+      let attempts = 0;
+      const maxAttempts = 20; // 10 segundos
+      
+      const interval = setInterval(() => {
+        attempts++;
+        
+        if (this.auth.currentUser) {
+          console.log('✅ Usuario autenticado:', this.auth.currentUser.uid);
+          this.currentUserId = this.auth.currentUser.uid;
+          this.nuevoCliente.userId = this.currentUserId;
+          clearInterval(interval);
+          resolve(true);
+        } else if (attempts >= maxAttempts) {
+          console.error('❌ Timeout esperando usuario');
+          clearInterval(interval);
+          resolve(false);
+        }
+      }, 500);
+    });
+  }
+
+  // ⭐ MÉTODO PARA VERIFICAR QUE TENGAMOS USERID ANTES DE CUALQUIER OPERACIÓN
+  private verificarUsuarioAutenticado(): boolean {
+    if (!this.currentUserId) {
+      // Intentar recuperar del auth
+      if (this.auth.currentUser) {
+        console.log('⚠️ Recuperando userId de auth.currentUser');
+        this.currentUserId = this.auth.currentUser.uid;
+        this.nuevoCliente.userId = this.currentUserId;
+        return true;
+      }
+      
+      console.error('❌ No hay userId disponible');
+      this.showToast('Error: Sesión no válida. Redirigiendo...', 'danger');
+      this.router.navigate(['/login']);
+      return false;
+    }
+    
+    return true;
+  }
+
   cargarDatosCliente() {
+    if (!this.verificarUsuarioAutenticado()) return;
+    
     if (this.clienteId) {
       this.isLoading = true;
       this.clienteService.getClienteById(this.clienteId).subscribe({
         next: (cliente) => {
-          console.log('Datos del cliente cargados:', cliente);
-          // Asegurar que todas las propiedades estén definidas
+          console.log('✅ Datos del cliente cargados:', cliente);
+          
+          // Verificar que el cliente pertenezca al usuario actual
+          if (cliente.userId !== this.currentUserId) {
+            console.error('❌ Este cliente no pertenece al usuario actual');
+            this.showToast('No tienes permiso para editar este cliente', 'danger');
+            this.router.navigate(['/tabs/clientes']);
+            return;
+          }
+          
           this.nuevoCliente = {
             ...cliente,
+            userId: this.currentUserId, // Asegurar userId correcto
             medidas: {
               largo: cliente.medidas?.largo || 0,
               ancho: cliente.medidas?.ancho || 0,
@@ -148,13 +240,12 @@ export class CrearClientesPage implements OnInit {
             email: cliente.email || '',
           };
           
-          // Actualizar los días seleccionados
           this.actualizarDiasSeleccionados();
           this.isLoading = false;
         },
         error: (err) => {
-          console.error('Error al cargar datos del cliente:', err);
-          this.showToast('Error al cargar datos del cliente ❌', 'danger');
+          console.error('❌ Error al cargar cliente:', err);
+          this.showToast('Error al cargar datos del cliente', 'danger');
           this.isLoading = false;
           this.router.navigate(['/tabs/clientes']);
         }
@@ -163,10 +254,8 @@ export class CrearClientesPage implements OnInit {
   }
 
   actualizarDiasSeleccionados() {
-    // Resetear todos los días
     this.diasSemana.forEach(dia => dia.seleccionado = false);
     
-    // Marcar los días guardados
     if (this.nuevoCliente.programacion.diasSemana) {
       this.nuevoCliente.programacion.diasSemana.forEach(diaGuardado => {
         const dia = this.diasSemana.find(d => d.valor === diaGuardado);
@@ -178,10 +267,24 @@ export class CrearClientesPage implements OnInit {
   }
 
   async crearCliente(form?: NgForm) {
-    console.log('Formulario válido:', form?.valid || 'Sin formulario');
-    console.log('Datos del cliente:', this.nuevoCliente);
+    console.log('🔄 Iniciando creación/actualización de cliente');
+    
+    // ⭐ VERIFICACIÓN CRÍTICA: Asegurar que tengamos userId
+    if (!this.verificarUsuarioAutenticado()) {
+      return;
+    }
 
-    // Validaciones paso a paso
+    // Asegurar que el cliente tenga el userId correcto
+    this.nuevoCliente.userId = this.currentUserId;
+    
+    console.log('📋 UserId confirmado:', this.currentUserId);
+    console.log('📋 Datos del cliente:', {
+      nombre: this.nuevoCliente.nombre,
+      userId: this.nuevoCliente.userId,
+      isEditing: this.isEditing
+    });
+
+    // Validaciones
     if (!this.nuevoCliente.nombre || this.nuevoCliente.nombre.trim() === '') {
       this.showToast('El nombre es obligatorio ❌', 'danger');
       return;
@@ -212,39 +315,49 @@ export class CrearClientesPage implements OnInit {
       return;
     }
 
-    // Actualizar los días seleccionados antes de enviar
     this.actualizarDiasEnCliente();
 
+    // ⭐ VERIFICACIÓN FINAL ANTES DE ENVIAR
+    if (!this.nuevoCliente.userId) {
+      console.error('❌ CRÍTICO: userId se perdió antes de enviar');
+      this.showToast('Error crítico: sesión inválida', 'danger');
+      return;
+    }
+
+    console.log('📤 Enviando cliente con userId:', this.nuevoCliente.userId);
     this.isLoading = true;
 
     if (this.isEditing) {
-      // Actualizar cliente existente
-      console.log('Actualizando cliente con ID:', this.nuevoCliente.id);
+      console.log('🔄 Actualizando cliente con ID:', this.nuevoCliente.id);
       this.clienteService.updateCliente(this.nuevoCliente).subscribe({
         next: () => {
-          console.log('Cliente actualizado exitosamente');
+          console.log('✅ Cliente actualizado exitosamente');
           this.showToast('Cliente actualizado con éxito ✅', 'success');
           this.isLoading = false;
           this.router.navigate(['/tabs/clientes']);
         },
         error: (err) => {
-          console.error('Error al actualizar cliente:', err);
+          console.error('❌ Error al actualizar cliente:', err);
           this.showToast('Error al actualizar cliente ❌', 'danger');
           this.isLoading = false;
         },
       });
     } else {
-      // Crear nuevo cliente
-      console.log('Creando nuevo cliente');
+      console.log('➕ Creando nuevo cliente');
       this.clienteService.addCliente(this.nuevoCliente).subscribe({
         next: () => {
-          console.log('Cliente creado exitosamente');
+          console.log('✅ Cliente creado exitosamente');
           this.showToast('Cliente creado con éxito ✅', 'success');
           this.isLoading = false;
           this.router.navigate(['/tabs/clientes']);
         },
         error: (err) => {
-          console.error('Error al crear cliente:', err);
+          console.error('❌ Error al crear cliente:', err);
+          console.error('🔍 Detalles:', {
+            message: err.message,
+            code: err.code,
+            details: err
+          });
           this.showToast('Error al crear cliente ❌', 'danger');
           this.isLoading = false;
         },
@@ -271,23 +384,18 @@ export class CrearClientesPage implements OnInit {
   }
 
   telefonoValido(): boolean {
-    // Validar formato +56 9 1234 5678
     const regex = /^\+56\s[1-9]\s\d{4}\s\d{4}$/;
     const valido = regex.test(this.nuevoCliente.telefono);
-    console.log('Validando teléfono:', this.nuevoCliente.telefono, 'Válido:', valido);
     return valido;
   }
 
   emailValido(): boolean {
-    // Si el campo está vacío, es válido porque es opcional
     if (!this.nuevoCliente.email || this.nuevoCliente.email.trim() === '') {
       return true;
     }
     
-    // Si tiene contenido, debe cumplir formato de email
     const regex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
     const valido = regex.test(this.nuevoCliente.email);
-    console.log('Validando email:', this.nuevoCliente.email, 'Válido:', valido);
     return valido;
   }
 
@@ -297,18 +405,13 @@ export class CrearClientesPage implements OnInit {
       this.nuevoCliente.medidas.ancho > 0 &&
       this.nuevoCliente.medidas.profundidad > 0
     );
-    console.log('Validando medidas:', this.nuevoCliente.medidas, 'Válido:', valido);
     return valido;
   }
 
   precioValido(): boolean {
-    const valido = (
-      this.nuevoCliente.precio > 0 
-    );
-    console.log('Validando precio:', this.nuevoCliente.precio, 'Válido:', valido);
+    const valido = (this.nuevoCliente.precio > 0);
     return valido;
   }
-
 
   diasSeleccionadosValidos(): boolean {
     const diasSeleccionados = this.getDiasSeleccionados();
@@ -317,19 +420,13 @@ export class CrearClientesPage implements OnInit {
 
   formatearTelefono(event: any) {
     let valor: string = event.target.value;
-    
-    // Quitar todo excepto números
     valor = valor.replace(/\D/g, '');
     
-    // Si ya comienza con 56, quitamos para evitar duplicar
     if (valor.startsWith('56')) {
       valor = valor.substring(2);
     }
     
-    // Limitar máximo a 9 dígitos después de +56
     valor = valor.substring(0, 9);
-    
-    // Construir el formato: +56 9 1234 5678
     let formateado = '+56';
     
     if (valor.length > 0) {
@@ -344,27 +441,16 @@ export class CrearClientesPage implements OnInit {
       formateado += ' ' + valor.substring(5, 9);
     }
     
-    // Actualizar valor en el input
     this.nuevoCliente.telefono = formateado.trim();
-    
-    // Forzar detección de cambios
     event.target.value = this.nuevoCliente.telefono;
   }
 
-  // Métodos para la programación de servicios
   onFrecuenciaChange(event: any) {
     const frecuencia = event.target.value;
     this.nuevoCliente.programacion.frecuencia = frecuencia;
-    
-    // Resetear cantidad y días cuando cambia la frecuencia
     this.nuevoCliente.programacion.cantidadPorPeriodo = 1;
     this.resetearDiasSeleccionados();
-    
-    console.log('Frecuencia cambiada a:', frecuencia);
   }
-
-  // Método para manejar cambios en la frecuencia del precio
-
 
   onDiaChange(dia: DiaSemana, event: any) {
     const seleccionado = event.target.checked;
@@ -372,9 +458,7 @@ export class CrearClientesPage implements OnInit {
     
     const diasSeleccionados = this.getDiasSeleccionados();
     
-    // Si se seleccionó un día y ya hay suficientes días seleccionados, deseleccionar el más antiguo
     if (seleccionado && diasSeleccionados.length > this.nuevoCliente.programacion.cantidadPorPeriodo) {
-      // Encontrar el primer día seleccionado que no sea el actual y deseleccionarlo
       for (let i = 0; i < this.diasSemana.length; i++) {
         if (this.diasSemana[i].seleccionado && this.diasSemana[i].valor !== dia.valor) {
           this.diasSemana[i].seleccionado = false;
@@ -382,8 +466,6 @@ export class CrearClientesPage implements OnInit {
         }
       }
     }
-    
-    console.log('Días seleccionados:', this.getDiasSeleccionados());
   }
 
   resetearDiasSeleccionados() {
@@ -414,22 +496,20 @@ export class CrearClientesPage implements OnInit {
   getMaxServicios(): number {
     switch (this.nuevoCliente.programacion.frecuencia) {
       case 'semanal':
-        return 7; // Máximo 7 días por semana
+        return 7;
       case 'quincenal':
-        return 4; // Máximo 4 servicios cada 15 días
+        return 4;
       case 'mensual':
-        return 8; // Máximo 8 servicios por mes
+        return 8;
       default:
         return 1;
     }
   }
 
-  // Métodos auxiliares para depuración
   onInputChange(field: string, value: any) {
     console.log(`Campo ${field} cambió a:`, value);
   }
 
-  // Método para validar en tiempo real
   validarFormulario(): boolean {
     return this.nuevoCliente.nombre.trim() !== '' &&
            this.nuevoCliente.direccion.trim() !== '' &&
@@ -439,12 +519,9 @@ export class CrearClientesPage implements OnInit {
            this.precioValido();
   }
 
-  // Método para forzar la detección de cambios en el formulario
   private triggerFormValidation() {
-    // Forzar validación del formulario después de autocompletar
     setTimeout(() => {
       if (this.nuevoCliente.direccion.trim() !== '') {
-        // Trigger validation for address field
         const direccionControl = document.querySelector('ion-input[name="direccion"]') as any;
         if (direccionControl) {
           direccionControl.value = this.nuevoCliente.direccion;
@@ -453,8 +530,9 @@ export class CrearClientesPage implements OnInit {
     }, 100);
   }
 
-  // Método para eliminar cliente
   async eliminarCliente() {
+    if (!this.verificarUsuarioAutenticado()) return;
+    
     if (!this.isEditing || !this.clienteId) {
       this.showToast('No se puede eliminar: cliente no encontrado ❌', 'danger');
       return;
@@ -486,32 +564,29 @@ export class CrearClientesPage implements OnInit {
     if (!this.clienteId) return;
 
     this.isLoading = true;
-    console.log('Eliminando cliente con ID:', this.clienteId);
+    console.log('🗑️ Eliminando cliente con ID:', this.clienteId);
 
     this.clienteService.deleteCliente(this.clienteId).subscribe({
       next: () => {
-        console.log('Cliente eliminado exitosamente');
+        console.log('✅ Cliente eliminado exitosamente');
         this.showToast('Cliente eliminado con éxito ✅', 'success');
         this.isLoading = false;
         this.router.navigate(['/tabs/clientes']);
       },
       error: (err) => {
-        console.error('Error al eliminar cliente:', err);
+        console.error('❌ Error al eliminar cliente:', err);
         this.showToast('Error al eliminar cliente ❌', 'danger');
         this.isLoading = false;
       }
     });
   }
 
-  // Método para obtener la ubicación actual
   async obtenerUbicacionActual() {
-    // Verificar si estamos en un navegador que soporta geolocalización
     if (!navigator.geolocation) {
       this.showToast('Geolocalización no soportada en este navegador ❌', 'danger');
       return;
     }
 
-    // Verificar si estamos en HTTPS (requerido para geolocalización en la mayoría de navegadores)
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       this.showToast('Se requiere HTTPS para acceder a la ubicación GPS ❌', 'danger');
       return;
@@ -523,92 +598,61 @@ export class CrearClientesPage implements OnInit {
       let latitude: number, longitude: number, accuracy: number;
 
       if (this.isDevelopment) {
-        // Coordenadas simuladas para Santiago, Chile (modo desarrollo)
         latitude = -33.4489;
         longitude = -70.6693;
-        accuracy = 10; // Precisión perfecta para simulación
+        accuracy = 10;
 
-        console.log('Modo desarrollo: Usando coordenadas simuladas de Santiago, Chile');
-        this.showToast('Modo desarrollo: Ubicación simulada obtenida', 'primary');
+        console.log('🧪 Modo desarrollo: Usando coordenadas simuladas');
+        this.showToast('Modo desarrollo: Ubicación simulada', 'primary');
       } else {
-        // Mostrar mensaje informativo
         this.showToast('Obteniendo ubicación GPS...', 'primary');
 
         const position = await this.getCurrentPosition();
         ({ latitude, longitude, accuracy } = position.coords);
 
-        console.log('Ubicación obtenida:', { latitude, longitude, accuracy });
-
-        // Verificar precisión (si es muy baja, advertir al usuario)
         if (accuracy > 100) {
           this.showToast('Ubicación obtenida (precisión baja)', 'warning');
         }
       }
 
-      // Obtener dirección usando geocodificación inversa
       await this.geocodificarCoordenadas(latitude, longitude);
 
     } catch (error: any) {
-      console.error('Error obteniendo ubicación:', error);
+      console.error('❌ Error obteniendo ubicación:', error);
 
       let mensaje = 'Error al obtener ubicación ❌';
-      let sugerencia = '';
 
       if (this.isDevelopment) {
-        mensaje = 'Modo desarrollo: GPS no disponible ❌';
-        sugerencia = 'Usando coordenadas simuladas de Santiago, Chile';
-        // Intentar usar coordenadas simuladas como fallback
-        console.log('Modo desarrollo: Intentando usar coordenadas simuladas');
         await this.geocodificarCoordenadas(-33.4489, -70.6693);
         return;
       } else {
         if (error.code === 1) {
-          mensaje = 'Permiso de ubicación denegado ❌';
-          sugerencia = 'Activa GPS en configuración del navegador/dispositivo';
+          mensaje = 'Permiso de ubicación denegado';
         } else if (error.code === 2) {
-          mensaje = 'Posición no disponible ❌';
-          sugerencia = 'Verifica que GPS esté activado y tengas señal';
+          mensaje = 'Posición no disponible';
         } else if (error.code === 3) {
-          mensaje = 'Tiempo agotado ❌';
-          sugerencia = 'Verifica conexión a internet y señal GPS';
+          mensaje = 'Tiempo agotado';
         }
       }
 
-      this.showToast(`${mensaje}\n${sugerencia}`, 'danger');
+      this.showToast(mensaje, 'danger');
     } finally {
       this.isLoadingUbicacion = false;
     }
   }
 
-  // Promesa para obtener posición actual
   private getCurrentPosition(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
-      // Configuración más permisiva para mejor compatibilidad
       const options: PositionOptions = {
-        enableHighAccuracy: false, // Cambiar a false para mejor compatibilidad
-        timeout: 15000, // Aumentar timeout
-        maximumAge: 600000 // 10 minutos de cache
+        enableHighAccuracy: false,
+        timeout: 15000,
+        maximumAge: 600000
       };
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('GPS exitoso:', {
-            accuracy: position.coords.accuracy,
-            altitude: position.coords.altitude,
-            timestamp: position.timestamp
-          });
-          resolve(position);
-        },
-        (error) => {
-          console.error('GPS error:', error);
-          reject(error);
-        },
-        options
-      );
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
     });
   }
 
-  // Geocodificación inversa usando Nominatim (OpenStreetMap)
   private async geocodificarCoordenadas(lat: number, lon: number) {
     try {
       const response = await fetch(
@@ -622,29 +666,24 @@ export class CrearClientesPage implements OnInit {
       const data = await response.json();
 
       if (data && data.display_name) {
-        // Limpiar y formatear la dirección
         let direccion = data.display_name;
 
-        // Remover información de país si es Chile
         if (direccion.includes(', Chile')) {
           direccion = direccion.replace(', Chile', '');
         }
 
-        // Remover códigos postales y otros detalles innecesarios
         direccion = direccion.split(',')[0] + ', ' + (data.address?.city || data.address?.town || data.address?.village || '');
 
         this.nuevoCliente.direccion = direccion.trim();
         this.triggerFormValidation();
         this.showToast('Dirección obtenida exitosamente ✅', 'success');
-
-        console.log('Dirección geocodificada:', direccion);
       } else {
         throw new Error('No se pudo obtener la dirección');
       }
 
     } catch (error) {
-      console.error('Error en geocodificación:', error);
-      this.showToast('Error al obtener dirección. Intenta nuevamente ❌', 'danger');
+      console.error('❌ Error en geocodificación:', error);
+      this.showToast('Error al obtener dirección', 'danger');
     }
   }
 }
