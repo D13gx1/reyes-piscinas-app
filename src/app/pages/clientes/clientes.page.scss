@@ -1,7 +1,7 @@
 
 // Ajuste para tabs flotantes
 ion-content {
-  --padding-bottom: 100px;
+  --padding-bottom: 120px;
 }
 
 
@@ -180,13 +180,29 @@ h1 {
 
 // Botón flotante
 ion-fab {
-  bottom: 90px !important; // Mover arriba para no ser tapado por los tabs
+  position: fixed;
+  bottom: 100px;
+  right: 16px;
+  z-index: 999;
 
   ion-fab-button {
     --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    --background: var(--ion-color-secondary);
+    --background-activated: var(--ion-color-secondary-shade);
+    --background-hover: var(--ion-color-secondary-tint);
+    --color: var(--ion-color-secondary-contrast, #ffffff);
+    --border-radius: 50%;
+    --padding-start: 0;
+    --padding-end: 0;
+    width: 56px;
+    height: 56px;
+
+    ion-icon {
+      font-size: 24px;
+      color: white;
   }
 }
-
+}
 // Responsive adjustments
 @media (max-width: 768px) {
   .container {
