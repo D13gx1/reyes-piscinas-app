@@ -2,8 +2,14 @@
   <ion-toolbar class="custom-toolbar">
     <ion-title class="custom-title">Clientes</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="refrescarClientes()" [disabled]="isLoading" class="refresh-button">
-        <ion-icon name="refresh-outline" [class.spinning]="isLoading">
+      <ion-button 
+        fill="clear" 
+        (click)="refrescarClientes()" 
+        [disabled]="isLoading"
+        class="refresh-button">
+        <ion-icon 
+          name="refresh-outline" 
+          [class.spinning]="isLoading">
         </ion-icon>
       </ion-button>
     </ion-buttons>
@@ -135,19 +141,19 @@
               <ion-icon name="mail-outline"></ion-icon>
               <strong>Email:</strong> {{ cliente.email }}
             </div>
-            <div class="buttons">
-              <div class="action-buttons">
+           <div class="buttons">
+            <div class="action-buttons">
 
-                <ion-button fill="clear" size="medium" (click)="editarCliente(cliente)">
-                  <ion-icon name="pencil-outline"></ion-icon>
-                </ion-button>
+              <ion-button fill="clear" size="medium" (click)="editarCliente(cliente)">
+                <ion-icon name="pencil-outline"></ion-icon>
+              </ion-button>
 
-                <ion-button fill="clear" size="medium" (click)="verHistorial(cliente)">
-                  <ion-icon name="time-outline"></ion-icon>
-                </ion-button>
+              <ion-button fill="clear" size="medium" (click)="verHistorial(cliente)">
+                <ion-icon name="time-outline"></ion-icon>
+              </ion-button>
 
-              </div>
             </div>
+           </div>
           </div>
         </ion-card-content>
 

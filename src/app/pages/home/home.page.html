@@ -1,276 +1,192 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>Estadísticas</ion-title>
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar class="custom-toolbar">
+    <ion-title class="custom-title">Inicio</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="refrescarEstadisticas()" [disabled]="isLoading">
-        <ion-icon name="refresh-outline"></ion-icon>
+      <ion-button 
+        fill="clear" 
+        (click)="refrescarClientes()" 
+        [disabled]="isLoading"
+        class="refresh-button">
+        <ion-icon 
+          name="refresh-outline" 
+          [class.spinning]="isLoading">
+        </ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Estadísticas</ion-title>
+<ion-content [fullscreen]="true" class="modern-content">
+  <ion-header collapse="condense" class="condensed-header">
+    <ion-toolbar class="condensed-toolbar">
+      <ion-title size="large" class="large-title">Inicio</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <!-- Selector de período -->
-  <ion-card>
-    <ion-card-content>
-      <ion-segment [(ngModel)]="periodoSeleccionado" (ionChange)="onPeriodoChange()">
-        <ion-segment-button value="dia">
-          <ion-label>Día</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="mes">
-          <ion-label>Mes</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="anio">
-          <ion-label>Año</ion-label>
-        </ion-segment-button>
-      </ion-segment>
-
-      <!-- Selectores de fecha según período -->
-      <div class="selectores-fecha">
-        <!-- Selector para día -->
-        <div *ngIf="periodoSeleccionado === 'dia'" class="selector-item">
-          <ion-label>Fecha:</ion-label>
-          <input type="date" [(ngModel)]="fechaSeleccionada" (change)="onFechaChange()">
+  <div class="container">
+    <div class="fecha-section">
+      <div class="fecha-display">
+        <div class="day-section">
+          <div class="day-number">{{ dayNumber }}</div>
+          <div class="day-short">{{ dayShort }}</div>
         </div>
-
-        <!-- Selectores para mes -->
-        <div *ngIf="periodoSeleccionado === 'mes'" class="selectores-mes">
-          <div class="selector-item">
-            <ion-label>Mes:</ion-label>
-            <ion-select [(ngModel)]="mesSeleccionado" (ionChange)="onMesChange()">
-              <ion-select-option *ngFor="let mes of meses" [value]="mes.valor">
-                {{ mes.nombre }}
-              </ion-select-option>
-            </ion-select>
-          </div>
-          <div class="selector-item">
-            <ion-label>Año:</ion-label>
-            <ion-select [(ngModel)]="anioSeleccionado" (ionChange)="onAnioChange()">
-              <ion-select-option *ngFor="let anio of anios" [value]="anio">
-                {{ anio }}
-              </ion-select-option>
-            </ion-select>
-          </div>
-        </div>
-
-        <!-- Selector para año -->
-        <div *ngIf="periodoSeleccionado === 'anio'" class="selector-item">
-          <ion-label>Año:</ion-label>
-          <ion-select [(ngModel)]="anioSeleccionado" (ionChange)="onAnioChange()">
-            <ion-select-option *ngFor="let anio of anios" [value]="anio">
-              {{ anio }}
-            </ion-select-option>
-          </ion-select>
+        <div class="maintenance-info">
+          tienes {{ maintenanceCount }} {{ maintenanceWord }} {{ isToday ? 'hoy' : 'este dia' }}
         </div>
       </div>
-    </ion-card-content>
-  </ion-card>
+    </div>
+  
+  <!-- Calendario completo del mes -->
+  <div class="calendario-completo">
+    <div class="calendario-header">
+      <div class="mes-selector-header">
+        <div
+        
+          class="mes-button-custom"
+          (click)="mostrarSelectorMes()">
+          <ion-icon name="calendar-outline"></ion-icon> {{ meses[mesSeleccionado].nombre || 'Mes' }}
+        </div>
+        <div class="nav-buttons">
+          <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+          </ion-button>
+          <ion-button fill="clear" size="small" (click)="cambiarMes(1)">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </div>
 
-  <!-- Loading -->
-  <div *ngIf="isLoading" class="loading-container">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Cargando estadísticas...</p>
+    <!-- Días de la semana -->
+    <div class="dias-semana">
+      <div class="dia-semana-header">Dom</div>
+      <div class="dia-semana-header">Lun</div>
+      <div class="dia-semana-header">Mar</div>
+      <div class="dia-semana-header">Mié</div>
+      <div class="dia-semana-header">Jue</div>
+      <div class="dia-semana-header">Vie</div>
+      <div class="dia-semana-header">Sáb</div>
+    </div>
+
+    <!-- Grid del calendario -->
+    <div class="calendario-grid">
+      <div
+        *ngFor="let dia of diasDelMes"
+        class="calendario-dia"
+        [class.hoy]="dia.esHoy"
+        [class.activo]="dia.seleccionado"
+        [class.vacio]="dia.numero === 0"
+        (click)="dia.numero !== 0 && seleccionarDia(dia)">
+
+        <div class="dia-numero" *ngIf="dia.numero !== 0">{{ dia.numero }}</div>
+        <div class="dia-indicador" *ngIf="dia.numero !== 0 && dia.cantidadPiscinas > 0">
+          <div class="piscina-dot" *ngFor="let dot of [].constructor(dia.cantidadPiscinas)"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Estadísticas de recaudación -->
-  <div *ngIf="!isLoading && estadisticas">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="cash-outline"></ion-icon>
-          Recaudación del {{ periodoSeleccionado }}
-        </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6">
-              <div class="stat-item">
-                <div class="stat-value">{{ formatearPrecio(estadisticas.total) }}</div>
-                <div class="stat-label">Total Recaudado</div>
-              </div>
-            </ion-col>
-            <ion-col size="6">
-              <div class="stat-item">
-                <div class="stat-value">{{ estadisticas.cantidadMantenciones }}</div>
-                <div class="stat-label">Mantenciones</div>
-              </div>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12">
-              <div class="stat-item">
-                <div class="stat-value">{{ formatearPrecio(estadisticas.promedioPorMantencion) }}</div>
-                <div class="stat-label">Promedio por Mantención</div>
-              </div>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
+    <!-- Spinner de carga -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando clientes del día...</p>
+    </div>
 
-    <!-- Estadísticas químicas -->
-    <ion-card *ngIf="estadisticasQuimicas">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="flask-outline"></ion-icon>
-          Promedio Quimicos
-        </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6">
-              <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.promedioCloro.toFixed(1) }}</div>
-                <div class="stat-label">Promedio Cloro</div>
-              </div>
-            </ion-col>
-            <ion-col size="6">
-              <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.promedioPh.toFixed(1) }}</div>
-                <div class="stat-label">Promedio pH</div>
-              </div>
-            </ion-col>
-          </ion-row>
-          <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="flask-outline"></ion-icon>
-          Quimicos usados
-        </ion-card-title>
-      </ion-card-header>
-          <ion-row>
-            
-            <ion-col size="6">
-              <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.totalBajaPh.toFixed(1) }}</div>
-                <div class="stat-label">Total baja pH usado</div>
-              </div>
-            </ion-col>
-            <ion-col size="6">
-              <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.totalSubePh.toFixed(1) }}</div>
-                <div class="stat-label">Total sube pH usado</div>
-              </div>
-            </ion-col>
-            <ion-col size="12">
-              <div class="stat-item">
-                <div class="stat-value">{{ estadisticasQuimicas.totalCloro.toFixed(1) }}</div>
-                <div class="stat-label">Total Cloro Usado</div>
-              </div>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- Historial de mantenciones -->
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>
+    <!-- Sección de clientes pendientes -->
+    <div *ngIf="!isLoading">
+      <div class="section-header">
+        <h3>
           <ion-icon name="time-outline"></ion-icon>
-          Historial de Mantenciones
-          <ion-badge color="primary">{{ mantenciones.length }}</ion-badge>
-        </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-list *ngIf="mantenciones.length > 0; else noMantenciones">
-          <ion-item *ngFor="let mantencion of mantenciones" class="mantencion-item" lines="none">
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <div class="mantencion-header">
-                    <h3>{{ mantencion.clienteNombre }}</h3>
-                    <ion-chip color="success">
-                      {{ formatearPrecio(mantencion.precio) }}
-                    </ion-chip>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6">
-                  <div class="mantencion-detail">
-                    <ion-icon name="calendar-outline"></ion-icon>
-                    <span>{{ formatearFechaCorta(mantencion.fecha) }}</span>
-                  </div>
-                </ion-col>
-                <ion-col size="6" *ngIf="mantencion.hora">
-                  <div class="mantencion-detail">
-                    <ion-icon name="time-outline"></ion-icon>
-                    <span>{{ mantencion.hora }}</span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <div class="chemical-levels">
-                    <span class="level-item">
-                      <ion-icon name="water-outline"></ion-icon>
-                      <strong>Cloro:</strong> <ion-chip [color]="getColorNivel(getNivelCloro(mantencion.cloro))" size="small">{{ getNivelCloro(mantencion.cloro) }}</ion-chip>
-                    </span>
-                    <span class="level-item">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      <strong>pH:</strong> <ion-chip [color]="getColorNivel(getNivelPh(mantencion.ph))" size="small">{{ getNivelPh(mantencion.ph) }}</ion-chip>
-                    </span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <div class="chemical-amounts">
-                    <span *ngIf="mantencion.cantidadCloro" class="amount-item">
-                      <ion-icon name="water-outline"></ion-icon>
-                      Cloro usado: {{ mantencion.cantidadCloro }}g
-                    </span>
-                    <span *ngIf="mantencion.cantidadSubePh" class="amount-item">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      Sube pH usado: {{ mantencion.cantidadSubePh }}g
-                    </span>
-                    <span *ngIf="mantencion.cantidadBajaPh" class="amount-item">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      Baja pH usado: {{ mantencion.cantidadBajaPh }}g
-                    </span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row *ngIf="mantencion.servicio">
-                <ion-col size="12">
-                  <div class="mantencion-detail">
-                    <ion-icon name="analytics-outline"></ion-icon>
-                    <span>{{ mantencion.servicio }}</span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12" class="ion-text-end">
-                  <ion-button fill="clear" color="danger" size="small" (click)="confirmarBorrado(mantencion)">
-                    <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-                  </ion-button>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-item>
-        </ion-list>
+          Mantenimientos Pendientes
+        </h3>
+        <ion-badge color="secondary">{{ clientesPendientes.length }}</ion-badge>
+      </div>
 
-        <ng-template #noMantenciones>
-          <div class="empty-state">
-            <ion-icon name="calendar-outline" size="large"></ion-icon>
-            <p>No hay mantenciones registradas en este período</p>
+      <div *ngIf="clientesPendientes.length === 0" class="empty-state">
+        <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
+        <h4>¡Excelente trabajo!</h4>
+        <p>No tienes mantenimientos pendientes para hoy</p>
+      </div>
+
+      <ion-card *ngFor="let cliente of clientesPendientes" class="cliente-card">
+        <ion-card-header class="header-container">
+          <div class="cliente-header">
+            <div class="cliente-info" style="display: flex; align-items: center; gap: 8px;">
+              <ion-card-title>{{ cliente.nombre }}</ion-card-title>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <ion-chip color="warning" style="height: 22px; font-size: 12px;">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <ion-label>Pendiente</ion-label>
+                </ion-chip>
+                <ion-chip color="success" style="height: 22px; font-size: 12px;">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  <ion-label>${{ formatearPrecio(cliente.precio) }}</ion-label>
+                </ion-chip>
+              </div>
+            </div>
+            <ion-card-subtitle>
+              <ion-icon name="location-outline"></ion-icon>
+              {{ cliente.direccion }}
+            </ion-card-subtitle>
           </div>
-        </ng-template>
-      </ion-card-content>
-    </ion-card>
-  </div>
+          <ion-card-content class="contenido-container">
+            <div class="detalles-cliente">
+              <p>
+                <strong>Teléfono:</strong> {{ cliente.telefono }}
+              </p>
+              <p>
+                <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
+              </p>
+            </div>
 
-  <!-- Mensaje cuando no hay datos -->
-  <div *ngIf="!isLoading && !estadisticas" class="empty-state">
-    <ion-icon name="analytics-outline" size="large"></ion-icon>
-    <p>No hay datos disponibles para el período seleccionado</p>
+            <div class="button-container">
+              <ion-button
+                expand="block"
+                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
+                class ="gradient-button">
+                <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                Completar Mantención
+              </ion-button>
+
+              <ion-button
+                fill="clear"
+                color="danger"
+                (click)="borrarMantenimiento(cliente)"
+                class="trash-button">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+
+          </ion-card-content>
+        </ion-card-header>
+      </ion-card>
+      
+    </div>
+
+    <!-- Sección de mantenciones realizadas -->
+    <div *ngIf="clientesRealizados.length > 0" class="realizados-section">
+      <div class="section-header">
+        <h3>
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          Mantenciones Realizadas
+        </h3>
+        <ion-badge color="success">{{ clientesRealizados.length }}</ion-badge>
+      </div>
+
+      <ion-list class="realizados-list">
+        <ion-item *ngFor="let cliente of clientesRealizados" class="realizado-item" (click)="deshacerMantenimiento(cliente)">
+          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+          <ion-label>
+            <h3>{{ cliente.nombre }}</h3>
+            <p>{{ cliente.direccion }}</p>
+            <p *ngIf="cliente.mantenimiento" class="mantenimiento-hora">
+              <small>Completado a las {{ cliente.mantenimiento.hora }}</small>
+            </p>
+          </ion-label>
+          <ion-note slot="end" class="precio-note">${{ formatearPrecio(cliente.precio) }}</ion-note>
+          <ion-icon name="arrow-undo" slot="end" color="medium" class="undo-icon"></ion-icon>
+        </ion-item>
+      </ion-list>
+    </div>
   </div>
 </ion-content>

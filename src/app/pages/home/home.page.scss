@@ -1,9 +1,10 @@
+
 /* ==================== */
 /* Contenedor general */
 /* ==================== */
 .container {
   padding: 16px;
-  padding-bottom: 80px;
+  padding-bottom: 80px; /* Espacio para el tab bar */
   animation: fadeIn 0.6s ease-in-out;
 }
 
@@ -177,77 +178,40 @@ ion-content {
     border-radius: 50%;
     background: var(--ion-color-primary);
   }
+}
 
-  &:hover:not(.vacio) {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
+.calendario-dia:hover:not(.vacio) {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
-  &.activo {
-    background: var(--ion-color-primary);
+.calendario-dia.activo {
+  background: var(--ion-color-primary);
+  color: white;
+  border-color: var(--ion-color-primary);
+  transform: scale(1.05);
+
+  .dia-numero {
     color: white;
-    border-color: var(--ion-color-primary);
-    transform: scale(1.05);
-
-    .dia-numero {
-      color: white;
-    }
-  }
-
-  &.hoy {
-    border-color: var(--ion-color-secondary);
-  }
-
-  &.vacio {
-    background: transparent;
-    cursor: default;
-    border: none;
   }
 }
 
-/* ==================== */
-/* Header de secciones */
-/* ==================== */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 0 4px;
-  
-  h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--ion-color-dark);
-    
-    ion-icon {
-      font-size: 1.2em;
-      color: var(--ion-color-secondary);
-    }
-  }
-  
-  ion-badge {
-    font-size: 0.9em;
-    font-weight: 600;
-  }
+.calendario-dia.hoy {
+  border-color: var(--ion-color-secondary);
 }
+
+
+.calendario-dia.vacio {
+  background: transparent;
+  cursor: default;
+  border: none;
+}
+
+
 
 /* ==================== */
 /* Tarjetas de clientes */
 /* ==================== */
-.header-container {
-  background: var(--ion-color-light);
-  padding: 12px;
-}
-
-.contenido-container {
-  background: var(--ion-color-light);
-}
-
 .cliente-card {
   border-radius: 16px;
   overflow: hidden;
@@ -255,189 +219,154 @@ ion-content {
   margin-bottom: 16px;
   animation: fadeUp 0.5s ease;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cliente-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px rgba(0,0,0,0.12);
+}
+
+.cliente-card.realizado {
+  border-left: 5px solid var(--ion-color-success);
+}
+
+/* Header dentro de card */
+.header-container {
+  padding: 12px;
+}
+
+.cliente-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+
+
+
+/* ==================== */
+/* Lista de realizados */
+/* ==================== */
+.realizados-list {
+  background: transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.realizado-item {
+  --background: rgba(255, 255, 255, 0.8);
+  --border-radius: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.12);
+    --background: rgba(40, 167, 69, 0.05);
+    transform: translateX(4px);
   }
 
-  &.realizado {
-    border-left: 5px solid var(--ion-color-success);
-    opacity: 0.8;
+  ion-icon[slot="start"] {
+    margin-right: 12px;
+    font-size: 1.2rem;
   }
 
-  .cliente-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    
-    .cliente-info {
-      flex: 1;
-      
-      ion-card-title {
-        font-size: 1.1em;
-        font-weight: 600;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-        
-        ion-chip {
-          font-size: 0.7em;
-          height: 24px;
-          margin: 0;
-        }
-      }
-      
-      ion-card-subtitle {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.9em;
-        color: var(--ion-color-medium);
-        
-        ion-icon {
-          font-size: 0.9em;
-        }
-      }
-    }
-  }
-  
-  .detalles-cliente {
-    .detalle-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-size: 0.9em;
-      color: var(--ion-color-dark);
-      
-      &:last-of-type {
-        margin-bottom: 16px;
-      }
-      
-      ion-icon {
-        font-size: 1em;
-        color: var(--ion-color-medium);
-        flex-shrink: 0;
-      }
-      
-      strong {
-        color: var(--ion-color-medium);
-        font-weight: 500;
-        margin-right: 4px;
-      }
-    }
-    
-    .action-buttons {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 12px;
-      
-      ion-button {
-        margin: 0;
-        
-        &[fill="solid"] {
-          flex: 1;
-          height: 48px;
-          font-size: 1em;
-          font-weight: 600;
-          
-          ion-icon {
-            font-size: 1.3em;
-          }
-        }
-        
-        &[fill="clear"] {
-          --padding-start: 8px;
-          --padding-end: 8px;
-          
-          ion-icon {
-            font-size: 1.2em;
-          }
-        }
-      }
-    }
-  }
-}
-
-/* ==================== */
-/* Sección de realizados */
-/* ==================== */
-.realizados-section {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--ion-color-light-shade);
-}
-
-/* ==================== */
-/* Estado vacío */
-/* ==================== */
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  
-  ion-icon {
-    font-size: 4em;
-    color: var(--ion-color-medium);
-    margin-bottom: 16px;
-  }
-  
-  h4 {
-    font-size: 1.2em;
+  h3 {
+    font-size: 1rem;
     font-weight: 600;
     color: var(--ion-color-dark);
-    margin-bottom: 8px;
+    margin: 0 0 2px 0;
   }
-  
+
   p {
+    font-size: 0.9rem;
     color: var(--ion-color-medium);
-    margin-bottom: 24px;
+    margin: 0;
+  }
+
+  .mantenimiento-hora {
+    font-size: 0.8rem;
+    color: var(--ion-color-success);
+    font-weight: 500;
+  }
+
+  .precio-note {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+  }
+
+  .undo-icon {
+    font-size: 1rem;
+    margin-left: 8px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 
 /* ==================== */
-/* Spinner de carga */
+/* Detalles mantenimiento */
 /* ==================== */
-.loading-container {
+.realizados-section h4 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.detalles-mantenimiento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 10px 0;
+}
+
+.detalle-item {
+  font-size: 0.9rem;
+  color: var(--ion-color-dark);
+}
+
+/* ==================== */
+/* Contenedor de botones */
+/* ==================== */
+.button-container {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.trash-button {
+  --border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
-  
-  ion-spinner {
-    margin-bottom: 16px;
-  }
-  
-  p {
-    color: var(--ion-color-medium);
-    font-size: 0.9em;
-  }
-}
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-/* ==================== */
-/* Responsive */
-/* ==================== */
-@media (max-width: 768px) {
-  .cliente-header {
-    flex-direction: column;
-    gap: 12px;
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
-  
-  .detalles-cliente .detalle-item {
-    flex-wrap: wrap;
-  }
-}
 
-/* ==================== */
-/* Dark theme */
-/* ==================== */
-@media (prefers-color-scheme: dark) {
-  .header-container,
-  .contenido-container {
-    background: var(--ion-color-step-50);
+  &:active {
+    transform: scale(0.95);
+  }
+
+  ion-icon {
+    font-size: 1.2rem;
   }
 }
