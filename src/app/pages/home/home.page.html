@@ -36,55 +36,54 @@
       </div>
     </div>
   
-  <!-- Calendario completo del mes -->
-  <div class="calendario-completo">
-    <div class="calendario-header">
-      <div class="mes-selector-header">
+    <!-- Calendario completo del mes -->
+    <div class="calendario-completo">
+      <div class="calendario-header">
+        <div class="mes-selector-header">
+          <div
+            class="mes-button-custom"
+            (click)="mostrarSelectorMes()">
+            <ion-icon name="calendar-outline"></ion-icon> {{ meses[mesSeleccionado].nombre || 'Mes' }}
+          </div>
+          <div class="nav-buttons">
+            <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
+              <ion-icon name="chevron-back-outline"></ion-icon>
+            </ion-button>
+            <ion-button fill="clear" size="small" (click)="cambiarMes(1)">
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Días de la semana -->
+      <div class="dias-semana">
+        <div class="dia-semana-header">Dom</div>
+        <div class="dia-semana-header">Lun</div>
+        <div class="dia-semana-header">Mar</div>
+        <div class="dia-semana-header">Mié</div>
+        <div class="dia-semana-header">Jue</div>
+        <div class="dia-semana-header">Vie</div>
+        <div class="dia-semana-header">Sáb</div>
+      </div>
+
+      <!-- Grid del calendario -->
+      <div class="calendario-grid">
         <div
-        
-          class="mes-button-custom"
-          (click)="mostrarSelectorMes()">
-          <ion-icon name="calendar-outline"></ion-icon> {{ meses[mesSeleccionado].nombre || 'Mes' }}
-        </div>
-        <div class="nav-buttons">
-          <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
-            <ion-icon name="chevron-back-outline"></ion-icon>
-          </ion-button>
-          <ion-button fill="clear" size="small" (click)="cambiarMes(1)">
-            <ion-icon name="chevron-forward-outline"></ion-icon>
-          </ion-button>
-        </div>
-      </div>
-    </div>
+          *ngFor="let dia of diasDelMes"
+          class="calendario-dia"
+          [class.hoy]="dia.esHoy"
+          [class.activo]="dia.seleccionado"
+          [class.vacio]="dia.numero === 0"
+          (click)="dia.numero !== 0 && seleccionarDia(dia)">
 
-    <!-- Días de la semana -->
-    <div class="dias-semana">
-      <div class="dia-semana-header">Dom</div>
-      <div class="dia-semana-header">Lun</div>
-      <div class="dia-semana-header">Mar</div>
-      <div class="dia-semana-header">Mié</div>
-      <div class="dia-semana-header">Jue</div>
-      <div class="dia-semana-header">Vie</div>
-      <div class="dia-semana-header">Sáb</div>
-    </div>
-
-    <!-- Grid del calendario -->
-    <div class="calendario-grid">
-      <div
-        *ngFor="let dia of diasDelMes"
-        class="calendario-dia"
-        [class.hoy]="dia.esHoy"
-        [class.activo]="dia.seleccionado"
-        [class.vacio]="dia.numero === 0"
-        (click)="dia.numero !== 0 && seleccionarDia(dia)">
-
-        <div class="dia-numero" *ngIf="dia.numero !== 0">{{ dia.numero }}</div>
-        <div class="dia-indicador" *ngIf="dia.numero !== 0 && dia.cantidadPiscinas > 0">
-          <div class="piscina-dot" *ngFor="let dot of [].constructor(dia.cantidadPiscinas)"></div>
+          <div class="dia-numero" *ngIf="dia.numero !== 0">{{ dia.numero }}</div>
+          <div class="dia-indicador" *ngIf="dia.numero !== 0 && dia.cantidadPiscinas > 0">
+            <div class="piscina-dot" *ngFor="let dot of [].constructor(dia.cantidadPiscinas)"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
     <!-- Spinner de carga -->
     <div *ngIf="isLoading" class="loading-container">
@@ -111,56 +110,52 @@
       <ion-card *ngFor="let cliente of clientesPendientes" class="cliente-card">
         <ion-card-header class="header-container">
           <div class="cliente-header">
-            <div class="cliente-info" style="display: flex; align-items: center; gap: 8px;">
-              <ion-card-title>{{ cliente.nombre }}</ion-card-title>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <ion-chip color="warning" style="height: 22px; font-size: 12px;">
-                  <ion-icon name="time-outline"></ion-icon>
-                  <ion-label>Pendiente</ion-label>
-                </ion-chip>
-                <ion-chip color="success" style="height: 22px; font-size: 12px;">
+            <div class="cliente-info">
+              <ion-card-title>
+                {{ cliente.nombre }}
+                <ion-chip color="success">
                   <ion-icon name="cash-outline"></ion-icon>
                   <ion-label>${{ formatearPrecio(cliente.precio) }}</ion-label>
                 </ion-chip>
-              </div>
+              </ion-card-title>
+              <ion-card-subtitle>
+                <ion-icon name="location-outline"></ion-icon>
+                {{ cliente.direccion }}
+              </ion-card-subtitle>
             </div>
-            <ion-card-subtitle>
-              <ion-icon name="location-outline"></ion-icon>
-              {{ cliente.direccion }}
-            </ion-card-subtitle>
           </div>
-          <ion-card-content class="contenido-container">
-            <div class="detalles-cliente">
-              <p>
-                <strong>Teléfono:</strong> {{ cliente.telefono }}
-              </p>
-              <p>
-                <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
-              </p>
+        </ion-card-header>
+
+        <ion-card-content class="contenido-container">
+          <div class="detalles-cliente">
+            <div class="detalle-item" *ngIf="cliente.telefono">
+              <ion-icon name="call-outline"></ion-icon>
+              <strong>Teléfono:</strong> {{ cliente.telefono }}
             </div>
-
-            <div class="button-container">
+            <div class="detalle-item" *ngIf="cliente.horaPreferida">
+              <ion-icon name="time-outline"></ion-icon>
+              <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
+            </div>
+            <div class="action-buttons">
               <ion-button
-                expand="block"
-                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
-                class ="gradient-button">
+                fill="solid"
+                color="secondary"
+                size="small"
+                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]">
                 <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-                Completar Mantención
+                Completar
               </ion-button>
-
               <ion-button
                 fill="clear"
                 color="danger"
-                (click)="borrarMantenimiento(cliente)"
-                class="trash-button">
+                size="medium"
+                (click)="borrarMantenimiento(cliente)">
                 <ion-icon name="trash-outline"></ion-icon>
               </ion-button>
             </div>
-
-          </ion-card-content>
-        </ion-card-header>
+          </div>
+        </ion-card-content>
       </ion-card>
-      
     </div>
 
     <!-- Sección de mantenciones realizadas -->
@@ -173,20 +168,48 @@
         <ion-badge color="success">{{ clientesRealizados.length }}</ion-badge>
       </div>
 
-      <ion-list class="realizados-list">
-        <ion-item *ngFor="let cliente of clientesRealizados" class="realizado-item" (click)="deshacerMantenimiento(cliente)">
-          <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
-          <ion-label>
-            <h3>{{ cliente.nombre }}</h3>
-            <p>{{ cliente.direccion }}</p>
-            <p *ngIf="cliente.mantenimiento" class="mantenimiento-hora">
-              <small>Completado a las {{ cliente.mantenimiento.hora }}</small>
-            </p>
-          </ion-label>
-          <ion-note slot="end" class="precio-note">${{ formatearPrecio(cliente.precio) }}</ion-note>
-          <ion-icon name="arrow-undo" slot="end" color="medium" class="undo-icon"></ion-icon>
-        </ion-item>
-      </ion-list>
+      <ion-card *ngFor="let cliente of clientesRealizados" class="cliente-card realizado">
+        <ion-card-header class="header-container">
+          <div class="cliente-header">
+            <div class="cliente-info">
+              <ion-card-title>
+                {{ cliente.nombre }}
+                <ion-chip color="success">
+                  <ion-icon name="checkmark-circle-outline"></ion-icon>
+                  <ion-label>Completado</ion-label>
+                </ion-chip>
+              </ion-card-title>
+              <ion-card-subtitle>
+                <ion-icon name="location-outline"></ion-icon>
+                {{ cliente.direccion }}
+              </ion-card-subtitle>
+            </div>
+          </div>
+        </ion-card-header>
+
+        <ion-card-content class="contenido-container">
+          <div class="detalles-cliente">
+            <div class="detalle-item" *ngIf="cliente.mantenimiento">
+              <ion-icon name="time-outline"></ion-icon>
+              <strong>Completado:</strong> {{ cliente.mantenimiento.hora }}
+            </div>
+            <div class="detalle-item" *ngIf="cliente.precio">
+              <ion-icon name="cash-outline"></ion-icon>
+              <strong>Precio:</strong> ${{ formatearPrecio(cliente.precio) }}
+            </div>
+
+            <div class="action-buttons">
+              <ion-button
+                fill="clear"
+                color="medium"
+                size="medium"
+                (click)="deshacerMantenimiento(cliente)">
+                <ion-icon name="arrow-undo-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
     </div>
   </div>
 </ion-content>

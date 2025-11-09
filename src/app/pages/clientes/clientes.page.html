@@ -44,6 +44,18 @@
       </div>
     </div>
 
+    <!-- Botón para crear cliente -->
+    <div class="create-client-section">
+      <ion-button
+        (click)="irACrearCliente()"
+        expand="full"
+        color="secondary"
+        class="create-client-button">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Crear Cliente
+      </ion-button>
+    </div>
+
     <!-- Spinner de carga -->
     <div *ngIf="isLoading" class="loading-container">
       <ion-spinner name="crescent"></ion-spinner>
@@ -172,10 +184,4 @@
     </div>
   </div>
 
-  <!-- Botón flotante para crear cliente -->
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="irACrearCliente()" color="secondary">
-      <ion-icon name="add-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
 </ion-content>

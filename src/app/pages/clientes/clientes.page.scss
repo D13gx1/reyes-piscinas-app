@@ -3,6 +3,20 @@
 ion-content {
   --padding-bottom: 100px;
 }
+// Botón crear cliente
+.create-client-section {
+  margin: 20px 0 16px;
+
+  .create-client-button {
+    --border-radius: 20px;
+    font-weight: 600;
+    height: 48px;
+
+    ion-icon {
+      font-size: 1.2em;
+    }
+  }
+}
 
 
 .header-content {
@@ -181,6 +195,7 @@ h1 {
 // Botón flotante
 ion-fab {
   bottom: 90px !important; // Mover arriba para no ser tapado por los tabs
+  right: 20px !important; // Posicionar a la derecha
 
   ion-fab-button {
     --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);

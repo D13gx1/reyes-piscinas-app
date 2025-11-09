@@ -1,24 +1,28 @@
-
 /* ==================== */
-/* Contenedor general */
+/* Variables */
 /* ==================== */
-.container {
-  padding: 16px;
-  padding-bottom: 80px; /* Espacio para el tab bar */
-  animation: fadeIn 0.6s ease-in-out;
+:root {
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --transition: all 0.2s ease;
 }
 
-// Ajuste para tabs flotantes
+/* ==================== */
+/* Layout Principal */
+/* ==================== */
+.container {
+  padding: 16px 16px 80px;
+}
+
 ion-content {
   --padding-bottom: 100px;
 }
 
 /* ==================== */
-/* Fecha */
+/* Sección Fecha */
 /* ==================== */
 .fecha-section {
-  margin: 8px 0 16px 0;
-  animation: fadeIn 0.8s ease;
+  margin: 8px 0 16px;
 }
 
 .fecha-display {
@@ -29,32 +33,25 @@ ion-content {
   padding: 16px;
   background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   color: white;
-}
-
-.day-section {
-  text-align: center;
 }
 
 .day-number {
   font-size: 2.5rem;
   font-weight: 800;
   line-height: 1;
-  margin-bottom: 4px;
 }
 
 .day-short {
-  font-size: 1.0rem;
+  font-size: 1rem;
   font-weight: 600;
   opacity: 0.9;
-  letter-spacing: 1px;
 }
 
 .maintenance-info {
   font-size: 1.1rem;
   font-weight: 500;
-  opacity: 0.95;
 }
 
 /* ==================== */
@@ -65,15 +62,7 @@ ion-content {
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  animation: fadeUp 0.5s ease;
-}
-
-.calendario-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 12px;
+  box-shadow: var(--shadow);
 }
 
 .mes-selector-header {
@@ -81,18 +70,6 @@ ion-content {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-
-  .nav-buttons {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-
-    ion-button {
-      --padding-start: 6px;
-      --padding-end: 6px;
-      --color: var(--ion-color-primary);
-    }
-  }
 }
 
 .mes-button-custom {
@@ -101,28 +78,13 @@ ion-content {
   padding: 8px 16px;
   font-size: 0.9rem;
   font-weight: 500;
-  min-width: 110px;
-  height: 36px;
   border: 1px solid #e0e0e0;
   border-radius: 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
   gap: 8px;
-
-  &:hover {
-    background: #f0f0f0;
-    border-color: #d0d0d0;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    background: #e8e8e8;
-    transform: translateY(0) scale(0.98);
-  }
+  cursor: pointer;
+  transition: var(--transition);
 }
 
 .dias-semana {
@@ -156,8 +118,7 @@ ion-content {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: all 0.25s ease;
-  position: relative;
+  transition: var(--transition);
 
   .dia-numero {
     font-size: 1rem;
@@ -178,195 +139,171 @@ ion-content {
     border-radius: 50%;
     background: var(--ion-color-primary);
   }
-}
 
-.calendario-dia:hover:not(.vacio) {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
+  &.activo {
+    background: var(--ion-color-primary);
+    border-color: var(--ion-color-primary);
 
-.calendario-dia.activo {
-  background: var(--ion-color-primary);
-  color: white;
-  border-color: var(--ion-color-primary);
-  transform: scale(1.05);
+    .dia-numero {
+      color: white;
+    }
+  }
 
-  .dia-numero {
-    color: white;
+  &.hoy {
+    border-color: var(--ion-color-secondary);
+  }
+
+  &.vacio {
+    background: transparent;
+    cursor: default;
+    border: none;
   }
 }
 
-.calendario-dia.hoy {
-  border-color: var(--ion-color-secondary);
-}
-
-
-.calendario-dia.vacio {
-  background: transparent;
-  cursor: default;
-  border: none;
-}
-
-
-
 /* ==================== */
-/* Tarjetas de clientes */
+/* Headers de Sección */
 /* ==================== */
-.cliente-card {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-  margin-bottom: 16px;
-  animation: fadeUp 0.5s ease;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.cliente-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px rgba(0,0,0,0.12);
-}
-
-.cliente-card.realizado {
-  border-left: 5px solid var(--ion-color-success);
-}
-
-/* Header dentro de card */
-.header-container {
-  padding: 12px;
-}
-
-.cliente-header {
+.section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-}
-
-
-
-
-/* ==================== */
-/* Lista de realizados */
-/* ==================== */
-.realizados-list {
-  background: transparent;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.realizado-item {
-  --background: rgba(255, 255, 255, 0.8);
-  --border-radius: 12px;
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --padding-top: 12px;
-  --padding-bottom: 12px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    --background: rgba(40, 167, 69, 0.05);
-    transform: translateX(4px);
-  }
-
-  ion-icon[slot="start"] {
-    margin-right: 12px;
-    font-size: 1.2rem;
-  }
+  align-items: center;
+  margin-bottom: 16px;
 
   h3 {
-    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1.1em;
     font-weight: 600;
     color: var(--ion-color-dark);
-    margin: 0 0 2px 0;
+  }
+}
+
+/* ==================== */
+/* Cards Minimalistas */
+/* ==================== */
+.cliente-card {
+  margin: 0 0 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid #f0f0f0;
+  background: #ffffff;
+  transition: var(--transition);
+
+  .header-container {
+    padding: 16px 16px 12px;
+    
+    ion-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    ion-card-subtitle {
+      font-size: 0.85rem;
+      color: #6c757d;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
   }
 
-  p {
-    font-size: 0.9rem;
-    color: var(--ion-color-medium);
-    margin: 0;
-  }
+  .contenido-container {
+    padding: 0 16px 16px;
 
-  .mantenimiento-hora {
-    font-size: 0.8rem;
-    color: var(--ion-color-success);
-    font-weight: 500;
-  }
+    .detalle-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 0.85rem;
+      color: #495057;
 
-  .precio-note {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--ion-color-primary);
-  }
+      ion-icon {
+        font-size: 1rem;
+        color: #6c757d;
+      }
 
-  .undo-icon {
-    font-size: 1rem;
-    margin-left: 8px;
-    opacity: 0.6;
-    transition: opacity 0.2s ease;
+      strong {
+        color: #2c3e50;
+        font-weight: 500;
+      }
+    }
 
-    &:hover {
-      opacity: 1;
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+
+      ion-button {
+        margin: 0;
+        --border-radius: 8px;
+        font-size: 0.8rem;
+        height: 36px;
+
+        &:first-child {
+          --background: #2c3e50;
+          --color: white;
+          flex: 1;
+        }
+
+        &:last-child {
+          --background: #f8f9fa;
+          --color: #6c757d;
+          min-width: 36px;
+        }
+      }
     }
   }
 }
 
 /* ==================== */
-/* Detalles mantenimiento */
+/* Estados Especiales */
 /* ==================== */
-.realizados-section h4 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.detalles-mantenimiento {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
-  margin: 10px 0;
-}
-
-.detalle-item {
-  font-size: 0.9rem;
-  color: var(--ion-color-dark);
-}
-
-/* ==================== */
-/* Contenedor de botones */
-/* ==================== */
-.button-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.trash-button {
-  --border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  --padding-start: 0;
-  --padding-end: 0;
-  --padding-top: 0;
-  --padding-bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f8f9fa;
+  border-radius: var(--radius);
+  margin: 20px 0;
 
   ion-icon {
-    font-size: 1.2rem;
+    font-size: 2.5rem;
+    color: #27ae60;
+    margin-bottom: 12px;
+  }
+
+  h4 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+}
+
+.realizados-section {
+  margin-top: 24px;
+
+  .cliente-card.realizado {
+    background: #f8f9fa;
+    border-color: #e9ecef;
+  }
+}
+
+/* ==================== */
+/* Spinner */
+/* ==================== */
+.loading-container {
+  text-align: center;
+  padding: 40px 20px;
+
+  ion-spinner {
+    --color: var(--ion-color-primary);
+    margin-bottom: 16px;
   }
 }
