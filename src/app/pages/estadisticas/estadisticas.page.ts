@@ -98,6 +98,7 @@ export class EstadisticasPage implements OnInit {
   estadisticasQuimicas: any = null;
   isLoading = false;
   
+  
   // Fechas para selección
   fechaSeleccionada = new Date().toISOString().split('T')[0];
   mesSeleccionado = new Date().getMonth() + 1;
@@ -120,6 +121,12 @@ export class EstadisticasPage implements OnInit {
   ];
 
   anios = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+
+  nombrePeriodos: Record<string, string> = {
+    dia: 'Día',
+    mes: 'Mes',
+    anio: 'Año'
+  };
 
   constructor(
     private estadisticasService: EstadisticasService,
