@@ -76,6 +76,10 @@
                       <span class="label">Ajuste:</span>
                       <span class="value">{{ item.cantidadCloro > 0 ? '+' : '' }}{{ item.cantidadCloro }} g</span>
                     </div>
+                    <div class="q-row" *ngIf="item.cantidadPastillas">
+                      <span class="label">Pastillas:</span>
+                      <span class="value">{{ item.cantidadPastillas }}</span>
+                    </div>
                   </div>
 
                   <!-- pH (derecha) -->
