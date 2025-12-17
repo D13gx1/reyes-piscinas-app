@@ -90,6 +90,7 @@ export class CompletarMantencionPage implements OnInit {
       cantidadCloro: [0, [Validators.required, Validators.min(0)]],
       cantidadBajaPh: [0, [Validators.required, Validators.min(0)]],
       cantidadSubePh: [0, [Validators.required, Validators.min(0)]],
+      cantidadPastillas: [0, [Validators.required, Validators.min(0)]],
       servicio: ['Mantenimiento general', Validators.required],
       notas: ['']
     });
@@ -153,6 +154,7 @@ export class CompletarMantencionPage implements OnInit {
       cantidadCloro: formValues.cantidadCloro,
       cantidadBajaPh: formValues.cantidadBajaPh,
       cantidadSubePh: formValues.cantidadSubePh,
+      cantidadPastillas: formValues.cantidadPastillas,
       estadoCloro: this.cloroSeleccionado,
       estadoPh: this.phSeleccionado,
       notas: formValues.notas

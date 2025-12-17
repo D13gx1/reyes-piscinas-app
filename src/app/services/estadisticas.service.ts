@@ -24,6 +24,7 @@ export interface Mantencion {
   cantidadCloro?: number;
   cantidadBajaPh?: number;
   cantidadSubePh?: number;
+  cantidadPastillas?: number;
   servicio: string;
   hora?: string;
   tipoPh?: 'Sube pH' | 'Baja pH';
@@ -126,6 +127,7 @@ export class EstadisticasService {
                       cantidadCloro: mantencion.cantidadCloro || 0,
                       cantidadBajaPh: mantencion.cantidadBajaPh || 0,
                       cantidadSubePh: mantencion.cantidadSubePh || 0,
+                      cantidadPastillas: mantencion.cantidadPastillas || 0,
                       tipoPh: mantencion.tipoPh
                     });
                   }
@@ -195,6 +197,7 @@ export class EstadisticasService {
                       cantidadCloro: mantencion.cantidadCloro || 0,
                       cantidadBajaPh: mantencion.cantidadBajaPh || 0,
                       cantidadSubePh: mantencion.cantidadSubePh || 0,
+                      cantidadPastillas: mantencion.cantidadPastillas || 0,
                       tipoPh: mantencion.tipoPh
                     });
                   }
@@ -260,6 +263,7 @@ export class EstadisticasService {
         const totalPh = mantenciones.reduce((sum, m) => sum + m.ph, 0);
         const totalSubePh = mantenciones.reduce((sum, m) => sum + (m.cantidadSubePh || 0), 0);
         const totalBajaPh = mantenciones.reduce((sum, m) => sum + (m.cantidadBajaPh || 0), 0);
+        const totalPastillas = mantenciones.reduce((sum, m) => sum + (m.cantidadPastillas || 0), 0);
         const cantidad = mantenciones.length;
 
         return {
@@ -269,6 +273,7 @@ export class EstadisticasService {
           totalPh,
           totalSubePh,
           totalBajaPh,
+          totalPastillas,
           cantidadMantenciones: cantidad
         };
       })

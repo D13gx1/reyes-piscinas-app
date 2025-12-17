@@ -72,15 +72,6 @@ export class LoginPage implements OnInit, OnDestroy {
 
   async loginWithGoogle(): Promise<void> {
   // ALERT TEMPORAL PARA DEBUG
-  const platformInfo = {
-    isCapacitor: this.platform.is('capacitor'),
-    isAndroid: this.platform.is('android'),
-    isMobile: this.platform.is('mobile'),
-    platforms: this.platform.platforms()
-  };
-  
-  alert('Platform Info: ' + JSON.stringify(platformInfo, null, 2));
-  
   console.log('Login button clicked');
   const error = await this.auth.googleLogin();
   if (error) {
