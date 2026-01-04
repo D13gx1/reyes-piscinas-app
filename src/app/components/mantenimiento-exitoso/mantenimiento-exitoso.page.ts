@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon, IonButton } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { checkmarkCircleOutline } from 'ionicons/icons';
+import { logoWhatsapp } from 'ionicons/icons';
 
 addIcons({
   'checkmark-circle-outline': checkmarkCircleOutline
+  , 'logo-whatsapp': logoWhatsapp
 });
 
 @Component({
@@ -15,17 +17,68 @@ addIcons({
   templateUrl: './mantenimiento-exitoso.page.html',
   styleUrls: ['./mantenimiento-exitoso.page.scss'],
   standalone: true,
-  imports: [IonIcon, CommonModule, FormsModule]
+  imports: [IonIcon, IonButton, CommonModule, FormsModule]
 })
 export class MantenimientoExitosoPage implements OnInit {
 
-  constructor(private router: Router) { }
+  cliente: any = null;
+  mantencion: any = null;
+
+  constructor(private router: Router) {
+    // intentar leer estado de navegación
+    const navState: any = history.state || {};
+    if (navState && (navState.cliente || navState.mantencion)) {
+      this.cliente = navState.cliente || null;
+      this.mantencion = navState.mantencion || null;
+    }
+  }
 
   ngOnInit() {
-    // Navigate back to home after 3 seconds
-    setTimeout(() => {
-      this.router.navigate(['/tabs/home']);
-    }, 3000);
+    // Do not auto-navigate; show buttons for user actions
+  }
+
+  volverHome() {
+    this.router.navigate(['/tabs/home']);
+  }
+
+  enviarWhatsApp() {
+    const telefono = this.cliente?.telefono || this.cliente?.telefonoPrincipal || '';
+    if (!telefono) {
+      window.alert('No se encontró número de teléfono del cliente');
+      return;
+    }
+
+    const lines: string[] = [];
+    lines.push(`Hola ${this.cliente?.nombre || ''}, te envío los detalles de la mantención:`);
+    if (this.mantencion) {
+      lines.push(`Fecha: ${this.mantencion.fecha}${this.mantencion.hora ? ' ' + this.mantencion.hora : ''}`);
+
+      const cloroMedido = this.mantencion.cloro !== undefined ? this.mantencion.cloro : '';
+      const cantidadCloro = this.mantencion.cantidadCloro ? `, Cloro usado: ${this.mantencion.cantidadCloro}g` : '';
+      lines.push(`Cloro: ${this.mantencion.estadoCloro}`);
+
+      const phMedido = this.mantencion.ph !== undefined ? this.mantencion.ph : '';
+      const ajustesPh: string[] = [];
+      if (this.mantencion.cantidadSubePh) ajustesPh.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
+      if (this.mantencion.cantidadBajaPh) ajustesPh.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
+      lines.push(`pH: ${this.mantencion.estadoPh}`);
+
+      const quimicos: string[] = [];
+      if (this.mantencion.cantidadCloro) quimicos.push(`Cloro: ${this.mantencion.cantidadCloro}g`);
+      if (this.mantencion.cantidadSubePh) quimicos.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
+      if (this.mantencion.cantidadBajaPh) quimicos.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
+      if (this.mantencion.cantidadPastillas) quimicos.push(`Pastillas: ${this.mantencion.cantidadPastillas}`);
+      if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
+    }
+
+    if (this.cliente?.precio) {
+      lines.push(`Valor mantención: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(this.cliente.precio)}`);
+    }
+
+    const text = encodeURIComponent(lines.join('\n'));
+    const phone = telefono.replace(/[^+0-9]/g, '');
+    const url = `https://wa.me/${phone}?text=${text}`;
+    window.open(url, '_blank');
   }
 
 }

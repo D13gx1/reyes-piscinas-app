@@ -3,6 +3,57 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.pay-button.whatsapp ion-icon {
+  color: #128C7E; /* whatsapp green */
+}
+
+.top-action {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.bottom-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* Use Ionic CSS variables to style ion-button reliably */
+.pay-button,
+.home-button {
+  --background: #f3f4f6;
+  --color: #111827;
+  --border-radius: 10px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  height: 44px;
+  text-transform: none;
+  box-shadow: 0 1px 3px rgba(16,24,40,0.06);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.pay-button ion-icon,
+.home-button ion-icon { font-size: 1rem; }
+
+.home-button {
+  /* ensure variables override Ionic defaults */
+  --background: #f3f4f6 !important;
+  --color: #111827 !important;
+}
+
+.success-title { text-transform: uppercase; }
   padding: 1rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }

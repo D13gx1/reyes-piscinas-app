@@ -54,6 +54,11 @@ export interface Cliente {
     estadoCloro?: string; // Nuevo campo para estado del cloro
     estadoPh?: string; // Nuevo campo para estado del pH
     hora?: string; // Nuevo campo para la hora del mantenimiento
+    // Campos de pago
+    pagado?: boolean | string;
+    pago?: boolean | string;
+    estadoPago?: string;
+    fechaPago?: string;
   }[];
   activo: boolean;
 }
@@ -274,6 +279,65 @@ export class ClienteService {
           // Actualizar el cliente con el historial modificado
           return this.updateCliente(cliente).pipe(
             map(() => void 0) // devolvemos void para que coincida con la firma
+          );
+        }
+        throw new Error('Cliente no encontrado o sin historial');
+      })
+    );
+  }
+
+  // Marcar un registro del historial como pagado
+  marcarPagoHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
+    return this.getClienteById(clienteId).pipe(
+      switchMap(cliente => {
+        if (cliente && cliente.historial) {
+          let encontrado = false;
+          cliente.historial = cliente.historial.map(registro => {
+            if (registro.fecha === fecha && (registro.hora || '00:00') === (hora || '00:00')) {
+              encontrado = true;
+              return {
+                ...registro,
+                pagado: true,
+                fechaPago: new Date().toISOString()
+              };
+            }
+            return registro;
+          });
+
+          if (!encontrado) {
+            throw new Error('Registro de historial no encontrado para marcar pago');
+          }
+
+          return this.updateCliente(cliente).pipe(
+            map(() => void 0)
+          );
+        }
+        throw new Error('Cliente no encontrado o sin historial');
+      })
+    );
+  }
+
+  // Deshacer (quitar) el marcado de pago en un registro del historial
+  deshacerPagoHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
+    return this.getClienteById(clienteId).pipe(
+      switchMap(cliente => {
+        if (cliente && cliente.historial) {
+          let encontrado = false;
+          cliente.historial = cliente.historial.map(registro => {
+            if (registro.fecha === fecha && (registro.hora || '00:00') === (hora || '00:00')) {
+              encontrado = true;
+              const { pagado, fechaPago, pago, estadoPago, ...rest } = registro as any;
+              return { ...rest };
+            }
+            return registro;
+          });
+
+          if (!encontrado) {
+            throw new Error('Registro de historial no encontrado para deshacer pago');
+          }
+
+          return this.updateCliente(cliente).pipe(
+            map(() => void 0)
           );
         }
         throw new Error('Cliente no encontrado o sin historial');

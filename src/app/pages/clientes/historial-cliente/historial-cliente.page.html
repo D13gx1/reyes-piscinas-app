@@ -110,6 +110,28 @@
                 </div>
               </div>
             </div>
+            <div class="accion-item" style="margin-top:12px; text-align:right;">
+              <ng-container *ngIf="item.pagado; else botonPagoCliente">
+                <ion-button class="pay-button" fill="clear" size="small" (click)="confirmarDeshacerPago(item)">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  <span>Deshacer pago</span>
+                </ion-button>
+              </ng-container>
+              <ng-template #botonPagoCliente>
+                <ion-button class="pay-button" fill="clear" color="success" size="small" (click)="confirmarPago(item)">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  <span>Pago realizado</span>
+                </ion-button>
+                <ion-button class="pay-button whatsapp" fill="clear" size="small" (click)="enviarWhatsApp(item)">
+                  <ion-icon name="logo-whatsapp"></ion-icon>
+                  <span>Enviar</span>
+                </ion-button>
+              </ng-template>
+
+              <ion-button fill="clear" color="danger" size="small" (click)="confirmarBorrado(item)">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
           </ion-card-content>
         </ion-card>
       </div>

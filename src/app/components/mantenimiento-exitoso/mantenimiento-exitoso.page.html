@@ -1,9 +1,23 @@
 <div class="success-page">
   <div class="success-container">
+    
+
     <div class="success-icon">
       <ion-icon name="checkmark-circle-outline" class="animated-check"></ion-icon>
     </div>
     <h1 class="success-title">¡Mantención Realizada con Éxito!</h1>
     <p class="success-message">La mantención ha sido completada correctamente.</p>
+
+    <div class="bottom-action">
+      <ion-button class="pay-button whatsapp" fill="clear" size="small" (click)="enviarWhatsApp()">
+        <ion-icon name="logo-whatsapp"></ion-icon>
+        <span>Enviar detalles por WhatsApp</span>
+      </ion-button>
+
+      <ion-button class="pay-button home-button" expand="block" (click)="volverHome()">
+        <ion-icon name="arrow-back"></ion-icon>
+        <span>Volver al Home</span>
+      </ion-button>
+    </div>
   </div>
 </div>

@@ -28,6 +28,11 @@ export interface Mantencion {
   servicio: string;
   hora?: string;
   tipoPh?: 'Sube pH' | 'Baja pH';
+  // Campos relacionados a pago
+  pagado?: boolean | string;
+  pago?: boolean | string;
+  estadoPago?: string;
+  fechaPago?: string;
 }
 
 @Injectable({
@@ -129,6 +134,12 @@ export class EstadisticasService {
                       cantidadSubePh: mantencion.cantidadSubePh || 0,
                       cantidadPastillas: mantencion.cantidadPastillas || 0,
                       tipoPh: mantencion.tipoPh
+                      ,
+                      // incluir campos de pago si existen en el historial
+                      pagado: mantencion.pagado,
+                      pago: mantencion.pago,
+                      estadoPago: mantencion.estadoPago,
+                      fechaPago: mantencion.fechaPago
                     });
                   }
                 });
@@ -199,6 +210,12 @@ export class EstadisticasService {
                       cantidadSubePh: mantencion.cantidadSubePh || 0,
                       cantidadPastillas: mantencion.cantidadPastillas || 0,
                       tipoPh: mantencion.tipoPh
+                      ,
+                      // incluir campos de pago si existen en el historial
+                      pagado: mantencion.pagado,
+                      pago: mantencion.pago,
+                      estadoPago: mantencion.estadoPago,
+                      fechaPago: mantencion.fechaPago
                     });
                   }
                 });
@@ -276,6 +293,49 @@ export class EstadisticasService {
           totalPastillas,
           cantidadMantenciones: cantidad
         };
+      })
+    );
+  }
+
+  // Devuelve las mantenciones pagadas en el rango y el total de dinero pagado
+  clientePagoListo(fechaInicio: string, fechaFin: string): Observable<{ dineroPagado: number; mantenciones: Mantencion[] }> {
+    return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
+      map(mantenciones => {
+        const esPagado = (m: any) => {
+          if (m == null) return false;
+          // Soporta varias formas comunes de almacenar pago
+          if (m.pagado === true) return true;
+          if (typeof m.pagado === 'string' && /^(si|sí|true)$/i.test(m.pagado)) return true;
+          if (m.pago === true) return true;
+          if (typeof m.pago === 'string' && /^(si|sí|true)$/i.test(m.pago)) return true;
+          if (m.estadoPago && typeof m.estadoPago === 'string' && /^(pagado|completado)$/i.test(m.estadoPago)) return true;
+          return false;
+        };
+
+        const pagadas = mantenciones.filter(m => esPagado(m));
+        const dineroPagado = pagadas.reduce((sum, m) => sum + (m.precio || 0), 0);
+        return { dineroPagado, mantenciones: pagadas };
+      })
+    );
+  }
+
+  // Devuelve las mantenciones pendientes de pago en el rango y el total pendiente
+  clientesPagoPendiente(fechaInicio: string, fechaFin: string): Observable<{ dineroPendiente: number; mantenciones: Mantencion[] }> {
+    return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
+      map(mantenciones => {
+        const esPagado = (m: any) => {
+          if (m == null) return false;
+          if (m.pagado === true) return true;
+          if (typeof m.pagado === 'string' && /^(si|sí|true)$/i.test(m.pagado)) return true;
+          if (m.pago === true) return true;
+          if (typeof m.pago === 'string' && /^(si|sí|true)$/i.test(m.pago)) return true;
+          if (m.estadoPago && typeof m.estadoPago === 'string' && /^(pagado|completado)$/i.test(m.estadoPago)) return true;
+          return false;
+        };
+
+        const pendientes = mantenciones.filter(m => !esPagado(m));
+        const dineroPendiente = pendientes.reduce((sum, m) => sum + (m.precio || 0), 0);
+        return { dineroPendiente, mantenciones: pendientes };
       })
     );
   }

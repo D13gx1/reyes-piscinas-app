@@ -176,7 +176,8 @@ export class CompletarMantencionPage implements OnInit {
     // Actualizar el cliente en la base de datos
     this.clienteService.updateCliente(this.cliente).subscribe({
       next: () => {
-        this.router.navigate(['/mantenimiento-exitoso']);
+        // Navegar a la página de éxito pasando el cliente y el registro para poder enviar detalles
+        this.router.navigate(['/mantenimiento-exitoso'], { state: { cliente: this.cliente, mantencion: nuevoRegistro } });
       },
       error: (error) => {
         console.error('Error al guardar mantención:', error);

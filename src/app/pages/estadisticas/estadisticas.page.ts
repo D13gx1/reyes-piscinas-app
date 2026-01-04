@@ -97,6 +97,10 @@ export class EstadisticasPage implements OnInit {
   mantenciones: Mantencion[] = [];
   estadisticasQuimicas: any = null;
   isLoading = false;
+  dineroPagado = 0;
+  dineroPendiente = 0;
+  clientesPagados: Mantencion[] = [];
+  clientesPendientes: Mantencion[] = [];
   
   
   // Fechas para selección
@@ -165,6 +169,7 @@ export class EstadisticasPage implements OnInit {
         this.estadisticas = stats;
         this.cargarMantencionesDetalladas();
         this.cargarEstadisticasQuimicas();
+        this.cargarDineroPagos();
         this.isLoading = false;
       },
       error: (err) => {
@@ -180,6 +185,7 @@ export class EstadisticasPage implements OnInit {
         this.estadisticas = stats;
         this.cargarMantencionesDetalladas();
         this.cargarEstadisticasQuimicas();
+        this.cargarDineroPagos();
         this.isLoading = false;
       },
       error: (err) => {
@@ -195,11 +201,36 @@ export class EstadisticasPage implements OnInit {
         this.estadisticas = stats;
         this.cargarMantencionesDetalladas();
         this.cargarEstadisticasQuimicas();
+        this.cargarDineroPagos();
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error cargando estadísticas del año:', err);
         this.isLoading = false;
+      }
+    });
+  }
+
+  cargarDineroPagos() {
+    if (!this.estadisticas) return;
+
+    this.estadisticasService.clientePagoListo(this.estadisticas.fechaInicio, this.estadisticas.fechaFin).subscribe({
+      next: (res) => {
+        this.dineroPagado = res.dineroPagado || 0;
+        this.clientesPagados = res.mantenciones || [];
+      },
+      error: (err) => {
+        console.error('Error cargando clientes pagados:', err);
+      }
+    });
+
+    this.estadisticasService.clientesPagoPendiente(this.estadisticas.fechaInicio, this.estadisticas.fechaFin).subscribe({
+      next: (res) => {
+        this.dineroPendiente = res.dineroPendiente || 0;
+        this.clientesPendientes = res.mantenciones || [];
+      },
+      error: (err) => {
+        console.error('Error cargando clientes pendientes:', err);
       }
     });
   }
@@ -327,6 +358,66 @@ export class EstadisticasPage implements OnInit {
       error: (error) => {
         console.error('Error al borrar el registro:', error);
         this.mostrarToast('Error al eliminar el registro');
+      }
+    });
+  }
+
+  async confirmarPago(mantencion: Mantencion) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar pago',
+      message: `¿Marcar como pagado el servicio para ${mantencion.clienteNombre} del ${this.formatearFechaCorta(mantencion.fecha)}?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Marcar pago', handler: () => this.marcarPago(mantencion) }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  marcarPago(mantencion: Mantencion) {
+    const clienteId = mantencion.clienteId;
+    const fecha = mantencion.fecha;
+    const hora = mantencion.hora || '00:00';
+
+    this.clienteService.marcarPagoHistorial(clienteId, fecha, hora).subscribe({
+      next: () => {
+        this.mostrarToast('Pago registrado correctamente');
+        this.cargarEstadisticas();
+      },
+      error: (err) => {
+        console.error('Error marcando pago:', err);
+        this.mostrarToast('Error al registrar pago');
+      }
+    });
+  }
+
+  async confirmarDeshacerPago(mantencion: Mantencion) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar deshacer pago',
+      message: `¿Deshacer pago del servicio para ${mantencion.clienteNombre} del ${this.formatearFechaCorta(mantencion.fecha)}?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Deshacer pago', handler: () => this.deshacerPago(mantencion) }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  deshacerPago(mantencion: Mantencion) {
+    const clienteId = mantencion.clienteId;
+    const fecha = mantencion.fecha;
+    const hora = mantencion.hora || '00:00';
+
+    this.clienteService.deshacerPagoHistorial(clienteId, fecha, hora).subscribe({
+      next: () => {
+        this.mostrarToast('Pago deshecho correctamente');
+        this.cargarEstadisticas();
+      },
+      error: (err) => {
+        console.error('Error deshaciendo pago:', err);
+        this.mostrarToast('Error al deshacer pago');
       }
     });
   }

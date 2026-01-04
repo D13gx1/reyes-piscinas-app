@@ -168,6 +168,35 @@ ion-button[color="danger"] {
 }
 }
 
+/* Estilo personalizado para botones de pago */
+.pay-button {
+  --background: transparent;
+  background: #f3f4f6; /* light gray */
+  color: #1f2937; /* dark gray text */
+  border-radius: 10px;
+  padding: 6px 10px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(16,24,40,0.06);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.pay-button ion-icon {
+  font-size: 1rem;
+  color: #065f46; /* a subtle green for icon */
+}
+
+.pay-button {
+  text-transform: none;
+}
+
+.pay-button span {
+  margin-left: 6px;
+  text-transform: none;
+}
+
 
 // Estilos para las tarjetas
 ion-card {
