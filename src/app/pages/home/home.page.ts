@@ -76,6 +76,9 @@ export class HomePage implements OnInit {
   clientesRealizados: ClienteDelDia[] = [];
   isLoading = false;
   progresoDelDia = 0;
+  // Contador de clientes borrados (saltados) para la fecha seleccionada
+  deletedTodayCount = 0;
+  deletedClientsList: { id: string; nombre: string }[] = [];
   
   // Propiedades del calendario
   fechaActual = new Date();
@@ -113,6 +116,57 @@ export class HomePage implements OnInit {
 
   ngOnInit() {
     this.cargarClientesDelDia();
+  }
+
+  async deshacerBorrado(clienteId: string) {
+    if (!this.fechaSeleccionada) return;
+    const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
+
+    this.clienteService.getClienteById(clienteId).subscribe({
+      next: (clienteCompleto) => {
+        // Remover la fecha de skippedDates
+        (clienteCompleto as any).skippedDates = (clienteCompleto as any).skippedDates || [];
+        (clienteCompleto as any).skippedDates = (clienteCompleto as any).skippedDates.filter((d: string) => d !== fechaSeleccionadaStr);
+
+        // Remover entradas 'saltada' del historial para esa fecha
+        clienteCompleto.historial = (clienteCompleto.historial || []).filter(h => !(h.fecha === fechaSeleccionadaStr && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada')))));
+
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            this.showToast('Borrado deshecho ✅', 'success');
+            this.cargarClientesDelDia();
+          },
+          error: (err) => {
+            console.error('Error al deshacer borrado:', err);
+            this.showToast('Error al deshacer borrado', 'danger');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error obteniendo cliente para deshacer:', err);
+        this.showToast('Error al deshacer borrado', 'danger');
+      }
+    });
+  }
+
+  async mostrarClientesBorrados() {
+    if (!this.deletedClientsList || this.deletedClientsList.length === 0) {
+      this.showToast('No hay clientes borrados para esta fecha', 'primary');
+      return;
+    }
+
+    // Usar ActionSheet para permitir deshacer por cliente
+    const buttons = this.deletedClientsList.map(c => ({
+      text: `${c.nombre} — Deshacer`,
+      handler: () => this.deshacerBorrado(c.id)
+    }));
+    buttons.push({ text: 'Cancelar', role: 'cancel' } as any);
+
+    const action = await this.actionSheetController.create({
+      header: `Clientes borrados (${this.deletedTodayCount})`,
+      buttons
+    });
+    await action.present();
   }
 
   configurarFecha() {
@@ -318,7 +372,7 @@ export class HomePage implements OnInit {
         // Fecha seleccionada en formato string
         const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
 
-        // Filtrar clientes que tienen mantenimiento en el día seleccionado y no han sido completados
+        // Filtrar clientes que tienen mantenimiento en el día seleccionado y no han sido completados o marcados como saltados
         const clientesDelDia = clientes.filter(cliente => {
           if (!cliente.activo || !cliente.programacion) {
             return false;
@@ -328,9 +382,15 @@ export class HomePage implements OnInit {
           const tieneMantenimientoHoy = diasProgramados.includes(this.diaHoy);
 
           // Verificar que no haya un registro de mantenimiento para el día seleccionado
-          const yaCompletado = cliente.historial.some(h => h.fecha === fechaSeleccionadaStr);
+          const yaCompletado = (cliente.historial || []).some(h => h.fecha === fechaSeleccionadaStr && h.estadoCloro !== 'saltada');
 
-          return tieneMantenimientoHoy && !yaCompletado;
+          // Verificar marcados como saltados mediante historial o skippedDates
+          const estaSaltadoHist = (cliente.historial || []).some(h => h.fecha === fechaSeleccionadaStr && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'))));
+          const estaSaltadoArray = (cliente as any).skippedDates ? (cliente as any).skippedDates.includes(fechaSeleccionadaStr) : false;
+
+          const estaSaltado = estaSaltadoHist || estaSaltadoArray;
+
+          return tieneMantenimientoHoy && !yaCompletado && !estaSaltado;
         });
 
         // Convertir a formato ClienteDelDia
@@ -370,11 +430,24 @@ export class HomePage implements OnInit {
 
         this.maintenanceCount = this.clientesPendientes.length;
         this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
+
+        // Calcular clientes borrados (saltados) para la fecha seleccionada
+        const fechaSeleccionadaStrLocal = fechaSeleccionadaStr; // alias local
+        this.deletedClientsList = clientes.filter(c => {
+          const saltadoHist = (c.historial || []).some(h => h.fecha === fechaSeleccionadaStrLocal && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'))));
+          const saltadoArr = (c as any).skippedDates ? (c as any).skippedDates.includes(fechaSeleccionadaStrLocal) : false;
+          return saltadoHist || saltadoArr;
+        }).map(c => ({ id: c.id || '', nombre: c.nombre }));
+        this.deletedTodayCount = this.deletedClientsList.length;
+        console.log('Deleted clients computed:', this.deletedTodayCount, this.deletedClientsList);
+        console.log('Deleted clients computed:', this.deletedTodayCount, this.deletedClientsList);
+
         this.calcularProgreso();
         this.actualizarEventosCalendario();
         this.isLoading = false;
 
         console.log('Clientes para el día seleccionado:', this.clientesPendientes);
+        console.log('Clientes borrados para la fecha:', this.deletedClientsList);
       },
       error: (err) => {
         console.error('Error al cargar clientes:', err);
@@ -750,15 +823,21 @@ export class HomePage implements OnInit {
           text: 'Borrar',
           cssClass: 'danger',
           handler: () => {
-            // Agregar registro de "saltada" al historial para evitar que reaparezca
-            this.agregarRegistroSaltado(cliente);
-
+            // Actualizar UI inmediatamente para evitar que se vea el cliente re-aparecer
             this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
+            // Añadir al contador local y lista de borrados
+            this.deletedClientsList.push({ id: cliente.id, nombre: cliente.nombre });
+            this.deletedTodayCount = this.deletedClientsList.length;
 
             this.maintenanceCount = this.clientesPendientes.length;
             this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
             this.calcularProgreso();
             this.actualizarEventosCalendario();
+
+            // Luego persistir como registro saltado en la base de datos (si falla, revertimos)
+            
+            this.agregarRegistroSaltado(cliente);
+
             this.showToast(`Mantención de ${cliente.nombre} borrada ❌`, 'danger');
           }
         }
@@ -804,6 +883,7 @@ export class HomePage implements OnInit {
           cantidadCloro: 0,
           cantidadSubePh: 0,
           cantidadBajaPh: 0,
+          cantidadPastillas: 0,
           tipoPh: undefined,
           estadoCloro: 'saltada',
           estadoPh: 'saltada',
@@ -811,14 +891,40 @@ export class HomePage implements OnInit {
         };
 
         clienteCompleto.historial = clienteCompleto.historial || [];
-        clienteCompleto.historial.push(nuevoRegistro);
+        // Añadir al inicio para que sea el más reciente
+        clienteCompleto.historial.unshift(nuevoRegistro);
+
+        // Marca explícita para evitar reaparición — array de fechas marcadas como saltadas
+        (clienteCompleto as any).skippedDates = (clienteCompleto as any).skippedDates || [];
+        if (!(clienteCompleto as any).skippedDates.includes(fechaSeleccionadaStr)) {
+          (clienteCompleto as any).skippedDates.push(fechaSeleccionadaStr);
+        }
 
         this.clienteService.updateCliente(clienteCompleto).subscribe({
           next: () => {
             console.log('Registro de mantención saltada agregado para cliente:', cliente.nombre);
+            // Verificar en DB que skippedDates fue persistido
+            this.clienteService.getClienteById(cliente.id).subscribe({
+              next: (verif) => console.log(`Verificación DB skippedDates para ${cliente.nombre}:`, (verif as any).skippedDates || []),
+              error: (vErr) => console.error('Error verificando skippedDates en DB:', vErr)
+            });
+
+            // Recargar clientes para aplicar filtro y actualizar contador de borrados
+            this.cargarClientesDelDia();
+            this.showToast(`Mantención de ${cliente.nombre} marcada como borrada ❌`, 'danger');
           },
           error: (err) => {
             console.error('Error al agregar registro saltado:', err);
+            // Revertir cambio local si falla la persistencia
+            this.deletedClientsList = this.deletedClientsList.filter(d => d.id !== cliente.id);
+            this.deletedTodayCount = this.deletedClientsList.length;
+            // Re-agregar el cliente a pendientes para que vuelva a mostrarse en UI
+            this.clientesPendientes.push(cliente);
+            this.maintenanceCount = this.clientesPendientes.length;
+            this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
+            this.calcularProgreso();
+            this.actualizarEventosCalendario();
+            this.showToast('Error al marcar mantención como borrada', 'danger');
           }
         });
       },

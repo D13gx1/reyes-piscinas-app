@@ -48,7 +48,7 @@ export interface Cliente {
     cloro: number;
     ph: number;
     cantidadCloro?: number; // Cantidad de cloro utilizada en gramos
-    cantidadBajaPh?: number; // Cantidad de baja pH utilizada en gramos
+    cantidadBajaPh?: number; // Cantidad de baja P H utilizada en gramos
     cantidadSubePh?: number; // Cantidad de sube pH utilizada en gramos
     cantidadPastillas?: number; // Cantidad de pastillas de cloro utilizadas
     estadoCloro?: string; // Nuevo campo para estado del cloro
@@ -60,6 +60,7 @@ export interface Cliente {
     estadoPago?: string;
     fechaPago?: string;
   }[];
+  skippedDates?: string[]; // Fechas marcadas como "saltadas" (YYYY-MM-DD)
   activo: boolean;
 }
 
@@ -141,6 +142,7 @@ export class ClienteService {
                     notas: ''
                   },
                   historial: data['historial'] || [],
+                  skippedDates: data['skippedDates'] || [],
                   activo: data['activo'] !== undefined ? data['activo'] : true
                 };
               });
@@ -196,6 +198,7 @@ export class ClienteService {
               notas: data['programacion']?.['notas'] || ''
             },
             historial: data['historial'] || [],
+            skippedDates: data['skippedDates'] || [],
             activo: data['activo'] !== undefined ? data['activo'] : true,
           } as Cliente;
         } else {
@@ -232,6 +235,7 @@ export class ClienteService {
         notas: cliente.programacion?.notas || ''
       },
       historial: cliente.historial || [],
+      skippedDates: cliente['skippedDates'] || [],
       activo: cliente.activo !== undefined ? cliente.activo : true,
     };
     

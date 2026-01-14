@@ -54,20 +54,20 @@ export class MantenimientoExitosoPage implements OnInit {
       lines.push(`Fecha: ${this.mantencion.fecha}${this.mantencion.hora ? ' ' + this.mantencion.hora : ''}`);
 
       const cloroMedido = this.mantencion.cloro !== undefined ? this.mantencion.cloro : '';
-      const cantidadCloro = this.mantencion.cantidadCloro ? `, Cloro usado: ${this.mantencion.cantidadCloro}g` : '';
+      const cantidadCloro = (this.mantencion.cantidadCloro !== undefined && this.mantencion.cantidadCloro !== null) ? `, Cloro usado: ${this.mantencion.cantidadCloro}g` : '';
       lines.push(`Cloro: ${this.mantencion.estadoCloro}`);
 
       const phMedido = this.mantencion.ph !== undefined ? this.mantencion.ph : '';
       const ajustesPh: string[] = [];
-      if (this.mantencion.cantidadSubePh) ajustesPh.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
-      if (this.mantencion.cantidadBajaPh) ajustesPh.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
+      if (this.mantencion.cantidadSubePh !== undefined && this.mantencion.cantidadSubePh !== null) ajustesPh.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
+      if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) ajustesPh.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
       lines.push(`pH: ${this.mantencion.estadoPh}`);
 
       const quimicos: string[] = [];
-      if (this.mantencion.cantidadCloro) quimicos.push(`Cloro: ${this.mantencion.cantidadCloro}g`);
-      if (this.mantencion.cantidadSubePh) quimicos.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
-      if (this.mantencion.cantidadBajaPh) quimicos.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
-      if (this.mantencion.cantidadPastillas) quimicos.push(`Pastillas: ${this.mantencion.cantidadPastillas}`);
+      if (this.mantencion.cantidadCloro !== undefined && this.mantencion.cantidadCloro !== null) quimicos.push(`Cloro: ${this.mantencion.cantidadCloro}g`);
+      if (this.mantencion.cantidadSubePh !== undefined && this.mantencion.cantidadSubePh !== null) quimicos.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
+      if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) quimicos.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
+      if (this.mantencion.cantidadPastillas !== undefined && this.mantencion.cantidadPastillas !== null) quimicos.push(`Pastillas: ${this.mantencion.cantidadPastillas}`);
       if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
     }
 

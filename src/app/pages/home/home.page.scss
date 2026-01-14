@@ -169,6 +169,13 @@ ion-content {
   align-items: center;
   margin-bottom: 16px;
 
+  .deleted-counter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 8px;
+  }
+
   h3 {
     display: flex;
     align-items: center;

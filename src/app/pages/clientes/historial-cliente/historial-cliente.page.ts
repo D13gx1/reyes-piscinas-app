@@ -62,20 +62,20 @@ export class HistorialClientePage implements OnInit {
     lines.push(`Fecha: ${item.fecha}${item.hora ? ' ' + item.hora : ''}`);
 
     const cloroMedido = item.cloro !== undefined ? item.cloro : '';
-    const cantidadCloro = item.cantidadCloro ? `, Cloro usado: ${item.cantidadCloro}g` : '';
+    const cantidadCloro = (item.cantidadCloro !== undefined && item.cantidadCloro !== null) ? `, Cloro usado: ${item.cantidadCloro}g` : '';
     lines.push(`Cloro: ${item.estadoCloro || cloroMedido}${cantidadCloro}`);
 
     const phMedido = item.ph !== undefined ? item.ph : '';
     const ajustesPh: string[] = [];
-    if (item.cantidadSubePh) ajustesPh.push(`Sube pH: ${item.cantidadSubePh}g`);
-    if (item.cantidadBajaPh) ajustesPh.push(`Baja pH: ${item.cantidadBajaPh}g`);
+    if (item.cantidadSubePh !== undefined && item.cantidadSubePh !== null) ajustesPh.push(`Sube pH: ${item.cantidadSubePh}g`);
+    if (item.cantidadBajaPh !== undefined && item.cantidadBajaPh !== null) ajustesPh.push(`Baja pH: ${item.cantidadBajaPh}g`);
     lines.push(`pH: ${item.estadoPh || phMedido}${ajustesPh.length ? ' (' + ajustesPh.join(', ') + ')' : ''}`);
 
     const quimicos: string[] = [];
-    if (item.cantidadCloro) quimicos.push(`Cloro: ${item.cantidadCloro}g`);
-    if (item.cantidadSubePh) quimicos.push(`Sube pH: ${item.cantidadSubePh}g`);
-    if (item.cantidadBajaPh) quimicos.push(`Baja pH: ${item.cantidadBajaPh}g`);
-    if (item.cantidadPastillas) quimicos.push(`Pastillas: ${item.cantidadPastillas}`);
+    if (item.cantidadCloro !== undefined && item.cantidadCloro !== null) quimicos.push(`Cloro: ${item.cantidadCloro}g`);
+    if (item.cantidadSubePh !== undefined && item.cantidadSubePh !== null) quimicos.push(`Sube pH: ${item.cantidadSubePh}g`);
+    if (item.cantidadBajaPh !== undefined && item.cantidadBajaPh !== null) quimicos.push(`Baja pH: ${item.cantidadBajaPh}g`);
+    if (item.cantidadPastillas !== undefined && item.cantidadPastillas !== null) quimicos.push(`Pastillas: ${item.cantidadPastillas}`);
     if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
 
     if (this.cliente.precio) {

@@ -246,17 +246,21 @@
               <ion-row>
                 <ion-col size="12">
                   <div class="chemical-amounts">
-                    <span *ngIf="mantencion.cantidadCloro" class="amount-item">
+                    <span *ngIf="mantencion.cantidadCloro !== null && mantencion.cantidadCloro !== undefined" class="amount-item">
                       <ion-icon name="water-outline"></ion-icon>
                       Cloro usado: {{ mantencion.cantidadCloro }}g
                     </span>
-                    <span *ngIf="mantencion.cantidadSubePh" class="amount-item">
+                    <span *ngIf="mantencion.cantidadSubePh !== null && mantencion.cantidadSubePh !== undefined" class="amount-item">
                       <ion-icon name="flask-outline"></ion-icon>
                       Sube pH usado: {{ mantencion.cantidadSubePh }}g
                     </span>
-                    <span *ngIf="mantencion.cantidadBajaPh" class="amount-item">
+                    <span *ngIf="mantencion.cantidadBajaPh !== null && mantencion.cantidadBajaPh !== undefined" class="amount-item">
                       <ion-icon name="flask-outline"></ion-icon>
                       Baja pH usado: {{ mantencion.cantidadBajaPh }}g
+                    </span>
+                    <span *ngIf="mantencion.cantidadPastillas !== null && mantencion.cantidadPastillas !== undefined" class="amount-item">
+                      <ion-icon name="cube-outline"></ion-icon>
+                      Pastillas usadas: {{ mantencion.cantidadPastillas }}
                     </span>
                   </div>
                 </ion-col>

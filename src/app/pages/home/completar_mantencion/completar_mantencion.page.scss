@@ -66,6 +66,21 @@ ion-button {
   margin-bottom: 16px;
 }
 
+/* Ajuste pequeño: bajar ion-input para separarlo del label */
+.quantities-container ion-input {
+  margin-top: 6px;
+  display: block;
+  --padding-start: 6px;
+  text-align: right;
+}
+
+/* Responsivo: reducir margen en pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .quantities-container ion-input {
+    margin-top: 4px;
+  }
+}
+
 /* Button styles */
 ion-button[fill="outline"] {
   --border-width: 1px;

@@ -87,10 +87,10 @@ export class CompletarMantencionPage implements OnInit {
     this.mantencionForm = this.formBuilder.group({
       cloro: ['', [Validators.required, Validators.min(0), Validators.max(10)]],
       ph: ['', [Validators.required, Validators.min(0), Validators.max(14)]],
-      cantidadCloro: [0, [Validators.required, Validators.min(0)]],
-      cantidadBajaPh: [0, [Validators.required, Validators.min(0)]],
-      cantidadSubePh: [0, [Validators.required, Validators.min(0)]],
-      cantidadPastillas: [0, [Validators.required, Validators.min(0)]],
+      cantidadCloro: [null, [Validators.min(0)]],
+      cantidadBajaPh: [null, [Validators.min(0)]],
+      cantidadSubePh: [null, [Validators.min(0)]],
+      cantidadPastillas: [null, [Validators.min(0)]],
       servicio: ['Mantenimiento general', Validators.required],
       notas: ['']
     });
@@ -151,10 +151,10 @@ export class CompletarMantencionPage implements OnInit {
       servicio: formValues.servicio,
       cloro: formValues.cloro,
       ph: formValues.ph,
-      cantidadCloro: formValues.cantidadCloro,
-      cantidadBajaPh: formValues.cantidadBajaPh,
-      cantidadSubePh: formValues.cantidadSubePh,
-      cantidadPastillas: formValues.cantidadPastillas,
+      cantidadCloro: this.toNumberOrZero(formValues.cantidadCloro),
+      cantidadBajaPh: this.toNumberOrZero(formValues.cantidadBajaPh),
+      cantidadSubePh: this.toNumberOrZero(formValues.cantidadSubePh),
+      cantidadPastillas: this.toNumberOrZero(formValues.cantidadPastillas),
       estadoCloro: this.cloroSeleccionado,
       estadoPh: this.phSeleccionado,
       notas: formValues.notas
@@ -184,6 +184,11 @@ export class CompletarMantencionPage implements OnInit {
         this.mostrarAlerta('Error', 'No se pudo guardar el registro de mantención');
       }
     });
+  }
+
+  private toNumberOrZero(val: any): number {
+    const n = Number(val);
+    return isNaN(n) ? 0 : n;
   }
 
   evaluarEstadoCloro(valor: number): string {

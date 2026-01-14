@@ -76,7 +76,7 @@
                       <span class="label">Ajuste:</span>
                       <span class="value">{{ item.cantidadCloro > 0 ? '+' : '' }}{{ item.cantidadCloro }} g</span>
                     </div>
-                    <div class="q-row" *ngIf="item.cantidadPastillas">
+                    <div class="q-row" *ngIf="item.cantidadPastillas !== null && item.cantidadPastillas !== undefined">
                       <span class="label">Pastillas:</span>
                       <span class="value">{{ item.cantidadPastillas }}</span>
                     </div>

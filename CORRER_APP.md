@@ -2,6 +2,13 @@
 ionic serve 
 npm start
 
+#restaurar app
+1.- ver en android/app/google-service 
+2.- agregar el del terminal de firebase
+3.- en el emulador de android agregar cuenta de gmail (deberia de salir del error de "no credential found")
+4.-java 21
+5.- cualquier otro error puede ser de capacitor.config.ts o en carpeta android
+
 #buildear
 ng build
 npx cap sync android
