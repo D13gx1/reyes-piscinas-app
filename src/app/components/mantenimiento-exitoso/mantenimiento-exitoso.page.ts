@@ -69,6 +69,16 @@ export class MantenimientoExitosoPage implements OnInit {
       if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) quimicos.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
       if (this.mantencion.cantidadPastillas !== undefined && this.mantencion.cantidadPastillas !== null) quimicos.push(`Pastillas: ${this.mantencion.cantidadPastillas}`);
       if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
+
+      // Agregar información de llenado de piscina
+      if (this.mantencion.piscinarLlenando && this.mantencion.horaCorte) {
+        lines.push(`⚠️ Piscina llenando: Cortar agua a las ${this.mantencion.horaCorte}`);
+      }
+
+      // Agregar notas adicionales si existen
+      if (this.mantencion.notas && this.mantencion.notas.trim()) {
+        lines.push(`Notas: ${this.mantencion.notas}`);
+      }
     }
 
     if (this.cliente?.precio) {

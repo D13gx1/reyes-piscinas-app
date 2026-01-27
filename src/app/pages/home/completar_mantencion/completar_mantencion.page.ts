@@ -92,7 +92,9 @@ export class CompletarMantencionPage implements OnInit {
       cantidadSubePh: [null, [Validators.min(0)]],
       cantidadPastillas: [null, [Validators.min(0)]],
       servicio: ['Mantenimiento general', Validators.required],
-      notas: ['']
+      notas: [''],
+      piscinarLlenando: [''],
+      horaCorte: ['']
     });
   }
   
@@ -106,6 +108,21 @@ export class CompletarMantencionPage implements OnInit {
   seleccionarPh(estado: string, valor: number) {
     this.phSeleccionado = estado;
     this.mantencionForm.get('ph')?.setValue(valor);
+  }
+
+  // Método para manejar cambio en el checkbox de llenado
+  onLlenandoChange() {
+    const piscinarLlenando = this.mantencionForm.get('piscinarLlenando')?.value;
+    const horaCorteControl = this.mantencionForm.get('horaCorte');
+    
+    if (piscinarLlenando === 'si') {
+      horaCorteControl?.setValidators([Validators.required]);
+      horaCorteControl?.updateValueAndValidity();
+    } else {
+      horaCorteControl?.clearValidators();
+      horaCorteControl?.setValue('');
+      horaCorteControl?.updateValueAndValidity();
+    }
   }
 
   ngOnInit() {
@@ -144,6 +161,12 @@ export class CompletarMantencionPage implements OnInit {
     }
 
     const formValues = this.mantencionForm.value;
+
+    // Validar que si está llenando, tenga hora de corte
+    if (formValues.piscinarLlenando === 'si' && !formValues.horaCorte) {
+      this.mostrarAlerta('Datos incompletos', 'Por favor indique la hora para cortar el agua');
+      return;
+    }
     
     const nuevoRegistro = {
       fecha: new Date().toISOString().split('T')[0],
@@ -157,7 +180,9 @@ export class CompletarMantencionPage implements OnInit {
       cantidadPastillas: this.toNumberOrZero(formValues.cantidadPastillas),
       estadoCloro: this.cloroSeleccionado,
       estadoPh: this.phSeleccionado,
-      notas: formValues.notas
+      notas: formValues.notas,
+      piscinarLlenando: formValues.piscinarLlenando === 'si',
+      horaCorte: formValues.horaCorte || null
     };
 
     // Asegurarse de que el cliente tenga un array de historial

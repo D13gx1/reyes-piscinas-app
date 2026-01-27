@@ -78,6 +78,16 @@ export class HistorialClientePage implements OnInit {
     if (item.cantidadPastillas !== undefined && item.cantidadPastillas !== null) quimicos.push(`Pastillas: ${item.cantidadPastillas}`);
     if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
 
+    // Agregar información de llenado de piscina
+    if (item.piscinarLlenando && item.horaCorte) {
+      lines.push(`⚠️ Piscina llenando: Cortar agua a las ${item.horaCorte}`);
+    }
+
+    // Agregar notas adicionales si existen
+    if (item.notas && item.notas.trim()) {
+      lines.push(`Notas: ${item.notas}`);
+    }
+
     if (this.cliente.precio) {
       lines.push(`Valor mantención: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(this.cliente.precio)}`);
     }

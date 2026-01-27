@@ -613,6 +613,23 @@ export class HomePage implements OnInit {
           name: 'cantidadPh',
           type: 'text',
           placeholder: 'Cantidad de pH agregado/corregido (kg)'
+        },
+        {
+          name: 'notas',
+          type: 'textarea',
+          placeholder: 'Notas adicionales (opcional)'
+        },
+        {
+          name: 'piscinarLlenando',
+          type: 'checkbox',
+          label: '¿Se dejó la piscina llenando?',
+          value: 'si'
+        },
+        {
+          name: 'horaCorte',
+          type: 'time',
+          placeholder: 'Hora para cortar el agua',
+          disabled: true
         }
       ],
       buttons: [
@@ -626,12 +643,20 @@ export class HomePage implements OnInit {
           text: 'Completar Mantención',
           cssClass: 'primary',
           handler: (data) => {
+            // Validar que si está llenando, se ingrese la hora
+            if (data.piscinarLlenando && !data.horaCorte) {
+              this.showToast('Por favor ingresa la hora de corte', 'warning');
+              return false;
+            }
+
             // Combinamos los datos de los tres alerts
             const datosCompletos = {
               estadoCloro: estadoCloro,
               estadoPh: estadoPh,
               cantidadCloro: data.cantidadCloro,
-              cantidadPh: data.cantidadPh
+              cantidadPh: data.cantidadPh,
+              piscinarLlenando: data.piscinarLlenando || false,
+              horaCorte: data.horaCorte || null
             };
             return this.completarMantenimiento(cliente, datosCompletos);
           }
@@ -646,6 +671,12 @@ export class HomePage implements OnInit {
     // Validar que se hayan llenado los campos obligatorios
     if (!data.estadoCloro || !data.estadoPh) {
       this.showToast('Por favor, completa el estado del cloro y pH ❌', 'danger');
+      return false;
+    }
+
+    // Validar que si está llenando, tenga hora de corte
+    if (data.piscinarLlenando && !data.horaCorte) {
+      this.showToast('Por favor, indica la hora para cortar el agua ❌', 'danger');
       return false;
     }
 
@@ -674,6 +705,11 @@ export class HomePage implements OnInit {
     // Mover cliente a realizados
     this.clientesRealizados.push(cliente);
     this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
+
+    // Guardar información adicional de llenado y notas
+    (cliente as any).piscinarLlenando = data.piscinarLlenando || false;
+    (cliente as any).horaCorte = data.horaCorte || null;
+    (cliente as any).notas = data.notas || '';
 
     // Actualizar historial del cliente en el servicio
     this.actualizarHistorialCliente(cliente);
@@ -717,7 +753,10 @@ export class HomePage implements OnInit {
           tipoPh: tipoPh,
           estadoCloro: cliente.mantenimiento!.estadoCloro,
           estadoPh: cliente.mantenimiento!.estadoPh,
-          hora: cliente.mantenimiento!.hora
+          hora: cliente.mantenimiento!.hora,
+          piscinarLlenando: (cliente as any).piscinarLlenando || false,
+          horaCorte: (cliente as any).horaCorte || null,
+          notas: (cliente as any).notas || ''
         };
 
         clienteCompleto.historial = clienteCompleto.historial || [];

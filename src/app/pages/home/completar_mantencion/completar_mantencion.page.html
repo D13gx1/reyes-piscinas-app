@@ -118,6 +118,23 @@
             </ion-item>
 
           </div>
+
+          <!-- Sección de llenado de piscina -->
+          <div class="quantities-container" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0;">
+            <ion-item>
+              <ion-label>¿Se dejó la piscina llenando?</ion-label>
+              <ion-select slot="end" formControlName="piscinarLlenando" (ionChange)="onLlenandoChange()">
+                <ion-select-option value="">No</ion-select-option>
+                <ion-select-option value="si">Sí</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item *ngIf="mantencionForm.get('piscinarLlenando')?.value === 'si'">
+              <ion-label position="floating">Hora para cortar el agua</ion-label>
+              <ion-input type="time" formControlName="horaCorte" required></ion-input>
+            </ion-item>
+          </div>
+
           <ion-item>
             <ion-label position="floating">Servicio Realizado</ion-label>
             <ion-select formControlName="servicio">
