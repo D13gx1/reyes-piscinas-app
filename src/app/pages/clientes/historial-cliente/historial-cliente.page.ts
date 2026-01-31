@@ -58,38 +58,62 @@ export class HistorialClientePage implements OnInit {
     }
 
     const lines: string[] = [];
-    lines.push(`Hola ${this.cliente.nombre || ''}, te envío los detalles de la mantención:`);
-    lines.push(`Fecha: ${item.fecha}${item.hora ? ' ' + item.hora : ''}`);
-
-    const cloroMedido = item.cloro !== undefined ? item.cloro : '';
-    const cantidadCloro = (item.cantidadCloro !== undefined && item.cantidadCloro !== null) ? `, Cloro usado: ${item.cantidadCloro}g` : '';
-    lines.push(`Cloro: ${item.estadoCloro || cloroMedido}${cantidadCloro}`);
-
-    const phMedido = item.ph !== undefined ? item.ph : '';
-    const ajustesPh: string[] = [];
-    if (item.cantidadSubePh !== undefined && item.cantidadSubePh !== null) ajustesPh.push(`Sube pH: ${item.cantidadSubePh}g`);
-    if (item.cantidadBajaPh !== undefined && item.cantidadBajaPh !== null) ajustesPh.push(`Baja pH: ${item.cantidadBajaPh}g`);
-    lines.push(`pH: ${item.estadoPh || phMedido}${ajustesPh.length ? ' (' + ajustesPh.join(', ') + ')' : ''}`);
-
-    const quimicos: string[] = [];
-    if (item.cantidadCloro !== undefined && item.cantidadCloro !== null) quimicos.push(`Cloro: ${item.cantidadCloro}g`);
-    if (item.cantidadSubePh !== undefined && item.cantidadSubePh !== null) quimicos.push(`Sube pH: ${item.cantidadSubePh}g`);
-    if (item.cantidadBajaPh !== undefined && item.cantidadBajaPh !== null) quimicos.push(`Baja pH: ${item.cantidadBajaPh}g`);
-    if (item.cantidadPastillas !== undefined && item.cantidadPastillas !== null) quimicos.push(`Pastillas: ${item.cantidadPastillas}`);
-    if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
-
-    // Agregar información de llenado de piscina
-    if (item.piscinarLlenando && item.horaCorte) {
-      lines.push(`⚠️ Piscina llenando: Cortar agua a las ${item.horaCorte}`);
+    lines.push('*Detalles de la Mantención de Piscina 🏊‍♂️*\n');
+    lines.push(`Hola ${this.cliente.nombre || ''},`);
+    lines.push('te envío el resumen de la mantención realizada:\n');
+    
+    // Fecha y hora
+    lines.push('*📅 Fecha: ' + (item.fecha || '') + '*');
+    if (item.hora) {
+      lines.push('*🕒 Hora: ' + item.hora + '*');
     }
-
-    // Agregar notas adicionales si existen
+    lines.push('');
+    
+    // Parámetros del agua
+    lines.push('*🧪 Parámetros del agua:*');
+    lines.push('• Cloro: ' + (item.estadoCloro || ''));
+    lines.push('• pH: ' + (item.estadoPh || ''));
+    lines.push('');
+    
+    // Químicos utilizados
+    lines.push('*🧴 Químicos utilizados:*');
+    if (item.cantidadCloro !== undefined && item.cantidadCloro !== null) {
+      lines.push('• Cloro: ' + item.cantidadCloro + ' g');
+    }
+    if (item.cantidadSubePh !== undefined && item.cantidadSubePh !== null) {
+      lines.push('• Sube pH: ' + item.cantidadSubePh + ' g');
+    }
+    if (item.cantidadBajaPh !== undefined && item.cantidadBajaPh !== null) {
+      lines.push('• Baja pH: ' + item.cantidadBajaPh + ' g');
+    }
+    if (item.cantidadPastillas !== undefined && item.cantidadPastillas !== null) {
+      lines.push('• Pastillas: ' + item.cantidadPastillas + ' unidad(es)');
+    }
+    lines.push('');
+    
+    // Estado de la piscina
+    if (item.piscinarLlenando || item.horaCorte) {
+      lines.push('*🚰 Estado de la piscina:*');
+      if (item.piscinarLlenando) {
+        lines.push('• Piscina llenando');
+      }
+      if (item.horaCorte) {
+        lines.push('• ⛔ Cortar agua a las ' + item.horaCorte + ' hrs');
+      }
+      lines.push('');
+    }
+    
+    // Notas adicionales
     if (item.notas && item.notas.trim()) {
-      lines.push(`Notas: ${item.notas}`);
+      lines.push('*📝 Notas:*');
+      lines.push('• ' + item.notas);
+      lines.push('');
     }
 
+    // Valor
     if (this.cliente.precio) {
-      lines.push(`Valor mantención: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(this.cliente.precio)}`);
+      lines.push('*💰 Valor de la mantención:*');
+      lines.push('$' + new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(this.cliente.precio));
     }
 
     const text = encodeURIComponent(lines.join('\n'));

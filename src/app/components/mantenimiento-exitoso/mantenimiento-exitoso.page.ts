@@ -49,41 +49,78 @@ export class MantenimientoExitosoPage implements OnInit {
     }
 
     const lines: string[] = [];
-    lines.push(`Hola ${this.cliente?.nombre || ''}, te envío los detalles de la mantención:`);
+    lines.push('*Detalles de la Mantención de Piscina 🏊‍♂️*\n');
+    lines.push(`Hola ${this.cliente?.nombre || ''},`);
+    lines.push('te envío el resumen de la mantención realizada:\n');
+    
     if (this.mantencion) {
-      lines.push(`Fecha: ${this.mantencion.fecha}${this.mantencion.hora ? ' ' + this.mantencion.hora : ''}`);
-
-      const cloroMedido = this.mantencion.cloro !== undefined ? this.mantencion.cloro : '';
-      const cantidadCloro = (this.mantencion.cantidadCloro !== undefined && this.mantencion.cantidadCloro !== null) ? `, Cloro usado: ${this.mantencion.cantidadCloro}g` : '';
-      lines.push(`Cloro: ${this.mantencion.estadoCloro}`);
-
-      const phMedido = this.mantencion.ph !== undefined ? this.mantencion.ph : '';
-      const ajustesPh: string[] = [];
-      if (this.mantencion.cantidadSubePh !== undefined && this.mantencion.cantidadSubePh !== null) ajustesPh.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
-      if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) ajustesPh.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
-      lines.push(`pH: ${this.mantencion.estadoPh}`);
-
-      const quimicos: string[] = [];
-      if (this.mantencion.cantidadCloro !== undefined && this.mantencion.cantidadCloro !== null) quimicos.push(`Cloro: ${this.mantencion.cantidadCloro}g`);
-      if (this.mantencion.cantidadSubePh !== undefined && this.mantencion.cantidadSubePh !== null) quimicos.push(`Sube pH: ${this.mantencion.cantidadSubePh}g`);
-      if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) quimicos.push(`Baja pH: ${this.mantencion.cantidadBajaPh}g`);
-      if (this.mantencion.cantidadPastillas !== undefined && this.mantencion.cantidadPastillas !== null) quimicos.push(`Pastillas: ${this.mantencion.cantidadPastillas}`);
-      if (quimicos.length) lines.push(`Químicos usados: ${quimicos.join(', ')}`);
-
-      // Agregar información de llenado de piscina
-      if (this.mantencion.piscinarLlenando && this.mantencion.horaCorte) {
-        lines.push(`⚠️ Piscina llenando: Cortar agua a las ${this.mantencion.horaCorte}`);
+      // Fecha y hora (formato DD/MM/YYYY)
+      if (this.mantencion?.fecha) {
+        const fechaRaw = this.mantencion.fecha;
+        let fechaStr = '';
+        const fechaDate = new Date(fechaRaw);
+        if (!isNaN(fechaDate.getTime())) {
+          fechaStr = ('0' + fechaDate.getDate()).slice(-2) + '/' + ('0' + (fechaDate.getMonth() + 1)).slice(-2) + '/' + fechaDate.getFullYear();
+        } else {
+          fechaStr = String(fechaRaw);
+        }
+        lines.push('*Fecha: ' + fechaStr + '*');
+      } else {
+        lines.push('*Fecha: ' + '' + '*');
       }
-
-      // Agregar notas adicionales si existen
+      if (this.mantencion.hora) {
+        lines.push('*Hora: ' + this.mantencion.hora + '*');
+      }
+      lines.push('');
+      
+      // Parámetros del agua
+      lines.push('*Parámetros del agua:*');
+      lines.push('• Cloro: ' + (this.mantencion.estadoCloro || ''));
+      lines.push('• pH: ' + (this.mantencion.estadoPh || ''));
+      lines.push('');
+      
+      // Químicos utilizados
+      lines.push('*Químicos utilizados:*');
+      if (this.mantencion.cantidadCloro !== undefined && this.mantencion.cantidadCloro !== null) {
+        lines.push('• Cloro: ' + this.mantencion.cantidadCloro + ' g');
+      }
+      if (this.mantencion.cantidadSubePh !== undefined && this.mantencion.cantidadSubePh !== null) {
+        lines.push('• Sube pH: ' + this.mantencion.cantidadSubePh + ' g');
+      }
+      if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) {
+        lines.push('• Baja pH: ' + this.mantencion.cantidadBajaPh + ' g');
+      }
+      if (this.mantencion.cantidadPastillas !== undefined && this.mantencion.cantidadPastillas !== null) {
+        lines.push('• Pastillas: ' + this.mantencion.cantidadPastillas + ' unidad(es)');
+      }
+      lines.push('');
+      
+      // Estado de la piscina
+      if (this.mantencion.piscinarLlenando || this.mantencion.horaCorte) {
+        lines.push('*Estado de la piscina:*');
+        if (this.mantencion.piscinarLlenando) {
+          lines.push('• Piscina llenando');
+        }
+        if (this.mantencion.horaCorte) {
+          lines.push('• Cortar agua a las ' + this.mantencion.horaCorte + ' hrs');
+        }
+        lines.push('');
+      }
+      
+      // Notas adicionales
       if (this.mantencion.notas && this.mantencion.notas.trim()) {
-        lines.push(`Notas: ${this.mantencion.notas}`);
+        lines.push('* Notas:*');
+        lines.push('• ' + this.mantencion.notas);
+        lines.push('');
       }
     }
 
+    // Valor
     if (this.cliente?.precio) {
-      lines.push(`Valor mantención: ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(this.cliente.precio)}`);
+      lines.push('* Valor de la mantención:*');
+      lines.push('$' + new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(this.cliente.precio));
     }
+    
 
     const text = encodeURIComponent(lines.join('\n'));
     const phone = telefono.replace(/[^+0-9]/g, '');
