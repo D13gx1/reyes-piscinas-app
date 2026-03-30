@@ -1,14 +1,15 @@
-
 // Ajuste para tabs flotantes
 ion-content {
   --padding-bottom: 100px;
 }
+
 // Botón crear cliente
 .create-client-section {
   margin: 20px 0 16px;
 
   .create-client-button {
-    --border-radius: 20px;
+    --border-radius: 40px !important;
+    border-radius: 40px !important;
     font-weight: 600;
     height: 48px;
 
@@ -18,6 +19,9 @@ ion-content {
   }
 }
 
+.create-client-button::part(native) {
+  border-radius: 40px !important;
+}
 
 .header-content {
   display: flex;
@@ -72,7 +76,6 @@ h1 {
   }
 }
 
-
 .header-container {
   background: var(--ion-color-light);
 }
@@ -80,8 +83,6 @@ h1 {
 .contenido-container {
   background: var(--ion-color-light);
 }
-
-
 
 .cliente-card {
   margin-bottom: 16px;
@@ -194,8 +195,8 @@ h1 {
 
 // Botón flotante
 ion-fab {
-  bottom: 90px !important; // Mover arriba para no ser tapado por los tabs
-  right: 20px !important; // Posicionar a la derecha
+  bottom: 90px !important;
+  right: 20px !important;
 
   ion-fab-button {
     --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);

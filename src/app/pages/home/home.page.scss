@@ -190,6 +190,16 @@ ion-content {
 /* ==================== */
 /* Cards Minimalistas */
 /* ==================== */
+
+.btn-rounded {
+  --border-radius: 25px !important;
+  border-radius: 25px !important;
+}
+
+.btn-rounded::part(native) {
+  border-radius: 25px !important;
+}
+
 .cliente-card {
   margin: 0 0 16px;
   border-radius: var(--radius);

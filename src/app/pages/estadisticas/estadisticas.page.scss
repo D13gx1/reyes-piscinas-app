@@ -5,7 +5,6 @@ ion-content {
   --padding-bottom: 100px;
 }
 
-
 .selectores-fecha {
   margin-top: 1rem;
   
@@ -50,6 +49,8 @@ ion-content {
   background: var(--ion-color-light);
   border-radius: 8px;
   margin-bottom: 0.5rem;
+  flex: 1;
+  min-width: 0;
   
   .stat-value {
     font-size: 1.5rem;
@@ -63,6 +64,38 @@ ion-content {
     color: var(--ion-color-medium);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--ion-color-primary);
+    margin-bottom: 0.25rem;
+  }
+  
+  .stat-label {
+    font-size: 0.825rem;
+    color: var(--ion-color-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
   }
 }
 
@@ -94,70 +127,71 @@ ion-content {
   }
   
   .mantencion-detail {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--ion-color-medium);
-  margin-bottom: 0.25rem;
-  
-  ion-icon {
-    color: var(--ion-color-primary);
-    font-size: 1rem;
-  }
-  
-  span {
-    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+    margin-bottom: 0.25rem;
+    
+    ion-icon {
+      color: var(--ion-color-primary);
+      font-size: 1rem;
+    }
+    
+    span {
+      flex: 1;
+    }
   }
 }
 
 .chemical-levels {
-   display: flex;
-   justify-content: space-between;
-   align-items: center;
-   margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 
-   .level-item {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     font-size: 0.9rem;
+  .level-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
 
-     ion-icon {
-       color: var(--ion-color-primary);
-       font-size: 1rem;
-     }
+    ion-icon {
+      color: var(--ion-color-primary);
+      font-size: 1rem;
+    }
 
-     strong {
-       color: var(--ion-color-dark);
-     }
+    strong {
+      color: var(--ion-color-dark);
+    }
 
-     ion-chip {
-       margin-left: 0.25rem;
-     }
-   }
+    ion-chip {
+      margin-left: 0.25rem;
+    }
+  }
 }
 
 .chemical-amounts {
-   display: flex;
-   flex-wrap: wrap;
-   gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 
-   .amount-item {
-     display: flex;
-     align-items: center;
-     gap: 0.25rem;
-     font-size: 0.8rem;
-     color: var(--ion-color-medium);
-     background: var(--ion-color-light);
-     padding: 0.25rem 0.5rem;
-     border-radius: 4px;
+  .amount-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--ion-color-medium);
+    background: var(--ion-color-light);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
 
-     ion-icon {
-       color: var(--ion-color-primary);
-       font-size: 0.9rem;
-     }
-   }
+    ion-icon {
+      color: var(--ion-color-primary);
+      font-size: 0.9rem;
+    }
+  }
 }
 
 ion-button[color="danger"] {
@@ -166,13 +200,12 @@ ion-button[color="danger"] {
   height: 30px;
   margin-top: 5px;
 }
-}
 
 /* Estilo personalizado para botones de pago */
 .pay-button {
   --background: transparent;
-  background: #f3f4f6; /* light gray */
-  color: #1f2937; /* dark gray text */
+  background: #f3f4f6;
+  color: #1f2937;
   border-radius: 10px;
   padding: 6px 10px;
   height: 36px;
@@ -185,18 +218,13 @@ ion-button[color="danger"] {
 
 .pay-button ion-icon {
   font-size: 1rem;
-  color: #065f46; /* a subtle green for icon */
-}
-
-.pay-button {
-  text-transform: none;
+  color: #065f46;
 }
 
 .pay-button span {
   margin-left: 6px;
   text-transform: none;
 }
-
 
 // Estilos para las tarjetas
 ion-card {

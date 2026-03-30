@@ -2,14 +2,13 @@
   <ion-toolbar class="custom-toolbar">
     <ion-title class="custom-title">Inicio</ion-title>
     <ion-buttons slot="end">
-      <ion-button 
-        fill="clear" 
-        (click)="refrescarClientes()" 
+      <ion-button
+        fill="clear"
+        (click)="refrescarClientes()"
         [disabled]="isLoading"
-        class="refresh-button">
-        <ion-icon 
-          name="refresh-outline" 
-          [class.spinning]="isLoading">
+        class="refresh-button"
+      >
+        <ion-icon name="refresh-outline" [class.spinning]="isLoading">
         </ion-icon>
       </ion-button>
     </ion-buttons>
@@ -31,19 +30,19 @@
           <div class="day-short">{{ dayShort }}</div>
         </div>
         <div class="maintenance-info">
-          tienes {{ maintenanceCount }} {{ maintenanceWord }} {{ isToday ? 'hoy' : 'este dia' }}
+          tienes {{ maintenanceCount }} {{ maintenanceWord }} {{ isToday ? 'hoy'
+          : 'este dia' }}
         </div>
       </div>
     </div>
-  
+
     <!-- Calendario completo del mes -->
     <div class="calendario-completo">
       <div class="calendario-header">
         <div class="mes-selector-header">
-          <div
-            class="mes-button-custom"
-            (click)="mostrarSelectorMes()">
-            <ion-icon name="calendar-outline"></ion-icon> {{ meses[mesSeleccionado].nombre || 'Mes' }}
+          <div class="mes-button-custom" (click)="mostrarSelectorMes()">
+            <ion-icon name="calendar-outline"></ion-icon> {{
+            meses[mesSeleccionado].nombre || 'Mes' }}
           </div>
           <div class="nav-buttons">
             <ion-button fill="clear" size="small" (click)="cambiarMes(-1)">
@@ -75,11 +74,19 @@
           [class.hoy]="dia.esHoy"
           [class.activo]="dia.seleccionado"
           [class.vacio]="dia.numero === 0"
-          (click)="dia.numero !== 0 && seleccionarDia(dia)">
-
-          <div class="dia-numero" *ngIf="dia.numero !== 0">{{ dia.numero }}</div>
-          <div class="dia-indicador" *ngIf="dia.numero !== 0 && dia.cantidadPiscinas > 0">
-            <div class="piscina-dot" *ngFor="let dot of [].constructor(dia.cantidadPiscinas)"></div>
+          (click)="dia.numero !== 0 && seleccionarDia(dia)"
+        >
+          <div class="dia-numero" *ngIf="dia.numero !== 0">
+            {{ dia.numero }}
+          </div>
+          <div
+            class="dia-indicador"
+            *ngIf="dia.numero !== 0 && dia.cantidadPiscinas > 0"
+          >
+            <div
+              class="piscina-dot"
+              *ngFor="let dot of [].constructor(dia.cantidadPiscinas)"
+            ></div>
           </div>
         </div>
       </div>
@@ -94,11 +101,7 @@
     <!-- Sección de clientes pendientes -->
     <div *ngIf="!isLoading">
       <div class="section-header">
-        
-        <h3>
-          
-          Mantenimientos Pendientes
-        </h3>
+        <h3>Mantenimientos Pendientes</h3>
         <ion-badge color="secondary">{{ clientesPendientes.length }}</ion-badge>
       </div>
 
@@ -135,22 +138,29 @@
             </div>
             <div class="detalle-item" *ngIf="cliente.horaPreferida">
               <ion-icon name="time-outline"></ion-icon>
-              <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
+              <strong>Horario preferido:</strong> {{
+              formatearHora(cliente.horaPreferida) }}
             </div>
             <div class="action-buttons">
               <ion-button
                 fill="solid"
                 color="secondary"
                 size="small"
-                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]">
-                <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
+                class="btn-rounded"
+              >
+                <ion-icon
+                  name="checkmark-circle-outline"
+                  slot="start"
+                ></ion-icon>
                 Completar
               </ion-button>
               <ion-button
                 fill="clear"
                 color="danger"
                 size="medium"
-                (click)="borrarMantenimiento(cliente)">
+                (click)="borrarMantenimiento(cliente)"
+              >
                 <ion-icon name="trash-outline"></ion-icon>
               </ion-button>
             </div>
@@ -169,7 +179,10 @@
         <ion-badge color="success">{{ clientesRealizados.length }}</ion-badge>
       </div>
 
-      <ion-card *ngFor="let cliente of clientesRealizados" class="cliente-card realizado">
+      <ion-card
+        *ngFor="let cliente of clientesRealizados"
+        class="cliente-card realizado"
+      >
         <ion-card-header class="header-container">
           <div class="cliente-header">
             <div class="cliente-info">
@@ -204,7 +217,8 @@
                 fill="clear"
                 color="medium"
                 size="medium"
-                (click)="deshacerMantenimiento(cliente)">
+                (click)="deshacerMantenimiento(cliente)"
+              >
                 <ion-icon name="arrow-undo-outline"></ion-icon>
               </ion-button>
             </div>
