@@ -42,8 +42,12 @@ import {
   trendingUpOutline,
   waterOutline,
   flaskOutline,
-  trashOutline
+  trashOutline,
+  trendingDownOutline,
+  buildOutline,
+  checkmarkCircle
 } from 'ionicons/icons';
+import { HistorialMantencionesComponent } from '../../components/historial-mantenciones/historial-mantenciones.component';
 
 addIcons({
   'calendar-outline': calendarOutline,
@@ -52,9 +56,12 @@ addIcons({
   'time-outline': timeOutline,
   'refresh-outline': refreshOutline,
   'trending-up-outline': trendingUpOutline,
+  'trending-down-outline': trendingDownOutline,
   'water-outline': waterOutline,
   'flask-outline': flaskOutline,
-  'trash-outline': trashOutline
+  'trash-outline': trashOutline,
+  'build-outline': buildOutline,
+  'checkmark-circle': checkmarkCircle
 });
 
 @Component({
@@ -88,44 +95,44 @@ addIcons({
     IonCol,
     IonChip,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    HistorialMantencionesComponent,
   ]
 })
 export class EstadisticasPage implements OnInit {
-  periodoSeleccionado: 'dia' | 'mes' | 'anio' = 'dia';
+  clienteId!: string;
+  periodoSeleccionado: string = 'mes';
+  mesSeleccionado: number = new Date().getMonth();
+  anioSeleccionado: number = new Date().getFullYear();
+  fechaSeleccionada: string = this.formatDateForInput(new Date());
+  isLoading: boolean = false;
   estadisticas: EstadisticasRecaudacion | null = null;
-  mantenciones: Mantencion[] = [];
   estadisticasQuimicas: any = null;
-  isLoading = false;
-  dineroPagado = 0;
-  dineroPendiente = 0;
-  clientesPagados: Mantencion[] = [];
-  clientesPendientes: Mantencion[] = [];
-  
-  
-  // Fechas para selección
-  fechaSeleccionada = new Date().toISOString().split('T')[0];
-  mesSeleccionado = new Date().getMonth() + 1;
-  anioSeleccionado = new Date().getFullYear();
-  
-  // Opciones para selectores
+  mantenciones: Mantencion[] = [];
+  mantencionesFiltradas: Mantencion[] = [];
+  filtroActual: string = 'todos';
+  dineroPendiente: number = 0;
+  dineroPagado: number = 0;
+  isMigrationExpanded: boolean = false;
+  clientesPagados: any[] = [];
+  clientesPendientes: any[] = [];
+
   meses = [
-    { valor: 1, nombre: 'Enero' },
-    { valor: 2, nombre: 'Febrero' },
-    { valor: 3, nombre: 'Marzo' },
-    { valor: 4, nombre: 'Abril' },
-    { valor: 5, nombre: 'Mayo' },
-    { valor: 6, nombre: 'Junio' },
-    { valor: 7, nombre: 'Julio' },
-    { valor: 8, nombre: 'Agosto' },
-    { valor: 9, nombre: 'Septiembre' },
-    { valor: 10, nombre: 'Octubre' },
-    { valor: 11, nombre: 'Noviembre' },
-    { valor: 12, nombre: 'Diciembre' }
+    { valor: 0, nombre: 'Enero' },
+    { valor: 1, nombre: 'Febrero' },
+    { valor: 2, nombre: 'Marzo' },
+    { valor: 3, nombre: 'Abril' },
+    { valor: 4, nombre: 'Mayo' },
+    { valor: 5, nombre: 'Junio' },
+    { valor: 6, nombre: 'Julio' },
+    { valor: 7, nombre: 'Agosto' },
+    { valor: 8, nombre: 'Septiembre' },
+    { valor: 9, nombre: 'Octubre' },
+    { valor: 10, nombre: 'Noviembre' },
+    { valor: 11, nombre: 'Diciembre' }
   ];
 
-  anios = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
-
+  anios: number[] = [];
   nombrePeriodos: Record<string, string> = {
     dia: 'Día',
     mes: 'Mes',
@@ -140,11 +147,19 @@ export class EstadisticasPage implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.cargarAnios();
     this.cargarEstadisticas();
   }
 
   ionViewWillEnter() {
+    this.cargarAnios();
     this.cargarEstadisticas();
+  }
+
+  cargarAnios() {
+    // Cargar años disponibles de forma simple
+    const anioActual = new Date().getFullYear();
+    this.anios = [anioActual, anioActual - 1, anioActual - 2, anioActual - 3];
   }
 
   cargarEstadisticas() {
@@ -238,12 +253,16 @@ export class EstadisticasPage implements OnInit {
   cargarMantencionesDetalladas() {
     if (!this.estadisticas) return;
 
+    console.log('Cargando mantenciones detalladas para:', this.estadisticas.fechaInicio, 'a', this.estadisticas.fechaFin);
+    
     this.estadisticasService.getMantencionesDetalladas(
       this.estadisticas.fechaInicio, 
       this.estadisticas.fechaFin
     ).subscribe({
       next: (mantenciones) => {
+        console.log('Mantenciones cargadas:', mantenciones);
         this.mantenciones = mantenciones;
+        // No aplicar filtro aquí, el componente lo manejará
       },
       error: (err) => {
         console.error('Error cargando mantenciones detalladas:', err);
@@ -310,6 +329,61 @@ export class EstadisticasPage implements OnInit {
     return new Date(fecha).toLocaleDateString('es-CL');
   }
 
+  formatearFechaCompleta(fecha: string): string {
+    const date = new Date(fecha);
+    const dia = date.getDate().toString().padStart(2, '0');
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const mes = meses[date.getMonth()];
+    return `${dia} ${mes}`;
+  }
+
+  formatDateForInput(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Métodos para el nuevo diseño de filtros
+  setFilter(filtro: string) {
+    this.filtroActual = filtro;
+    this.aplicarFiltro();
+    
+    // Actualizar las variables CSS para la animación del indicador
+    this.actualizarIndicadorFiltro(filtro);
+  }
+  
+  actualizarIndicadorFiltro(filtro: string) {
+    const filtros = ['todos', 'pagados', 'pendientes'];
+    const indiceActivo = filtros.indexOf(filtro);
+    
+    // Actualizar todas las pestañas
+    filtros.forEach((nombreFiltro, index) => {
+      const boton = document.querySelector(`button[style*="--tab-index: ${index};"]`) as HTMLElement;
+      if (boton) {
+        boton.style.setProperty('--tab-index', index.toString());
+        
+        // Forzar la actualización del indicador
+        setTimeout(() => {
+          boton.classList.toggle('active', index === indiceActivo);
+        }, 10);
+      }
+    });
+  }
+
+  aplicarFiltro() {
+    switch (this.filtroActual) {
+      case 'pagados':
+        this.mantencionesFiltradas = this.mantenciones.filter(m => m.pagado);
+        break;
+      case 'pendientes':
+        this.mantencionesFiltradas = this.mantenciones.filter(m => !m.pagado);
+        break;
+      default:
+        this.mantencionesFiltradas = [...this.mantenciones];
+    }
+  }
+
   getNombreMes(mes: number): string {
     return this.meses.find(m => m.valor === mes)?.nombre || '';
   }
@@ -352,8 +426,11 @@ export class EstadisticasPage implements OnInit {
     this.clienteService.borrarRegistroHistorial(clienteId, fecha, hora).subscribe({
       next: () => {
         this.mostrarToast('Registro eliminado correctamente');
-        // Recargar las estadísticas para reflejar el cambio
-        this.cargarEstadisticas();
+        // Solución definitiva: Refrescar página completa después de la operación
+        setTimeout(() => {
+          console.log('Forzando recarga completa para sincronización...');
+          window.location.reload();
+        }, 1000);
       },
       error: (error) => {
         console.error('Error al borrar el registro:', error);
@@ -380,10 +457,18 @@ export class EstadisticasPage implements OnInit {
     const fecha = mantencion.fecha;
     const hora = mantencion.hora || '00:00';
 
+    console.log('Marcando pago para:', clienteId, fecha, hora);
+
     this.clienteService.marcarPagoHistorial(clienteId, fecha, hora).subscribe({
       next: () => {
+        console.log('Pago marcado exitosamente');
         this.mostrarToast('Pago registrado correctamente');
-        this.cargarEstadisticas();
+        
+        // Solución definitiva: Refrescar página completa después de la operación
+        setTimeout(() => {
+          console.log('Forzando recarga completa para sincronización...');
+          window.location.reload();
+        }, 1000);
       },
       error: (err) => {
         console.error('Error marcando pago:', err);
@@ -413,13 +498,43 @@ export class EstadisticasPage implements OnInit {
     this.clienteService.deshacerPagoHistorial(clienteId, fecha, hora).subscribe({
       next: () => {
         this.mostrarToast('Pago deshecho correctamente');
-        this.cargarEstadisticas();
+        // Solución definitiva: Refrescar página completa después de la operación
+        setTimeout(() => {
+          console.log('Forzando recarga completa para sincronización...');
+          window.location.reload();
+        }, 1000);
       },
       error: (err) => {
         console.error('Error deshaciendo pago:', err);
         this.mostrarToast('Error al deshacer pago');
       }
     });
+  }
+
+  async migrarPreciosHistorial() {
+    const { firstValueFrom } = await import('rxjs');
+    const clientes = await firstValueFrom(this.clienteService.getClientes());
+    let migrados = 0;
+
+    for (const cliente of clientes) {
+      let modificado = false;
+
+      cliente.historial = cliente.historial.map((registro: any) => {
+        if (registro.precioCobrado === undefined || registro.precioCobrado === null) {
+          modificado = true;
+          return { ...registro, precioCobrado: cliente.precio };
+        }
+        return registro;
+      });
+
+      if (modificado) {
+        await firstValueFrom(this.clienteService.updateCliente(cliente));
+        migrados++;
+      }
+    }
+
+    await this.mostrarToast(`✅ Migración completada: ${migrados} clientes actualizados`);
+    this.cargarEstadisticas();
   }
 
   async mostrarToast(mensaje: string) {
@@ -457,5 +572,50 @@ export class EstadisticasPage implements OnInit {
       case 'Alto': return 'danger';
       default: return 'medium';
     }
+  }
+
+  // Método para toggle de la notificación de migración
+  toggleMigration() {
+    this.isMigrationExpanded = !this.isMigrationExpanded;
+  }
+
+  // Método para transformar los datos del historial al formato esperado por el componente
+  transformarHistorialParaComponente(historial: any[]): any[] {
+    return historial.map(item => ({
+      id: `${item.fecha}_${item.hora || '00:00'}`,
+      clienteId: item.clienteId || '',
+      clienteNombre: item.clienteNombre || 'Cliente',
+      precio: item.precio || 0,
+      fecha: item.fecha,
+      servicio: item.servicio || 'Mantenimiento',
+      cloro: item.cloro || 0,
+      ph: item.ph || 0,
+      cantidadCloro: item.cantidadCloro,
+      cantidadBajaPh: item.cantidadBajaPh,
+      cantidadSubePh: item.cantidadSubePh,
+      cantidadPastillas: item.cantidadPastillas,
+      hora: item.hora,
+      pagado: item.pagado || false
+    }));
+  }
+
+  // Métodos para manejar eventos del historial
+  verDetalleMantencion(mantencion: any) {
+    console.log('Ver detalle de mantención:', mantencion);
+    // Aquí puedes implementar la lógica para ver detalles
+  }
+
+  togglePago(event: {mantencion: any, evento: Event}) {
+    const mantencion = event.mantencion;
+    if (mantencion.pagado) {
+      this.confirmarDeshacerPago(mantencion);
+    } else {
+      this.confirmarPago(mantencion);
+    }
+  }
+
+  borrarMantencion(event: {mantencion: any, evento: Event}) {
+    const mantencion = event.mantencion;
+    this.confirmarBorrado(mantencion);
   }
 }

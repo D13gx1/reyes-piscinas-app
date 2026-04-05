@@ -1,24 +1,18 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
+<ion-header [translucent]="true" class="modern-header">
+  <ion-toolbar class="custom-toolbar">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/tabs/clientes"></ion-back-button>
     </ion-buttons>
-    <ion-title>Historial - {{ cliente?.nombre || 'Cliente' }}</ion-title>
+    <ion-title class="custom-title">Historial - {{ cliente?.nombre || 'Cliente' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Historial - {{ cliente?.nombre || 'Cliente' }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
   <div class="container">
     <!-- Loading -->
     <div *ngIf="isLoading" class="loading-container">
       <ion-spinner name="crescent"></ion-spinner>
-      <span>Cargando historial...</span>
+      <p>Cargando historial...</p>
     </div>
 
     <!-- Error -->
@@ -26,116 +20,25 @@
       {{ error }}
     </div>
 
-    <!-- Historial -->
+    <!-- Historial usando el nuevo componente -->
     <ng-container *ngIf="!isLoading && !error">
+      <!-- Resumen de deuda -->
+      <app-resumen-deuda
+        [mantenciones]="transformarHistorialParaComponente(historialOrdenado)"
+        [clienteNombre]="cliente?.nombre || ''"
+        [clienteTelefono]="cliente?.telefono || ''">
+      </app-resumen-deuda>
+
       <div *ngIf="(historialOrdenado?.length || 0) > 0; else emptyState">
-        <ion-card class="historial-card" *ngFor="let item of historialOrdenado; let i = index">
-          <ion-card-header class="header-container">
-            <div class="historial-header">
-              <div class="historial-info">
-                <ion-card-title>
-                  <div class="fecha-row">
-                    <div class="fecha-pill">{{ item.fecha }}</div>
-                    <ion-chip color="medium" *ngIf="item.hora" class="chip-hora">
-                      <ion-icon name="time-outline"></ion-icon>
-                      <ion-label>{{ item.hora }}</ion-label>
-                    </ion-chip>
-                  </div>
-                </ion-card-title>
-              </div>
-            </div>
-          </ion-card-header>
-
-          <ion-card-content class="contenido-container">
-            <div class="detalles-historial">
-              <div class="detalle-item">
-                <strong>Servicio: </strong>
-                <span>{{ item.servicio || 'Mantenimiento' }}</span>
-              </div>
-
-              <div class="quimicos-section">
-                <h3>Químicos utilizados</h3>
-                <div class="quimicos-grid">
-                  <!-- Cloro (izquierda) -->
-                  <div class="quimico-card cloro-card">
-                    <div class="q-header">
-                      <ion-icon name="beaker-outline"></ion-icon>
-                      <span>Cloro</span>
-                    </div>
-                    <div class="q-row">
-                      <span class="label">Medido:</span>
-                      <span class="value">{{ item.cloro }}</span>
-                    </div>
-                    <div class="q-row" *ngIf="item.estadoCloro">
-                      <span class="label">Estado:</span>
-                      <ion-badge [color]="item.estadoCloro === 'Alto' ? 'warning' : item.estadoCloro === 'Bajo' ? 'danger' : 'success'">
-                        {{ item.estadoCloro }}
-                      </ion-badge>
-                    </div>
-                    <div class="q-row" *ngIf="item.cantidadCloro">
-                      <span class="label">Ajuste:</span>
-                      <span class="value">{{ item.cantidadCloro > 0 ? '+' : '' }}{{ item.cantidadCloro }} g</span>
-                    </div>
-                    <div class="q-row" *ngIf="item.cantidadPastillas !== null && item.cantidadPastillas !== undefined">
-                      <span class="label">Pastillas:</span>
-                      <span class="value">{{ item.cantidadPastillas }}</span>
-                    </div>
-                  </div>
-
-                  <!-- pH (derecha) -->
-                  <div class="quimico-card ph-card">
-                    <div class="q-header">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      <span>pH</span>
-                    </div>
-                    <div class="q-row">
-                      <span class="label">Medido:</span>
-                      <span class="value">{{ item.ph }}</span>
-                    </div>
-                    <div class="q-row" *ngIf="item.estadoPh">
-                      <span class="label">Estado:</span>
-                      <ion-badge [color]="item.estadoPh === 'Alto' ? 'warning' : item.estadoPh === 'Bajo' ? 'danger' : 'success'">
-                        {{ item.estadoPh }}
-                      </ion-badge>
-                    </div>
-                    <div class="q-row" *ngIf="item.cantidadBajaPh && item.cantidadBajaPh > 0">
-                      <span class="label">Sube pH:</span>
-                      <span class="value">{{ item.cantidadBajaPh }} g</span>
-                    </div>
-                    <div class="q-row" *ngIf="item.cantidadSubePh && item.cantidadSubePh > 0">
-                      <span class="label">Baja pH:</span>
-                      <span class="value">{{ item.cantidadSubePh }} g</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="accion-item" style="margin-top:12px; text-align:right;">
-              <ng-container *ngIf="item.pagado; else botonPagoCliente">
-                <ion-button class="pay-button" fill="clear" size="small" (click)="confirmarDeshacerPago(item)">
-                  <ion-icon name="cash-outline"></ion-icon>
-                  <span>Deshacer pago</span>
-                </ion-button>
-              </ng-container>
-              <ng-template #botonPagoCliente>
-                <ion-button class="pay-button" fill="clear" color="success" size="small" (click)="confirmarPago(item)">
-                  <ion-icon name="cash-outline"></ion-icon>
-                  <span>Pago realizado</span>
-                </ion-button>
-                <ion-button class="pay-button whatsapp" fill="clear" size="small" (click)="enviarWhatsApp(item)">
-                  <ion-icon name="logo-whatsapp"></ion-icon>
-                  <span>Enviar</span>
-                </ion-button>
-              </ng-template>
-
-              <ion-button fill="clear" color="danger" size="small" (click)="confirmarBorrado(item)">
-                <ion-icon name="trash-outline"></ion-icon>
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
+        <app-historial-mantenciones
+          [mantenciones]="transformarHistorialParaComponente(historialOrdenado)"
+          [titulo]="'Historial del Cliente'"
+          [mostrarFiltros]="true"
+          (onMantencionClick)="verDetalleMantencion($event)"
+          (onPagoToggle)="togglePago($event)"
+          (onBorrarClick)="borrarMantencion($event)">
+        </app-historial-mantenciones>
       </div>
-
       <ng-template #emptyState>
         <div class="empty-state">
           <ion-icon name="time-outline" size="large"></ion-icon>

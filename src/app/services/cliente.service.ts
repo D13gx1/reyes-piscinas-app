@@ -54,6 +54,7 @@ export interface Cliente {
     estadoCloro?: string; // Nuevo campo para estado del cloro
     estadoPh?: string; // Nuevo campo para estado del pH
     hora?: string; // Nuevo campo para la hora del mantenimiento
+    precioCobrado?: number; // Precio que se cobró en ese momento
     // Campos de pago
     pagado?: boolean | string;
     pago?: boolean | string;
@@ -257,15 +258,42 @@ export class ClienteService {
       console.error(' Error: ID de cliente requerido para actualizar');
       throw new Error('ID de cliente requerido para actualizar');
     }
-    const clienteRef = doc(this.firestore, this.collectionName, cliente.id);
-    console.log(' Referencia a documento creada:', clienteRef);
-    const { id, ...clienteData } = cliente;
-    console.log(' Datos a actualizar:', clienteData);
     
-    return from(updateDoc(clienteRef, clienteData)).pipe(
-      map(() => {
-        console.log(' Cliente actualizado exitosamente');
-        return cliente;
+    // Obtener el cliente actual para preservar el historial
+    return this.getClienteById(cliente.id).pipe(
+      switchMap(clienteActual => {
+        if (!clienteActual) {
+          throw new Error('Cliente no encontrado');
+        }
+        
+        const clienteRef = doc(this.firestore, this.collectionName, cliente.id!);
+        console.log(' Referencia a documento creada:', clienteRef);
+        
+        // Preservar el historial existente y solo actualizar campos permitidos
+        const clienteData = {
+          userId: cliente.userId || clienteActual.userId,
+          nombre: cliente.nombre || clienteActual.nombre,
+          direccion: cliente.direccion || clienteActual.direccion,
+          telefono: cliente.telefono || clienteActual.telefono,
+          email: cliente.email || clienteActual.email,
+          medidas: cliente.medidas || clienteActual.medidas,
+          precio: cliente.precio !== undefined ? cliente.precio : clienteActual.precio,
+          programacion: cliente.programacion || clienteActual.programacion,
+          historial: cliente.historial && cliente.historial.length > 0 
+  ? cliente.historial 
+  : clienteActual.historial,
+          skippedDates: cliente.skippedDates || clienteActual.skippedDates,
+          activo: cliente.activo !== undefined ? cliente.activo : clienteActual.activo
+        };
+        
+        console.log(' Datos a actualizar (historial preservado):', clienteData);
+        
+        return from(updateDoc(clienteRef, clienteData)).pipe(
+          map(() => {
+            console.log(' Cliente actualizado exitosamente (historial preservado)');
+            return { ...cliente, historial: clienteActual.historial };
+          })
+        );
       })
     );
   }

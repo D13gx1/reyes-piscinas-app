@@ -1,0 +1,60 @@
+<!-- ===== RESUMEN DEUDA COMPONENTE - VERSIÓN NOTIFICACIÓN ===== -->
+
+<div class="resumen-deuda-container" *ngIf="resumenDeuda.cantidadPendientes > 0; else sinDeuda">
+  <!-- Notificación compacta -->
+  <div class="notificacion-deuda" [class.expandida]="expandido">
+    <!-- Header clickeable -->
+    <div class="notificacion-header" (click)="toggleExpandido()">
+      <div class="notificacion-info">
+        <div class="notificacion-icono">
+          <ion-icon name="cash-outline"></ion-icon>
+          <span class="notificacion-badge">{{ resumenDeuda.cantidadPendientes }}</span>
+        </div>
+        <div class="notificacion-texto">
+          <span class="notificacion-titulo">Tienes deuda pendiente</span>
+          <span class="notificacion-monto">{{ formatearPrecio(resumenDeuda.totalPendiente) }}</span>
+        </div>
+      </div>
+      <div class="notificacion-flecha">
+        <ion-icon [name]="expandido ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+      </div>
+    </div>
+
+    <!-- Contenido expandido -->
+    <div class="notificacion-contenido" *ngIf="expandido">
+      <div class="contenido-detalles">
+        <div class="detalle-item">
+          <ion-icon name="document-text-outline" class="detalle-icono"></ion-icon>
+          <span class="detalle-texto">{{ resumenDeuda.cantidadPendientes }} mantenciones sin pagar</span>
+        </div>
+        
+        <!-- Botón WhatsApp -->
+        <div class="whatsapp-container">
+          <ion-button 
+            class="whatsapp-button" 
+            fill="clear" 
+            (click)="enviarPorWhatsApp()"
+            [disabled]="!resumenDeuda.clienteTelefono">
+            <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
+            Enviar recordatorio por WhatsApp
+          </ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estado sin deuda -->
+<ng-template #sinDeuda>
+  <div class="sin-deuda-container">
+    <div class="notificacion-sin-deuda">
+      <div class="sin-deuda-icono">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+      </div>
+      <div class="sin-deuda-texto">
+        <span class="sin-deuda-titulo">¡Todo al día!</span>
+        <span class="sin-deuda-subtitulo">No hay mantenciones pendientes</span>
+      </div>
+    </div>
+  </div>
+</ng-template>

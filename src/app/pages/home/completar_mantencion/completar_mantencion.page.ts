@@ -182,7 +182,8 @@ export class CompletarMantencionPage implements OnInit {
       estadoPh: this.phSeleccionado,
       notas: formValues.notas,
       piscinarLlenando: formValues.piscinarLlenando === 'si',
-      horaCorte: formValues.horaCorte || null
+      horaCorte: formValues.horaCorte || null,
+      precioCobrado: this.cliente.precio // Guardar el precio actual que se está cobrando
     };
 
     // Asegurarse de que el cliente tenga un array de historial

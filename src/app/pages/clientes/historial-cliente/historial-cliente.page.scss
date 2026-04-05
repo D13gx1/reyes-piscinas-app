@@ -1,16 +1,100 @@
-ion-content {
-  --padding-bottom: 100px;
+// Importar estilos base de clientes
+.modern-header {
+  --background: #2c3e50;  // Fondo oscuro gris azulado
+  
+  .custom-toolbar {
+    --background: transparent;
+    --color: #ffffff;  // Letras blancas
+    
+    .custom-title {
+      --color: #ffffff !important;
+      font-weight: 600;
+    }
+    
+    ion-back-button {
+      --color: #ffffff !important;
+      color: #ffffff !important;
+    }
+    
+    ion-buttons {
+      --color: #ffffff !important;
+      color: #ffffff !important;
+    }
+    
+    ion-icon {
+      color: #ffffff !important;
+    }
+  }
 }
 
-.container {
-  padding: 16px;
+// Estilos globales para todos los elementos del header
+.modern-header * {
+  color: #000000 !important;
+}
+
+.modern-header ion-button {
+  --color: #000000 !important;
+  color: #000000 !important;
+}
+
+.modern-header ion-back-button {
+  --color: #000000 !important;
+  color: #000000 !important;
+}
+
+.modern-header ion-back-button ion-icon {
+  color: #000000 !important;
+}
+
+.modern-header ion-back-button::part(native) {
+  color: #000000 !important;
+}
+
+.modern-header ion-back-button::part(icon) {
+  color: #000000 !important;
+}
+
+.modern-header ion-buttons {
+  --color: #000000 !important;
+  color: #000000 !important;
+}
+
+.modern-header ion-buttons ion-back-button {
+  --color: #000000 !important;
+  color: #000000 !important;
+}
+
+.modern-header ion-buttons ion-icon {
+  color: #000000 !important;
+}
+
+.modern-header [slot="start"] {
+  color: #000000 !important;
+}
+
+.modern-header ion-back-button svg {
+  fill: #000000 !important;
+  color: #000000 !important;
 }
 
 .loading-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
   color: var(--ion-color-medium);
+  
+  ion-spinner {
+    width: 40px;
+    height: 40px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+  }
 }
 
 .error {
@@ -19,212 +103,273 @@ ion-content {
   border: 1px solid color-mix(in srgb, var(--ion-color-danger) 30%, transparent);
   padding: 12px;
   border-radius: 8px;
+  margin: 16px;
 }
 
-.historial-list {
-  background: transparent;
-}
-
-.historial-item {
-  --inner-padding-top: 12px;
-  --inner-padding-bottom: 12px;
-  --inner-padding-start: 12px;
-  --inner-padding-end: 12px;
-  margin: 8px 0;
+// Estilos para tarjetas de historial
+.historial-card {
+  margin-bottom: 16px;
   border-radius: 12px;
-  --background: var(--ion-item-background, var(--ion-background-color, #fff));
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--ion-color-medium-contrast) 6%, transparent);
-}
-
-.fila-fecha {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.fecha-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.fecha-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--ion-color-light);
-  color: var(--ion-color-dark);
-  font-weight: 600;
-  font-size: 0.95em;
-  letter-spacing: 0.2px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-@media (prefers-color-scheme: dark) {
-  .fecha-pill {
-    background: #3880ff;
-    color: var(--ion-color-light);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  .header-container {
+    background: var(--ion-color-light);
+    padding: 16px;
+    
+    .historial-header {
+      .historial-info {
+        ion-card-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--ion-text-color);
+          margin: 0 0 4px 0;
+          
+          .fecha-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            .fecha-pill {
+              display: inline-flex;
+              align-items: center;
+              padding: 6px 12px;
+              border-radius: 999px;
+              background: var(--ion-color-primary);
+              color: white;
+              font-weight: 600;
+              font-size: 0.9em;
+              letter-spacing: 0.2px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            }
+            
+            .chip-hora {
+              margin: 0;
+              height: 24px;
+              font-size: 0.8rem;
+            }
+          }
+        }
+        
+        ion-card-subtitle {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.95rem;
+          color: var(--ion-color-medium);
+          
+          ion-icon {
+            color: var(--ion-color-primary);
+          }
+        }
+      }
+    }
   }
-}
-
-.fecha {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ion-text-color);
-}
-
-.hora {
-  margin-left: 8px;
-}
-
-.fila {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin: 2px 0;
-}
-
-.etiqueta {
-  font-weight: 600;
-  color: var(--ion-color-medium);
-}
-
-.valor {
-  color: var(--ion-text-color);
+  
+  .contenido-container {
+    background: var(--ion-background-color);
+    padding: 16px;
+    
+    .detalles-historial {
+      .quimicos-section {
+        margin-bottom: 16px;
+        
+        h3 {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 0 0 12px 0;
+          font-size: 1.05rem;
+          font-weight: 600;
+          color: var(--ion-text-color);
+          
+          ion-icon {
+            color: var(--ion-color-primary);
+          }
+        }
+        
+        .quimicos-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          
+          @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+          }
+        }
+        
+        .quimico-card {
+          border: 1px solid var(--ion-color-light-shade);
+          border-radius: 12px;
+          padding: 12px;
+          background: var(--ion-color-light);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+          
+          .q-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--ion-text-color);
+            font-size: 0.95rem;
+            
+            ion-icon {
+              font-size: 1.1rem;
+            }
+          }
+          
+          .q-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 6px 0;
+            font-size: 0.9rem;
+            
+            .label {
+              color: var(--ion-color-medium);
+              font-weight: 500;
+            }
+            
+            .value {
+              color: var(--ion-text-color);
+              font-weight: 600;
+            }
+          }
+        }
+        
+        .cloro-card {
+          border-left: 4px solid var(--ion-color-primary);
+        }
+        
+        .ph-card {
+          border-left: 4px solid var(--ion-color-tertiary);
+        }
+      }
+      
+      .payment-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--ion-color-light-shade);
+        
+        .payment-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          
+          .payment-status {
+            ion-chip {
+              margin: 0;
+              height: 24px;
+              font-size: 0.8rem;
+            }
+          }
+          
+          .payment-amount {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--ion-color-primary);
+          }
+        }
+        
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+          
+          .pay-button {
+            --background: transparent;
+            background: #f3f4f6;
+            color: #1f2937;
+            border-radius: 10px;
+            padding: 6px 10px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(16,24,40,0.06);
+            border: 1px solid rgba(0,0,0,0.06);
+            font-size: 0.85rem;
+            
+            ion-icon {
+              font-size: 1rem;
+              color: #065f46;
+            }
+            
+            &.whatsapp {
+              background: #25d366;
+              color: white;
+              border-color: #25d366;
+              
+              ion-icon {
+                color: white;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 .empty-state {
   text-align: center;
   color: var(--ion-color-medium);
-  padding: 24px 12px;
-}
-
-// Sección de químicos
-.quimicos-section {
-  margin-top: 16px;
-
-  h3 {
-    margin: 0 0 12px 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--ion-color-dark);
-  }
-}
-
-.quimicos-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  padding: 60px 20px;
   
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.quimico-card {
-  border: 1px solid var(--ion-color-light-shade);
-  border-radius: 12px;
-  padding: 14px;
-  background: var(--ion-color-light);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  height: 100%;
-  box-sizing: border-box;
-}
-
-// Estilo específico para tarjeta de Cloro
-.cloro-card {
-  border-left: 4px solid var(--ion-color-primary);
-}
-
-// Estilo específico para tarjeta de pH
-.ph-card {
-  border-left: 4px solid var(--ion-color-tertiary);
-}
-
-.q-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-weight: 600;
-  color: var(--ion-color-dark);
-  font-size: 1.05em;
-
   ion-icon {
-    font-size: 1.2em;
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--ion-text-color);
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
   }
 }
 
-.q-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 8px 0;
-  font-size: 0.95em;
-
-  .label {
-    color: var(--ion-color-medium);
-    font-weight: 500;
+// Responsive adjustments
+@media (max-width: 576px) {
+  .container {
+    padding: 12px;
   }
-
-  .value {
-    color: var(--ion-color-dark);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-
-    .cantidad {
-      background: var(--ion-color-light-shade);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.9em;
+  
+  .historial-card {
+    margin-bottom: 12px;
+    
+    .header-container {
+      padding: 12px;
+    }
+    
+    .contenido-container {
+      padding: 12px;
+      
+      .payment-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        
+        .payment-info {
+          align-items: center;
+          text-align: center;
+        }
+        
+        .action-buttons {
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+      }
     }
   }
 }
-
-// Ajustes para modo oscuro
-@media (prefers-color-scheme: dark) {
-  .quimico-card {
-    background: white;
-    border-color: var(--ion-color-medium);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-  }
-
-  .q-row .value .cantidad {
-    background: var(--ion-color-medium-shade);
-  }
-}
-
-  /* Estilo personalizado para botones de pago */
-  .pay-button {
-    --background: transparent;
-    background: #f3f4f6; /* light gray */
-    color: #1f2937; /* dark gray text */
-    border-radius: 10px;
-    padding: 6px 10px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 1px 3px rgba(16,24,40,0.06);
-    border: 1px solid rgba(0,0,0,0.06);
-  }
-
-  .pay-button ion-icon {
-    font-size: 1rem;
-    color: #065f46; /* subtle green */
-  }
-
-  .pay-button {
-    text-transform: none;
-  }
-
-  .pay-button span {
-    margin-left: 6px;
-    text-transform: none;
-  }

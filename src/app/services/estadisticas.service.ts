@@ -75,7 +75,12 @@ export class EstadisticasService {
   // Obtener estadísticas por mes
   getEstadisticasMes(anio: number, mes: number): Observable<EstadisticasRecaudacion> {
     const fechaInicio = `${anio}-${mes.toString().padStart(2, '0')}-01`;
-    const fechaFin = `${anio}-${mes.toString().padStart(2, '0')}-31`;
+    
+    // Calcular el último día correcto del mes
+    const ultimoDiaMes = new Date(anio, mes + 1, 0).getDate(); 
+    const fechaFin = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${ultimoDiaMes}`;
+    
+    console.log(`Estadísticas mes ${mes}/${anio}: ${fechaInicio} a ${fechaFin}`);
     
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => this.calcularEstadisticas(mantenciones, 'mes', fechaInicio, fechaFin))
@@ -124,7 +129,7 @@ export class EstadisticasService {
                       clienteId: doc.id,
                       clienteNombre: data['nombre'] || 'Cliente sin nombre',
                       fecha: mantencion.fecha,
-                      precio: data['precio'] || 0, // Usar el precio del cliente
+                      precio: mantencion.precioCobrado || data['precio'] || 0, // Usar precio cobrado en ese momento, si no existe usar precio actual
                       cloro: mantencion.cloro || 0,
                       ph: mantencion.ph || 0,
                       servicio: mantencion.servicio || 'Mantención',
@@ -200,7 +205,7 @@ export class EstadisticasService {
                       clienteId: doc.id,
                       clienteNombre: data['nombre'] || 'Cliente sin nombre',
                       fecha: mantencion.fecha,
-                      precio: data['precio'] || 0, // Usar el precio del cliente
+                      precio: mantencion.precioCobrado || data['precio'] || 0, // Usar precio cobrado en ese momento, si no existe usar precio actual
                       cloro: mantencion.cloro || 0,
                       ph: mantencion.ph || 0,
                       servicio: mantencion.servicio || 'Mantención',

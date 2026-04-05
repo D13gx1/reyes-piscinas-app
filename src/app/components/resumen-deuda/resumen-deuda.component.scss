@@ -1,0 +1,342 @@
+// ===== RESUMEN DEUDA COMPONENTE - VERSIÓN NOTIFICACIÓN =====
+
+.resumen-deuda-container {
+  margin-bottom: 16px;
+}
+
+// Notificación de deuda - diseño agradable
+.notificacion-deuda {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.25);
+  }
+  
+  &.expandida {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  }
+}
+
+// Header de la notificación
+.notificacion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  
+  .notificacion-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    
+    .notificacion-icono {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      ion-icon {
+        color: white;
+        font-size: 18px;
+      }
+      
+      .notificacion-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+      }
+    }
+    
+    .notificacion-texto {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      
+      .notificacion-titulo {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      
+      .notificacion-monto {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+    }
+  }
+  
+  .notificacion-flecha {
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    
+    ion-icon {
+      font-size: 20px;
+    }
+  }
+}
+
+// Contenido expandido
+.notificacion-contenido {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(99, 102, 241, 0.2);
+  
+  .contenido-detalles {
+    padding: 16px;
+    
+    .detalle-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(99, 102, 241, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      
+      .detalle-icono {
+        color: #6366f1;
+        font-size: 18px;
+      }
+      
+      .detalle-texto {
+        color: #374151;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+    }
+    
+    .whatsapp-container {
+      .whatsapp-button {
+        width: 100%;
+        height: 44px;
+        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        color: white;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        transition: all 0.3s ease;
+        
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, #128c7e 0%, #0d5f4f 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+        
+        &:disabled {
+          background: #e5e7eb;
+          color: #9ca3af;
+          opacity: 0.6;
+          box-shadow: none;
+        }
+        
+        ion-icon {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+}
+
+// Notificación sin deuda - diseño agradable
+.sin-deuda-container {
+  margin-bottom: 16px;
+}
+
+.notificacion-sin-deuda {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.25);
+  }
+  
+  .sin-deuda-icono {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    
+    ion-icon {
+      color: white;
+      font-size: 24px;
+    }
+  }
+  
+  .sin-deuda-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    
+    .sin-deuda-titulo {
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    
+    .sin-deuda-subtitulo {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+  }
+}
+
+// Animaciones
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    max-height: 200px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+  }
+}
+
+.notificacion-contenido {
+  animation: slideDown 0.3s ease-out;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .resumen-deuda-container {
+    margin-bottom: 12px;
+  }
+  
+  .notificacion-deuda {
+    .notificacion-header {
+      padding: 10px 12px;
+      
+      .notificacion-info {
+        gap: 10px;
+        
+        .notificacion-icono {
+          width: 36px;
+          height: 36px;
+          
+          ion-icon {
+            font-size: 16px;
+          }
+          
+          .notificacion-badge {
+            font-size: 0.65rem;
+            padding: 1px 5px;
+            min-width: 16px;
+          }
+        }
+        
+        .notificacion-texto {
+          .notificacion-titulo {
+            font-size: 0.8rem;
+          }
+          
+          .notificacion-monto {
+            font-size: 1rem;
+          }
+        }
+      }
+      
+      .notificacion-flecha {
+        ion-icon {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+  
+  .notificacion-contenido {
+    .contenido-detalles {
+      padding: 12px;
+      
+      .detalle-item {
+        padding: 10px;
+        margin-bottom: 12px;
+        
+        .detalle-icono {
+          font-size: 16px;
+        }
+        
+        .detalle-texto {
+          font-size: 0.85rem;
+        }
+      }
+      
+      .whatsapp-container {
+        .whatsapp-button {
+          height: 40px;
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+  
+  .notificacion-sin-deuda {
+    padding: 12px;
+    gap: 12px;
+    
+    .sin-deuda-icono {
+      width: 40px;
+      height: 40px;
+      
+      ion-icon {
+        font-size: 20px;
+      }
+    }
+    
+    .sin-deuda-texto {
+      .sin-deuda-titulo {
+        font-size: 1rem;
+      }
+      
+      .sin-deuda-subtitulo {
+        font-size: 0.8rem;
+      }
+    }
+  }
+}

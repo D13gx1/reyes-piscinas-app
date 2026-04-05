@@ -1,0 +1,126 @@
+<!-- ===== HISTORIAL DE MANTENCIONES COMPONENTE ===== -->
+
+<!-- Header con filtros -->
+<div class="historial-container" *ngIf="mantenciones.length > 0; else noMantenciones">
+  <!-- Header con filtros (opcional) -->
+  <div class="historial-header" *ngIf="mostrarFiltros">
+    <h2 class="historial-title">
+      {{ titulo }}
+    </h2>
+    <div class="filter-tabs">
+      <button class="filter-tab active" style="--tab-index: 0;" (click)="setFilter('todos')">
+        Todos
+      </button>
+      <button class="filter-tab" style="--tab-index: 1;" (click)="setFilter('pagados')">
+        Pagados
+      </button>
+      <button class="filter-tab" style="--tab-index: 2;" (click)="setFilter('pendientes')">
+        Pendientes
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de mantenciones -->
+  <ng-container *ngIf="mantenciones.length > 0; else noMantenciones">
+    <ion-card class="mantencion-card" *ngFor="let item of mantencionesFiltradas; let i = index">
+      <!-- Header principal -->
+      <div class="mantencion-header">
+        <div class="mantencion-info">
+          <div class="cliente-container">
+            <h3 class="cliente-nombre">{{ item.clienteNombre }}</h3>
+            <div class="precio-badge">
+              {{ formatearPrecio(item.precio) }}
+            </div>
+          </div>
+          <div class="mantencion-fecha">
+            <ion-icon name="calendar-outline"></ion-icon>
+            {{ formatearFechaCompleta(item.fecha) }} · {{ item.hora || 'N/A' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-card: Estado del agua -->
+      <div class="sub-card">
+        <div class="sub-card-header">
+          <ion-icon name="water-outline"></ion-icon>
+          <h4 class="sub-card-title">Estado del agua</h4>
+        </div>
+        <div class="estado-agua">
+          <div class="estado-item">
+            <span class="estado-label">Cloro</span>
+            <div [ngClass]="'estado-badge ' + getColorNivel(getNivelCloro(item.cloro))" [style]="getBadgeStyle(getColorNivel(getNivelCloro(item.cloro)))">
+              <ion-icon name="water-outline" style="margin-right: 6px;"></ion-icon>
+              <span>{{ getNivelCloro(item.cloro) }}</span>
+            </div>
+          </div>
+          <div class="estado-item">
+            <span class="estado-label">pH</span>
+            <div [ngClass]="'estado-badge ' + getColorNivel(getNivelPh(item.ph))" [style]="getBadgeStyle(getColorNivel(getNivelPh(item.ph)))">
+              <ion-icon name="flask-outline" style="margin-right: 6px;"></ion-icon>
+              <span>{{ getNivelPh(item.ph) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-card: Productos usados -->
+      <div class="sub-card">
+        <div class="sub-card-header">
+          <ion-icon name="flask-outline"></ion-icon>
+          <h4 class="sub-card-title">Productos usados</h4>
+        </div>
+        <div class="productos-grid">
+          <div class="producto-item">
+            <ion-icon name="water-outline"></ion-icon>
+            <span>Cloro</span>
+            <strong>{{ item.cantidadCloro || 0 }}g</strong>
+          </div>
+          <div class="producto-item">
+            <ion-icon name="trending-up-outline"></ion-icon>
+            <span>pH+</span>
+            <strong>{{ item.cantidadSubePh || 0 }}g</strong>
+          </div>
+          <div class="producto-item">
+            <ion-icon name="cube-outline"></ion-icon>
+            <span>Pastillas</span>
+            <strong>{{ item.cantidadPastillas || 0 }}</strong>
+          </div>
+          <div class="producto-item">
+            <ion-icon name="trending-down-outline"></ion-icon>
+            <span>pH-</span>
+            <strong>{{ item.cantidadBajaPh || 0 }}g</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-card: Mantenimiento -->
+      <div class="sub-card" *ngIf="item.servicio">
+        <div class="sub-card-header">
+          <ion-icon name="build-outline"></ion-icon>
+          <h4 class="sub-card-title">{{ item.servicio }}</h4>
+        </div>
+        <!-- Botones de acción -->
+        <div style="display: flex !important; align-items: center !important; gap: 12px !important; width: 100% !important; margin-top: 12px !important;">
+          <div [ngClass]="item.pagado ? 'pago-button pagado' : 'pago-button pendiente'" 
+               (click)="onPagoClick(item, $event)">
+            <ion-icon [name]="item.pagado ? 'checkmark-circle' : 'checkmark-outline'" class="pago-icon"></ion-icon>
+            <span class="pago-text">{{ item.pagado ? 'Pagado' : 'Marcar Pagado' }}</span>
+          </div>
+          <div class="borrar-button" 
+               (click)="onBorrar(item, $event)">
+            <ion-icon name="trash-outline" class="borrar-icon"></ion-icon>
+          </div>
+        </div>
+      </div>
+    </ion-card>
+  </ng-container>
+</div>
+
+<!-- Empty state -->
+<ng-template #noMantenciones>
+  <div class="empty-state-modern">
+    <ion-icon name="calendar-outline"></ion-icon>
+    <h3>No hay mantenciones</h3>
+    <p>No se encontraron mantenciones para el filtro seleccionado</p>
+  </div>
+</ng-template>

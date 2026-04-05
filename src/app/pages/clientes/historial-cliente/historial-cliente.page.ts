@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonLabel, IonSpinner, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonChip, IonIcon, IonButton, AlertController, ToastController } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonLabel, IonSpinner, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonChip, IonIcon, IonButton, AlertController, ToastController } from '@ionic/angular/standalone';
 import { ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { addIcons } from 'ionicons';
 import { timeOutline, constructOutline, beakerOutline, flaskOutline, cashOutline, trashOutline, logoWhatsapp } from 'ionicons/icons';
+import { HistorialMantencionesComponent } from '../../../components/historial-mantenciones/historial-mantenciones.component';
+import { ResumenDeudaComponent } from '../../../components/resumen-deuda/resumen-deuda.component';
 
 addIcons({
   'time-outline': timeOutline,
@@ -26,7 +28,9 @@ addIcons({
     IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
     IonButton,
     IonLabel, IonSpinner, IonBadge,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonChip, IonIcon,
+    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonChip, IonIcon,
+    HistorialMantencionesComponent,
+    ResumenDeudaComponent,
     CommonModule, FormsModule
   ]
 })
@@ -39,8 +43,7 @@ export class HistorialClientePage implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private clienteService: ClienteService
-    ,
+    private clienteService: ClienteService,
     private alertController: AlertController,
     private toastController: ToastController
   ) {}
@@ -144,68 +147,105 @@ export class HistorialClientePage implements OnInit {
     });
   }
 
-  async confirmarBorrado(item: any) {
-    const alert = await this.alertController.create({
-      header: 'Confirmar borrado',
-      message: `¿Está seguro que desea borrar el registro del ${item.fecha}${item.hora ? ' a las ' + item.hora : ''}?`,
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        { text: 'Borrar', role: 'destructive', handler: () => this.borrarRegistro(item) }
-      ]
-    });
-
-    await alert.present();
+  // Método para transformar los datos del historial al formato esperado por el componente
+  transformarHistorialParaComponente(historial: any[]): any[] {
+    return historial.map(item => ({
+      id: `${item.fecha}_${item.hora || '00:00'}`,
+      clienteId: this.clienteId || '',
+      clienteNombre: this.cliente?.nombre || 'Cliente',
+      precio: this.cliente?.precio || 0,
+      fecha: item.fecha,
+      servicio: item.servicio || 'Mantenimiento',
+      cloro: item.cloro || 0,
+      ph: item.ph || 0,
+      cantidadCloro: item.cantidadCloro,
+      cantidadBajaPh: item.cantidadBajaPh,
+      cantidadSubePh: item.cantidadSubePh,
+      cantidadPastillas: item.cantidadPastillas,
+      hora: item.hora,
+      pagado: item.pagado || false
+    }));
   }
 
-  borrarRegistro(item: any) {
-    if (!this.clienteId) return;
-    const hora = item.hora || '00:00';
-    this.clienteService.borrarRegistroHistorial(this.clienteId, item.fecha, hora).subscribe({
-      next: () => {
-        this.clienteService.getClienteById(this.clienteId).subscribe({
-          next: (cliente) => {
-            this.cliente = cliente;
-            this.historialOrdenado = this.ordenarHistorial(cliente.historial || []);
-            this.mostrarToast('Registro eliminado correctamente');
-          },
-          error: (err) => console.error('Error recargando cliente después de borrar:', err)
-        });
-      },
-      error: (err) => {
-        console.error('Error borrando registro:', err);
-        this.mostrarToast('Error al eliminar registro');
-      }
-    });
+  // Métodos para manejar eventos del componente
+  verDetalleMantencion(mantencion: any): void {
+    console.log('Ver detalle de mantención:', mantencion);
   }
 
-  async confirmarPago(item: any) {
+  togglePago(event: {mantencion: any, evento: Event}): void {
+    const mantencion = event.mantencion;
+    console.log('Toggle pago:', mantencion);
+    
+    if (mantencion.pagado) {
+      this.confirmarDeshacerPago(mantencion);
+    } else {
+      this.confirmarPago(mantencion);
+    }
+  }
+
+  borrarMantencion(event: {mantencion: any, evento: Event}): void {
+    const mantencion = event.mantencion;
+    console.log('Borrar mantención:', mantencion);
+    this.confirmarBorrado(mantencion);
+  }
+
+  // Métodos de confirmación
+  async confirmarPago(mantencion: any) {
     const alert = await this.alertController.create({
       header: 'Confirmar pago',
-      message: `¿Marcar como pagado el servicio del ${item.fecha}${item.hora ? ' a las ' + item.hora : ''}?`,
+      message: `¿Marcar como pagado el servicio para ${mantencion.clienteNombre} del ${new Date(mantencion.fecha).toLocaleDateString('es-CL')}?`,
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
-        { text: 'Marcar pago', handler: () => this.marcarPago(item) }
+        { text: 'Marcar pago', handler: () => this.marcarPago(mantencion) }
       ]
     });
 
     await alert.present();
   }
 
-  marcarPago(item: any) {
-    if (!this.clienteId) return;
-    const hora = item.hora || '00:00';
-    this.clienteService.marcarPagoHistorial(this.clienteId, item.fecha, hora).subscribe({
-      next: () => {
-        this.clienteService.getClienteById(this.clienteId).subscribe({
-          next: (cliente) => {
-            this.cliente = cliente;
-            this.historialOrdenado = this.ordenarHistorial(cliente.historial || []);
-            this.mostrarToast('Pago registrado correctamente');
-          },
-          error: (err) => {
-            console.error('Error recargando cliente:', err);
+  async confirmarDeshacerPago(mantencion: any) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar deshacer pago',
+      message: `¿Deshacer pago del servicio para ${mantencion.clienteNombre} del ${new Date(mantencion.fecha).toLocaleDateString('es-CL')}?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Deshacer pago', handler: () => this.deshacerPago(mantencion) }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async confirmarBorrado(mantencion: any) {
+    const alert = await this.alertController.create({
+      header: 'Confirmar borrado',
+      message: `¿Está seguro que desea borrar el registro de mantención para ${mantencion.clienteNombre} del ${new Date(mantencion.fecha).toLocaleDateString('es-CL')}?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Borrar',
+          role: 'destructive',
+          handler: () => {
+            this.borrarRegistroHistorial(mantencion);
           }
-        });
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // Métodos de operación con refresco completo
+  marcarPago(mantencion: any) {
+    this.clienteService.marcarPagoHistorial(this.clienteId, mantencion.fecha, mantencion.hora || '00:00').subscribe({
+      next: () => {
+        this.mostrarToast('Pago registrado correctamente');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       },
       error: (err) => {
         console.error('Error marcando pago:', err);
@@ -214,38 +254,32 @@ export class HistorialClientePage implements OnInit {
     });
   }
 
-  async confirmarDeshacerPago(item: any) {
-    const alert = await this.alertController.create({
-      header: 'Confirmar deshacer pago',
-      message: `¿Deshacer pago del servicio del ${item.fecha}${item.hora ? ' a las ' + item.hora : ''}?`,
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        { text: 'Deshacer pago', handler: () => this.deshacerPago(item) }
-      ]
-    });
-
-    await alert.present();
-  }
-
-  deshacerPago(item: any) {
-    if (!this.clienteId) return;
-    const hora = item.hora || '00:00';
-    this.clienteService.deshacerPagoHistorial(this.clienteId, item.fecha, hora).subscribe({
+  deshacerPago(mantencion: any) {
+    this.clienteService.deshacerPagoHistorial(this.clienteId, mantencion.fecha, mantencion.hora || '00:00').subscribe({
       next: () => {
-        this.clienteService.getClienteById(this.clienteId).subscribe({
-          next: (cliente) => {
-            this.cliente = cliente;
-            this.historialOrdenado = this.ordenarHistorial(cliente.historial || []);
-            this.mostrarToast('Pago deshecho correctamente');
-          },
-          error: (err) => {
-            console.error('Error recargando cliente:', err);
-          }
-        });
+        this.mostrarToast('Pago deshecho correctamente');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       },
       error: (err) => {
         console.error('Error deshaciendo pago:', err);
         this.mostrarToast('Error al deshacer pago');
+      }
+    });
+  }
+
+  borrarRegistroHistorial(mantencion: any) {
+    this.clienteService.borrarRegistroHistorial(this.clienteId, mantencion.fecha, mantencion.hora || '00:00').subscribe({
+      next: () => {
+        this.mostrarToast('Registro eliminado correctamente');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      },
+      error: (error) => {
+        console.error('Error al borrar el registro:', error);
+        this.mostrarToast('Error al eliminar el registro');
       }
     });
   }

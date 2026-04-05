@@ -16,6 +16,44 @@
     </ion-toolbar>
   </ion-header>
 
+  <!-- Notificación de migración -->
+  <div class="migration-notification" [class.expanded]="isMigrationExpanded">
+    <div class="notification-header" (click)="toggleMigration()">
+      <div class="notification-content">
+        <ion-icon name="build-outline" class="notification-icon"></ion-icon>
+        <div class="notification-text">
+          <h4>🔧 Migración de Precios</h4>
+          <p *ngIf="!isMigrationExpanded">Actualiza tu historial para estadísticas correctas</p>
+        </div>
+      </div>
+      <ion-icon 
+        [name]="isMigrationExpanded ? 'chevron-up-outline' : 'chevron-down-outline'" 
+        class="expand-icon">
+      </ion-icon>
+    </div>
+    
+    <div class="notification-body" *ngIf="isMigrationExpanded">
+      <p class="notification-description">
+        Este proceso actualizará todo tu historial de mantenimientos para que las estadísticas se calculen correctamente con los precios reales cobrados en cada momento.
+        <br>
+        <br>
+        Recuerda dejar a tus clientes registrados bien con el precio que cobraste en cada mantenimiento.
+      </p>
+      <ion-button 
+        expand="block" 
+        color="warning" 
+        class="migration-button"
+        (click)="migrarPreciosHistorial()">
+        <ion-icon name="sync-outline" slot="start"></ion-icon>
+        Migrar historial de precios
+      </ion-button>
+      <p class="migration-note">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        Ejecutar solo una vez
+      </p>
+    </div>
+  </div>
+
   <!-- Selector de período -->
   <ion-card>
     <ion-card-content>
@@ -193,122 +231,20 @@
     </ion-card>
 
     <!-- Historial de mantenciones -->
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="time-outline"></ion-icon>
-          Historial de Mantenciones
-          <ion-badge color="primary">{{ mantenciones.length }}</ion-badge>
-        </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-list *ngIf="mantenciones.length > 0; else noMantenciones">
-          <ion-item *ngFor="let mantencion of mantenciones" class="mantencion-item" lines="none">
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <div class="mantencion-header">
-                    <h3>{{ mantencion.clienteNombre }}</h3>
-                    <ion-chip color="success">
-                      {{ formatearPrecio(mantencion.precio) }}
-                    </ion-chip>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="6">
-                  <div class="mantencion-detail">
-                    <ion-icon name="calendar-outline"></ion-icon>
-                    <span>{{ formatearFechaCorta(mantencion.fecha) }}</span>
-                  </div>
-                </ion-col>
-                <ion-col size="6" *ngIf="mantencion.hora">
-                  <div class="mantencion-detail">
-                    <ion-icon name="time-outline"></ion-icon>
-                    <span>{{ mantencion.hora }}</span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <div class="chemical-levels">
-                    <span class="level-item">
-                      <ion-icon name="water-outline"></ion-icon>
-                      <strong>Cloro:</strong> <ion-chip [color]="getColorNivel(getNivelCloro(mantencion.cloro))" size="small">{{ getNivelCloro(mantencion.cloro) }}</ion-chip>
-                    </span>
-                    <span class="level-item">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      <strong>pH:</strong> <ion-chip [color]="getColorNivel(getNivelPh(mantencion.ph))" size="small">{{ getNivelPh(mantencion.ph) }}</ion-chip>
-                    </span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <div class="chemical-amounts">
-                    <span *ngIf="mantencion.cantidadCloro !== null && mantencion.cantidadCloro !== undefined" class="amount-item">
-                      <ion-icon name="water-outline"></ion-icon>
-                      Cloro usado: {{ mantencion.cantidadCloro }}g
-                    </span>
-                    <span *ngIf="mantencion.cantidadSubePh !== null && mantencion.cantidadSubePh !== undefined" class="amount-item">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      Sube pH usado: {{ mantencion.cantidadSubePh }}g
-                    </span>
-                    <span *ngIf="mantencion.cantidadBajaPh !== null && mantencion.cantidadBajaPh !== undefined" class="amount-item">
-                      <ion-icon name="flask-outline"></ion-icon>
-                      Baja pH usado: {{ mantencion.cantidadBajaPh }}g
-                    </span>
-                    <span *ngIf="mantencion.cantidadPastillas !== null && mantencion.cantidadPastillas !== undefined" class="amount-item">
-                      <ion-icon name="cube-outline"></ion-icon>
-                      Pastillas usadas: {{ mantencion.cantidadPastillas }}
-                    </span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row *ngIf="mantencion.servicio">
-                <ion-col size="12">
-                  <div class="mantencion-detail">
-                    <ion-icon name="analytics-outline"></ion-icon>
-                    <span>{{ mantencion.servicio }}</span>
-                  </div>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12" class="ion-text-end">
-                    <ng-container *ngIf="mantencion.pagado; else botonPago">
-                      <ion-button class="pay-button" fill="clear" size="small" (click)="confirmarDeshacerPago(mantencion)">
-                        <ion-icon name="cash-outline"></ion-icon>
-                        <span>Deshacer pago</span>
-                      </ion-button>
-                    </ng-container>
-                    <ng-template #botonPago>
-                      <ion-button class="pay-button" fill="clear" color="success" size="small" (click)="confirmarPago(mantencion)">
-                        <ion-icon name="cash-outline"></ion-icon>
-                        <span>Pago realizado</span>
-                      </ion-button>
-                    </ng-template>
-                    <ion-button fill="clear" color="danger" size="small" (click)="confirmarBorrado(mantencion)">
-                      <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-                    </ion-button>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-item>
-        </ion-list>
+    <div class="mantenciones-container">
+      <!-- Componente de historial de mantenciones -->
+      <app-historial-mantenciones
+        [mantenciones]="transformarHistorialParaComponente(mantenciones)"
+        [titulo]="'Historial de Mantenciones'"
+        [mostrarFiltros]="true"
+        (onMantencionClick)="verDetalleMantencion($event)"
+        (onPagoToggle)="togglePago($event)"
+        (onBorrarClick)="borrarMantencion($event)">
+      </app-historial-mantenciones>
 
-        <ng-template #noMantenciones>
-          <div class="empty-state">
-            <ion-icon name="calendar-outline" size="large"></ion-icon>
-            <p>No hay mantenciones registradas en este período</p>
-          </div>
-        </ng-template>
-      </ion-card-content>
-    </ion-card>
-  </div>
-
-  <!-- Mensaje cuando no hay datos -->
-  <div *ngIf="!isLoading && !estadisticas" class="empty-state">
-    <ion-icon name="analytics-outline" size="large"></ion-icon>
-    <p>No hay datos disponibles para el período seleccionado</p>
-  </div>
-</ion-content>
+      <!-- Mensaje cuando no hay datos -->
+      <div *ngIf="!isLoading && !estadisticas" class="empty-state">
+        <ion-icon name="analytics-outline" size="large"></ion-icon>
+        <p>No hay datos disponibles para el período seleccionado</p>
+      </div>
+    </div>

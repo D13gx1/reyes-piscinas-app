@@ -1,0 +1,486 @@
+// ===== HISTORIAL DE MANTENCIONES COMPONENTE SCSS =====
+
+.historial-container {
+  background: #f8fafc;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+// Header con filtros
+.historial-header {
+  margin-bottom: 24px;
+  
+  .historial-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 20px 0;
+    
+    ion-icon {
+      color: var(--ion-color-primary);
+      font-size: 1.8rem;
+    }
+  }
+  
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    position: relative;
+    
+    // Indicador de deslizamiento
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--ion-color-primary);
+      border-radius: 3px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .filter-tab {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      
+      &.active {
+        background: var(--ion-color-primary);
+        color: white;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        
+        // Animar el indicador
+        &::after {
+          transform: translateX(calc(100% * var(--tab-index, 0)));
+        }
+      }
+      
+      &:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+}
+
+// Card principal - diseño minimalista
+.mantencion-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+  border: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Sub-cards - bloques visuales independientes
+.sub-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+  
+  &:first-of-type {
+    margin-top: 16px;
+  }
+}
+
+// Header de sub-cards
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  
+  ion-icon {
+    color: var(--ion-color-primary);
+    font-size: 18px;
+  }
+  
+  .sub-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+  }
+}
+
+// Header compacto
+.mantencion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  
+  .mantencion-info {
+    flex: 1;
+    
+    .cliente-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      position: relative;
+      
+      .cliente-nombre {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1.2;
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding-right: 8px;
+      }
+      
+      .precio-badge {
+        background: #dcfce7;
+        color: #15803d;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+      }
+      
+      // Efecto de desvanecimiento para nombres largos
+      &::after {
+        content: '';
+        position: absolute;
+        right: 90px;
+        top: 0;
+        width: 30px;
+        height: 100%;
+        background: linear-gradient(to right, transparent, white);
+        pointer-events: none;
+        z-index: 1;
+      }
+    }
+    
+    .mantencion-fecha {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #64748b;
+      
+      ion-icon {
+        color: #64748b;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+// Estado del agua - dentro de sub-card
+.estado-agua {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .estado-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .estado-label {
+      font-weight: 500;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+    
+    .estado-badge {
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      
+      // Colores específicos para los estados
+      &[color="danger"] {
+        --background: #fee2e2;
+        --color: #dc2626;
+      }
+      
+      &[color="success"] {
+        --background: #dcfce7;
+        --color: #15803d;
+      }
+      
+      &[color="warning"] {
+        --background: #fef3c7;
+        --color: #d97706;
+      }
+    }
+  }
+}
+
+// Productos grid - dentro de sub-card
+.productos-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px;
+  width: 100%;
+  
+  .producto-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.2s ease;
+    text-align: center;
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+    
+    &:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+    
+    ion-icon {
+      color: #64748b;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    span {
+      flex: 1;
+      font-weight: 500;
+      color: #374151;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    
+    strong {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.9rem;
+      text-align: right;
+    }
+  }
+}
+
+// Botones de acción
+.pago-button {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  .pago-icon {
+    margin-right: 6px;
+    font-size: 18px;
+  }
+  
+  .pago-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  
+  // Estado pendiente (estilo actual verde)
+  &.pendiente {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    
+    &:hover {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+    
+    .pago-icon {
+      color: white;
+    }
+  }
+  
+  // Estado pagado (fondo blanco, texto verde oscuro)
+  &.pagado {
+    background: white;
+    color: #15803d;
+    border: 2px solid #22c55e;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+    
+    &:hover {
+      background: #f8fafc;
+      border-color: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+    }
+    
+    .pago-icon {
+      color: #15803d;
+    }
+  }
+}
+
+.borrar-button {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  
+  .borrar-icon {
+    color: #ef4444;
+    font-size: 18px;
+    transition: all 0.3s ease;
+  }
+  
+  &:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    transform: scale(1.05);
+    
+    .borrar-icon {
+      color: #dc2626;
+    }
+  }
+}
+
+// Empty state moderno
+.empty-state-modern {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin: 20px 0;
+  
+  ion-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+  }
+  
+  p {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .historial-container {
+    padding: 16px;
+  }
+  
+  .historial-header {
+    .filter-tabs {
+      .filter-tab {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+      }
+    }
+  }
+  
+  .mantencion-card {
+    padding: 14px;
+    
+    .mantencion-header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+      
+      .precio-badge {
+        align-self: flex-start;
+      }
+    }
+    
+    // Mantener 2 columnas en tablets
+    .productos-grid {
+      grid-template-columns: 1fr 1fr !important;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .historial-header {
+    .historial-title {
+      font-size: 1.3rem;
+    }
+    
+    .filter-tabs {
+      flex-direction: column;
+      
+      .filter-tab {
+        text-align: center;
+      }
+    }
+  }
+  
+  .mantencion-card {
+    // Cambiar a 1 columna solo en móviles pequeños
+    .productos-grid {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .estado-agua {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+      
+      .estado-item {
+        justify-content: space-between;
+      }
+    }
+  }
+}
