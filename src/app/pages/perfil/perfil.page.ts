@@ -51,7 +51,13 @@ export class PerfilPage implements OnInit, OnDestroy {
     });
 
     const savedTheme = localStorage.getItem('theme-mode');
-    this.isDarkMode = savedTheme === 'dark';
+    const isExplicitDarkTheme = savedTheme === 'dark';
+    this.isDarkMode = isExplicitDarkTheme;
+
+    if (savedTheme === null) {
+      localStorage.setItem('theme-mode', 'light');
+    }
+
     this.applyTheme(this.isDarkMode);
   }
 

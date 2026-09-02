@@ -249,10 +249,28 @@ ion-fab {
 
 :host-context(body.dark),
 :host-context(html.dark) {
-  .stats-section .stats-container,
-  .stats-section .stats-container .stat-item,
-  .stats-section .stats-container .stat-item .stat-number,
-  .stats-section .stats-container .stat-item .stat-label,
+  .stats-section {
+    .stats-container {
+      background: #101827 !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22) !important;
+
+      .stat-item {
+        background: transparent !important;
+        border-radius: 20px !important;
+
+        .stat-number,
+        .stat-label {
+          color: #ffffff !important;
+        }
+      }
+
+      .stat-divider {
+        background: rgba(255, 255, 255, 0.12) !important;
+      }
+    }
+  }
+
   .cliente-card,
   .cliente-card .header-container,
   .cliente-card .cliente-header,
@@ -267,20 +285,11 @@ ion-fab {
     color: #ffffff !important;
   }
 
-  .stats-section .stats-container .stat-divider {
-    background: rgba(255, 255, 255, 0.12) !important;
-  }
-
-  .stats-section .stats-container .stat-item .stat-number,
-  .stats-section .stats-container .stat-item .stat-label,
   .cliente-card ion-card-title,
   .cliente-card ion-card-subtitle,
   .cliente-card .detalle-item,
   .cliente-card .detalle-item strong,
   .cliente-card .detalle-item ion-icon,
-  .cliente-card ion-chip,
-  .cliente-card ion-chip ion-label,
-  .cliente-card ion-chip ion-icon,
   .cliente-card .action-buttons ion-button,
   .cliente-card .action-buttons ion-button ion-icon,
   .section-header h3,
@@ -289,6 +298,24 @@ ion-fab {
   .cliente-card .cliente-header .cliente-info ion-card-title,
   .cliente-card .cliente-header .cliente-info ion-card-subtitle {
     color: #ffffff !important;
+  }
+
+  .cliente-card ion-chip[color='success'],
+  .cliente-card ion-chip[color='danger'] {
+    --background: transparent !important;
+    background: transparent !important;
+  }
+
+  .cliente-card ion-chip[color='success'] {
+    --color: var(--ion-color-success-contrast) !important;
+    color: var(--ion-color-success-contrast) !important;
+    background: var(--ion-color-success) !important;
+  }
+
+  .cliente-card ion-chip[color='danger'] {
+    --color: var(--ion-color-danger-contrast) !important;
+    color: var(--ion-color-danger-contrast) !important;
+    background: var(--ion-color-danger) !important;
   }
 
   .cliente-card ion-card-title,

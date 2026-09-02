@@ -53,23 +53,34 @@
   }
 }
 
-body.dark {
+:host-context(body.dark),
+:host-context(html.dark),
+body.dark,
+html.dark {
   .smart-navbar {
-    background: var(--ion-card-background);
-    box-shadow: var(--app-shadow-soft);
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    --background: #0f172a;
 
     ion-tab-button {
+      --color: #ffffff;
+      --color-selected: #ffffff;
+      --background: transparent;
+
       ion-icon {
-        color: var(--ion-color-medium);
+        color: #ffffff !important;
+        opacity: 0.9;
       }
 
       &.tab-selected {
         ion-icon {
-          color: var(--ion-color-primary);
+          color: #ffffff !important;
+          opacity: 1;
         }
 
         &::after {
-          background: var(--ion-color-primary);
+          background: #ffffff;
         }
       }
     }

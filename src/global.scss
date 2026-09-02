@@ -123,6 +123,34 @@ ion-tab-button {
   --color-selected: var(--ion-color-primary);
 }
 
+ion-select {
+  --background: var(--ion-item-background);
+  --background-hover: var(--ion-item-background);
+  --background-activated: var(--ion-item-background);
+  --background-focused: var(--ion-item-background);
+  --color: var(--ion-text-color);
+  --placeholder-color: rgba(255, 255, 255, 0.7);
+  --border-radius: 12px;
+  --highlight-color-focused: var(--ion-color-primary);
+}
+
+ion-select-option,
+.select-interface-option {
+  --color: var(--ion-text-color);
+  color: var(--ion-text-color);
+}
+
+body.dark ion-select,
+html.dark ion-select,
+body.dark ion-select::part(native),
+html.dark ion-select::part(native),
+body.dark ion-select::part(container),
+html.dark ion-select::part(container) {
+  --background: #0f172a !important;
+  background: #0f172a !important;
+  color: #ffffff !important;
+}
+
 html.dark,
 body.dark {
   --ion-background-color: var(--ion-background-color);
@@ -132,6 +160,40 @@ body.dark {
 body.dark,
 html.dark {
   color-scheme: dark;
+
+  ion-select {
+    --background: #0f172a;
+    --color: #ffffff;
+    --placeholder-color: rgba(255, 255, 255, 0.75);
+    --border-color: rgba(255, 255, 255, 0.12);
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  ion-select::part(container),
+  ion-select::part(text),
+  ion-select::part(icon) {
+    color: #ffffff !important;
+  }
+
+  ion-select-option,
+  .select-interface-option {
+    --background: #0f172a;
+    background: #0f172a !important;
+    color: #ffffff !important;
+  }
+
+  ion-popover {
+    --background: #0f172a;
+    --color: #ffffff;
+    --backdrop-opacity: 0.5;
+  }
+
+  ion-popover::part(content) {
+    background: #0f172a !important;
+    color: #ffffff !important;
+  }
 
   ion-content,
   ion-page,
