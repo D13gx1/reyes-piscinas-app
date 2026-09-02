@@ -7,6 +7,34 @@
   min-height: 100vh;
 }
 
+body.dark .mantenciones-container,
+body.dark app-historial-mantenciones,
+body.dark app-historial-mantenciones .historial-container,
+body.dark .mantencion-card,
+body.dark .sub-card,
+body.dark .empty-state-modern,
+body.dark .producto-item,
+body.dark .mantenciones-header {
+  background: var(--ion-background-color) !important;
+  border-color: var(--ion-border-color) !important;
+}
+
+body.dark .mantenciones-container,
+body.dark app-historial-mantenciones,
+body.dark app-historial-mantenciones .historial-container,
+body.dark .mantenciones-title,
+body.dark .sub-card-title,
+body.dark .cliente-nombre,
+body.dark .estado-label,
+body.dark .mantencion-fecha,
+body.dark .producto-item span,
+body.dark .producto-item strong,
+body.dark .filter-tab,
+body.dark .empty-state-modern h3,
+body.dark .empty-state-modern p {
+  color: #ffffff !important;
+}
+
 // Header con filtros
 .mantenciones-header {
   margin-bottom: 24px;
@@ -945,6 +973,100 @@ ion-list {
     &:last-child {
       margin-bottom: 0;
     }
+  }
+}
+
+body.dark {
+  .stat-item {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-border-color);
+
+    .stat-value {
+      color: #ffffff;
+    }
+
+    .stat-label {
+      color: #dfeaff;
+    }
+  }
+
+  .mantenciones-container,
+  .mantenciones-header,
+  .mantencion-card,
+  .sub-card,
+  .producto-item,
+  .empty-state-modern,
+  .migration-notification {
+    background: var(--ion-background-color);
+    border-color: var(--ion-border-color);
+  }
+
+  .mantenciones-container {
+    background: var(--ion-background-color);
+  }
+
+  .mantenciones-title,
+  .sub-card-title,
+  .cliente-nombre,
+  .mantencion-fecha,
+  .estado-label,
+  .product-item span,
+  .producto-item span,
+  .producto-item strong,
+  .mantencion-header h3,
+  .empty-state-modern h3,
+  .empty-state-modern p,
+  .filter-tab {
+    color: #ffffff !important;
+  }
+
+  .mantencion-item {
+    background: var(--ion-item-background);
+    border-color: var(--ion-border-color);
+
+    .mantencion-header h3,
+    .chemical-levels .level-item strong,
+    .chemical-amounts .amount-item,
+    .mantencion-detail {
+      color: var(--ion-text-color);
+    }
+  }
+
+  .pay-button {
+    background: var(--ion-item-background);
+    color: var(--ion-text-color);
+    border-color: var(--ion-border-color);
+  }
+
+  .section-header h3,
+  ion-card ion-card-title,
+  ion-card ion-card-title ion-icon,
+  ion-card ion-card-content,
+  ion-card ion-card-subtitle,
+  .selector-item ion-label,
+  .selector-item input[type="date"],
+  .selectores-mes .selector-item,
+  .selectores-fecha .selector-item {
+    color: #ffffff;
+  }
+
+  ion-card {
+    background: var(--ion-card-background);
+    box-shadow: var(--app-shadow-soft);
+    border: 1px solid var(--ion-border-color);
+  }
+
+  ion-item,
+  ion-list,
+  ion-segment {
+    --background: var(--ion-item-background);
+    --color: var(--ion-text-color);
+  }
+
+  input[type="date"] {
+    background: var(--ion-item-background);
+    color: var(--ion-text-color);
+    border-color: var(--ion-border-color);
   }
 }
 

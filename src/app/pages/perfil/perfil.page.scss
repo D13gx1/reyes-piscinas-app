@@ -63,6 +63,43 @@ ion-button {
   box-shadow: 0 6px 12px rgba(255, 0, 0, 0.2);
 }
 
+:host-context(body.dark),
+:host-context(html.dark) {
+  .profile-content {
+    --background: linear-gradient(135deg, #08131d, #101d2d);
+    background: linear-gradient(135deg, #08131d, #101d2d) !important;
+  }
+
+  .header-toolbar {
+    --background: transparent;
+    --color: #e5f2ff;
+  }
+
+  .profile-header h2,
+  .subtitle,
+  ion-title,
+  ion-label,
+  ion-item {
+    color: #e5f2ff !important;
+  }
+
+  ion-list {
+    --background: transparent;
+    background: transparent;
+  }
+
+  ion-item {
+    --background: var(--ion-card-background);
+    --color: var(--ion-text-color);
+    border-bottom: 1px solid var(--ion-border-color);
+    color: #e5f2ff !important;
+  }
+
+  ion-item ion-icon {
+    color: var(--ion-color-primary);
+  }
+}
+
 /* Animaciones suaves */
 .fade-in {
   opacity: 0;

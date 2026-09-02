@@ -38,7 +38,32 @@
 /* Import Roboto Slab font */
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
 
-/* Global styles for page titles */
+body {
+  background: var(--ion-background-color);
+  color: var(--ion-text-color);
+}
+
+ion-app,
+ion-content {
+  --background: var(--ion-background-color);
+  background: var(--ion-background-color);
+  color: var(--ion-text-color);
+}
+
+ion-toolbar {
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-text-color);
+  --min-height: 56px;
+}
+
+ion-card {
+  --background: var(--app-surface);
+  --color: var(--ion-text-color);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--app-shadow-soft);
+  border-radius: 18px;
+}
+
 ion-title {
   text-align: center;
   font-weight: 700 !important;
@@ -50,8 +75,202 @@ ion-title {
   pointer-events: none;
 }
 
-ion-toolbar {
-  --min-height: 56px;
+ion-button {
+  --border-radius: 999px;
+  --box-shadow: none;
+}
+
+ion-button[color="primary"],
+ion-button[color="secondary"],
+ion-button[color="tertiary"] {
+  font-weight: 600;
+}
+
+ion-item {
+  --background: var(--ion-item-background);
+  --color: var(--ion-text-color);
+}
+
+ion-list {
+  background: transparent;
+}
+
+ion-toggle {
+  --background: var(--ion-color-medium);
+  --background-checked: var(--ion-color-primary);
+  --handle-background: var(--ion-color-light);
+  --handle-background-checked: var(--ion-color-light);
+}
+
+ion-segment {
+  --background: var(--ion-toolbar-background);
+}
+
+ion-segment-button {
+  --color: var(--ion-text-color);
+  --color-checked: var(--ion-color-primary-contrast);
+  --indicator-color: var(--ion-color-primary);
+}
+
+ion-tab-bar {
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-color-medium);
+  --color-selected: var(--ion-color-primary);
+}
+
+ion-tab-button {
+  --color: var(--ion-color-medium);
+  --color-selected: var(--ion-color-primary);
+}
+
+html.dark,
+body.dark {
+  --ion-background-color: var(--ion-background-color);
+  --ion-text-color: var(--ion-text-color);
+}
+
+body.dark,
+html.dark {
+  color-scheme: dark;
+
+  ion-content,
+  ion-page,
+  .ion-page {
+    --background: var(--ion-background-color);
+    background: var(--ion-background-color);
+    color: var(--ion-text-color);
+  }
+
+  app-clientes,
+  app-perfil,
+  app-historial-mantenciones,
+  app-historial-mantenciones .historial-container,
+  .mantenciones-container,
+  .profile-content,
+  .stats-section .stats-container,
+  .cliente-card,
+  .header-container,
+  .contenido-container {
+    background: var(--ion-background-color) !important;
+    color: var(--ion-text-color) !important;
+  }
+
+  .profile-content {
+    background: linear-gradient(135deg, #08131d, #101d2d) !important;
+  }
+
+  ion-item,
+  ion-card,
+  ion-list {
+    --background: var(--ion-card-background);
+    --color: var(--ion-text-color);
+    color: var(--ion-text-color);
+  }
+
+  ion-toolbar {
+    --background: var(--ion-toolbar-background);
+    --color: var(--ion-text-color);
+  }
+
+  .stat-item {
+    background: var(--ion-item-background);
+    border: 1px solid var(--ion-border-color);
+  }
+
+  .stat-item .stat-value,
+  .stat-item .stat-label,
+  .section-header h3,
+  ion-card ion-card-title,
+  ion-card ion-card-title ion-icon,
+  .mantencion-header h3,
+  .chemical-levels .level-item strong,
+  .mantencion-detail,
+  .calendario-dia .dia-numero,
+  .dia-semana-header,
+  .cliente-card .header-container ion-card-title,
+  .cliente-card .header-container ion-card-subtitle,
+  .cliente-card .contenido-container .detalle-item,
+  .empty-state h4,
+  .mantencion-item .mantencion-header h3 {
+    color: #ffffff !important;
+  }
+
+  .calendario-completo {
+    background: var(--ion-card-background);
+    border: 1px solid var(--ion-border-color);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .calendario-dia {
+    background: #112233;
+    border-color: var(--ion-border-color);
+  }
+
+  .mes-button-custom {
+    background: var(--ion-item-background);
+    color: var(--ion-text-color);
+    border-color: var(--ion-border-color);
+  }
+
+  .cliente-card,
+  .mantencion-item,
+  ion-card {
+    background: var(--ion-card-background);
+    border-color: var(--ion-border-color);
+  }
+
+  .pay-button {
+    background: var(--ion-item-background);
+    color: var(--ion-text-color);
+    border-color: var(--ion-border-color);
+  }
+
+  app-historial-mantenciones {
+    .historial-container,
+    .empty-state-modern {
+      background: var(--ion-background-color);
+      border-color: var(--ion-border-color);
+    }
+
+    .historial-title,
+    .cliente-nombre,
+    .sub-card-title,
+    .estado-label,
+    .mantencion-fecha,
+    .producto-item span,
+    .producto-item strong,
+    .empty-state-modern h3,
+    .empty-state-modern p,
+    .filter-tab {
+      color: #ffffff !important;
+    }
+
+    .filter-tabs {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--ion-border-color);
+    }
+
+    .mantencion-card,
+    .sub-card,
+    .producto-item,
+    .borrar-button,
+    .empty-state-modern,
+    .pago-button.pagado {
+      background: var(--ion-card-background);
+      border-color: var(--ion-border-color);
+      color: #ffffff;
+    }
+
+    .precio-badge {
+      background: rgba(34, 197, 94, 0.18);
+      color: #d9ffe7;
+    }
+
+    .pago-button.pendiente {
+      background: linear-gradient(135deg, #1b8b50, #0f763e);
+      color: white;
+    }
+  }
 }
 
 /* ==================== */
@@ -131,7 +350,7 @@ ion-toolbar {
 
 /* Botón gradiente */
 .gradient-button {
-  --background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  --background: var(--app-gradient);
   --border-radius: 999px;
   color: #fff;
   font-weight: 600;
@@ -140,7 +359,7 @@ ion-toolbar {
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 18px rgba(81, 69, 255, 0.18);
   }
 
   &:active {

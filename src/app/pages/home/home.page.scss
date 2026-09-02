@@ -324,3 +324,82 @@ ion-content {
     margin-bottom: 16px;
   }
 }
+
+body.dark {
+  .calendario-completo {
+    background: var(--ion-card-background);
+    box-shadow: var(--app-shadow-soft);
+    border: 1px solid var(--ion-border-color);
+  }
+
+  .mes-button-custom {
+    background: var(--ion-item-background);
+    border-color: var(--ion-border-color);
+    color: var(--ion-text-color);
+  }
+
+  .dias-semana .dia-semana-header {
+    color: #dfeaff;
+  }
+
+  .calendario-dia {
+    background: #112233;
+    color: var(--ion-text-color);
+    border-color: var(--ion-border-color);
+
+    .dia-numero {
+      color: #ffffff;
+    }
+
+    &.vacio {
+      background: transparent;
+    }
+  }
+
+  .section-header h3 {
+    color: #ffffff;
+  }
+
+  .cliente-card {
+    background: var(--ion-card-background);
+    border-color: var(--ion-border-color);
+
+    .header-container {
+      ion-card-title {
+        color: #ffffff;
+      }
+
+      ion-card-subtitle {
+        color: #dfeaff;
+      }
+    }
+
+    .contenido-container {
+      .detalle-item {
+        color: #edf4ff;
+
+        strong {
+          color: #ffffff;
+        }
+      }
+
+      .action-buttons ion-button:last-child {
+        --background: var(--ion-item-background);
+        --color: var(--ion-text-color);
+      }
+    }
+  }
+
+  .empty-state {
+    background: var(--ion-item-background);
+
+    h4 {
+      color: #ffffff;
+    }
+  }
+
+  .realizados-section .cliente-card.realizado {
+    background: var(--ion-item-background);
+    border-color: var(--ion-border-color);
+  }
+}

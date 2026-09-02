@@ -37,6 +37,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class PerfilPage implements OnInit, OnDestroy {
   userName: string = 'Usuario';
+  isDarkMode = false;
   private userSub: Subscription | undefined;
 
   constructor(
@@ -48,12 +49,27 @@ export class PerfilPage implements OnInit, OnDestroy {
     this.userSub = this.authService.getUserName().subscribe(name => {
       this.userName = name;
     });
+
+    const savedTheme = localStorage.getItem('theme-mode');
+    this.isDarkMode = savedTheme === 'dark';
+    this.applyTheme(this.isDarkMode);
   }
 
   ngOnDestroy() {
     if (this.userSub) {
       this.userSub.unsubscribe();
     }
+  }
+
+  toggleDarkMode(event: any) {
+    this.isDarkMode = !!event?.detail?.checked;
+    this.applyTheme(this.isDarkMode);
+  }
+
+  private applyTheme(isDark: boolean) {
+    document.body.classList.toggle('dark', isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme-mode', isDark ? 'dark' : 'light');
   }
 
   async logout() {

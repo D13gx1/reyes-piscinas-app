@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardHeader, IonCardContent, IonIcon, IonButton } from '@ionic/angular/standalone';
+import { IonIcon, IonButton } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { cashOutline, logoWhatsapp, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 
@@ -28,9 +28,6 @@ export interface DeudaSummary {
   imports: [
     CommonModule,
     FormsModule,
-    IonCard,
-    IonCardHeader,
-    IonCardContent,
     IonIcon,
     IonButton
   ]

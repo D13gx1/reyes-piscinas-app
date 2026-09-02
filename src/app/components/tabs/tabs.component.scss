@@ -53,6 +53,29 @@
   }
 }
 
+body.dark {
+  .smart-navbar {
+    background: var(--ion-card-background);
+    box-shadow: var(--app-shadow-soft);
+
+    ion-tab-button {
+      ion-icon {
+        color: var(--ion-color-medium);
+      }
+
+      &.tab-selected {
+        ion-icon {
+          color: var(--ion-color-primary);
+        }
+
+        &::after {
+          background: var(--ion-color-primary);
+        }
+      }
+    }
+  }
+}
+
 /* Animación para el puntito indicador */
 @keyframes fadeIn {
   from {

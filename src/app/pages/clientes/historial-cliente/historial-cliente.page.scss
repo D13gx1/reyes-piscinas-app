@@ -1,80 +1,48 @@
 // Importar estilos base de clientes
 .modern-header {
-  --background: #2c3e50;  // Fondo oscuro gris azulado
-  
+  --background: #2c3e50;
+
   .custom-toolbar {
     --background: transparent;
-    --color: #ffffff;  // Letras blancas
-    
+    --color: #ffffff;
+
     .custom-title {
       --color: #ffffff !important;
       font-weight: 600;
     }
-    
+
     ion-back-button {
       --color: #ffffff !important;
       color: #ffffff !important;
     }
-    
+
     ion-buttons {
       --color: #ffffff !important;
       color: #ffffff !important;
     }
-    
+
     ion-icon {
       color: #ffffff !important;
     }
   }
 }
 
-// Estilos globales para todos los elementos del header
-.modern-header * {
-  color: #000000 !important;
-}
+body.dark {
+  .modern-header {
+    --background: var(--ion-toolbar-background);
 
-.modern-header ion-button {
-  --color: #000000 !important;
-  color: #000000 !important;
-}
+    .custom-toolbar {
+      --color: var(--ion-text-color);
 
-.modern-header ion-back-button {
-  --color: #000000 !important;
-  color: #000000 !important;
-}
-
-.modern-header ion-back-button ion-icon {
-  color: #000000 !important;
-}
-
-.modern-header ion-back-button::part(native) {
-  color: #000000 !important;
-}
-
-.modern-header ion-back-button::part(icon) {
-  color: #000000 !important;
-}
-
-.modern-header ion-buttons {
-  --color: #000000 !important;
-  color: #000000 !important;
-}
-
-.modern-header ion-buttons ion-back-button {
-  --color: #000000 !important;
-  color: #000000 !important;
-}
-
-.modern-header ion-buttons ion-icon {
-  color: #000000 !important;
-}
-
-.modern-header [slot="start"] {
-  color: #000000 !important;
-}
-
-.modern-header ion-back-button svg {
-  fill: #000000 !important;
-  color: #000000 !important;
+      .custom-title,
+      ion-back-button,
+      ion-buttons,
+      ion-icon {
+        --color: var(--ion-text-color) !important;
+        color: var(--ion-text-color) !important;
+      }
+    }
+  }
 }
 
 .loading-container {

@@ -17,10 +17,10 @@
       <ion-label>Editar perfil</ion-label>
     </ion-item>
 
-    <ion-item button detail="false">
-      <ion-icon name="notifications-outline" slot="start"></ion-icon>
-      <ion-label>Notificaciones</ion-label>
-      <ion-toggle slot="end" [checked]="true"></ion-toggle>
+    <ion-item detail="false">
+      <ion-icon name="moon-outline" slot="start"></ion-icon>
+      <ion-label>Modo oscuro</ion-label>
+      <ion-toggle slot="end" [checked]="isDarkMode" (ionChange)="toggleDarkMode($event)"></ion-toggle>
     </ion-item>
 
     <ion-item button detail="false">

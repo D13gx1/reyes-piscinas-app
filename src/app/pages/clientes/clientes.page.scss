@@ -246,3 +246,67 @@ ion-fab {
     }
   }
 }
+
+:host-context(body.dark),
+:host-context(html.dark) {
+  .stats-section .stats-container,
+  .stats-section .stats-container .stat-item,
+  .stats-section .stats-container .stat-item .stat-number,
+  .stats-section .stats-container .stat-item .stat-label,
+  .cliente-card,
+  .cliente-card .header-container,
+  .cliente-card .cliente-header,
+  .cliente-card .cliente-info,
+  .cliente-card ion-card-header,
+  .cliente-card ion-card-content,
+  .cliente-card .contenido-container,
+  .cliente-card .detalles-cliente,
+  .cliente-card .action-buttons {
+    background: var(--ion-card-background) !important;
+    border-color: var(--ion-border-color) !important;
+    color: #ffffff !important;
+  }
+
+  .stats-section .stats-container .stat-divider {
+    background: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .stats-section .stats-container .stat-item .stat-number,
+  .stats-section .stats-container .stat-item .stat-label,
+  .cliente-card ion-card-title,
+  .cliente-card ion-card-subtitle,
+  .cliente-card .detalle-item,
+  .cliente-card .detalle-item strong,
+  .cliente-card .detalle-item ion-icon,
+  .cliente-card ion-chip,
+  .cliente-card ion-chip ion-label,
+  .cliente-card ion-chip ion-icon,
+  .cliente-card .action-buttons ion-button,
+  .cliente-card .action-buttons ion-button ion-icon,
+  .section-header h3,
+  .section-header ion-badge,
+  .cliente-card .cliente-header .cliente-info,
+  .cliente-card .cliente-header .cliente-info ion-card-title,
+  .cliente-card .cliente-header .cliente-info ion-card-subtitle {
+    color: #ffffff !important;
+  }
+
+  .cliente-card ion-card-title,
+  .cliente-card ion-card-subtitle,
+  .cliente-card .detalle-item,
+  .cliente-card .detalle-item strong,
+  .cliente-card .detalle-item ion-icon,
+  .cliente-card .cliente-header .cliente-info {
+    --color: #ffffff !important;
+    color: #ffffff !important;
+  }
+
+  .cliente-card .detalle-item strong {
+    opacity: 1;
+  }
+
+  .header-container,
+  .contenido-container {
+    background: transparent !important;
+  }
+}
