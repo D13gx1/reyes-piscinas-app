@@ -1094,6 +1094,13 @@ body.dark {
     background: var(--ion-item-background);
     color: var(--ion-text-color);
     border-color: var(--ion-border-color);
+    color-scheme: dark;
+  }
+
+  .selectores-fecha .selector-item input[type="date"] {
+    background: var(--ion-item-background) !important;
+    color: var(--ion-text-color) !important;
+    border-color: var(--ion-border-color) !important;
   }
 
   ion-select {
