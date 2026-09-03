@@ -10,6 +10,43 @@
     <h2>{{ userName }}</h2>
   </div>
 
+  <div class="migration-notification" [class.expanded]="isMigrationExpanded">
+    <div class="notification-header" (click)="toggleMigration()">
+      <div class="notification-content">
+        <ion-icon name="build-outline" class="notification-icon"></ion-icon>
+        <div class="notification-text">
+          <h4>🔧 Migración de Precios</h4>
+          <p *ngIf="!isMigrationExpanded">Actualiza tu historial para estadísticas correctas</p>
+        </div>
+      </div>
+      <ion-icon
+        [name]="isMigrationExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+        class="expand-icon">
+      </ion-icon>
+    </div>
+
+    <div class="notification-body" *ngIf="isMigrationExpanded">
+      <p class="notification-description">
+        Este proceso actualizará todo tu historial de mantenimientos para que las estadísticas se calculen correctamente con los precios reales cobrados en cada momento.
+        <br>
+        <br>
+        Recuerda dejar a tus clientes registrados bien con el precio que cobraste en cada mantenimiento.
+      </p>
+      <ion-button
+        expand="block"
+        color="warning"
+        class="migration-button"
+        (click)="migrarPreciosHistorial()">
+        <ion-icon name="sync-outline" slot="start"></ion-icon>
+        Migrar historial de precios
+      </ion-button>
+      <p class="migration-note">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        Ejecutar solo una vez
+      </p>
+    </div>
+  </div>
+
   <!-- Opciones de Perfil -->
   <ion-list class="fade-in-up delay-1">
     <ion-item button detail="false">

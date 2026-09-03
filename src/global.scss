@@ -195,6 +195,52 @@ html.dark {
     color: #ffffff !important;
   }
 
+  ion-action-sheet {
+    --background: #0f172a;
+    --button-background: #0f172a;
+    --button-color: #ffffff;
+    --color: #ffffff;
+  }
+
+  ion-alert {
+    --background: #0f172a;
+    --button-color: #ffffff;
+    --color: #ffffff;
+    --header-color: #ffffff;
+    --message-color: #ffffff;
+  }
+
+  ion-action-sheet .action-sheet-button,
+  ion-action-sheet .action-sheet-title,
+  ion-alert .alert-button,
+  ion-alert .alert-radio-label,
+  ion-alert .alert-checkbox-label {
+    color: #ffffff !important;
+  }
+
+  ion-action-sheet::part(button),
+  ion-action-sheet::part(title),
+  ion-alert::part(button),
+  ion-alert::part(radio-label),
+  ion-alert::part(checkbox-label),
+  ion-alert::part(title),
+  ion-alert::part(message) {
+    color: #ffffff !important;
+  }
+
+  .selectores-fecha .selector-item input[type="date"] {
+    --background: var(--ion-item-background);
+    background: var(--ion-item-background) !important;
+    color: var(--ion-text-color) !important;
+    border-color: var(--ion-border-color) !important;
+    color-scheme: dark;
+  }
+
+  .selectores-fecha .selector-item input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.9;
+  }
+
   ion-content,
   ion-page,
   .ion-page {
@@ -321,6 +367,11 @@ html.dark {
       background: var(--ion-card-background);
       border-color: var(--ion-border-color);
       color: #ffffff;
+    }
+
+    .mantencion-card {
+      border-radius: 16px !important;
+      --border-radius: 16px;
     }
 
     .precio-badge {

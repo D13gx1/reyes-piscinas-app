@@ -2,6 +2,128 @@
   --background: linear-gradient(135deg, #f8f9fa, #ffffff);
 }
 
+.migration-notification {
+  margin: 1rem 1rem 0;
+  background: linear-gradient(135deg, #fff9e6 0%, #fef3c7 100%);
+  border-radius: 12px;
+  border: 1px solid var(--ion-color-warning);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &.expanded {
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  }
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgba(255, 193, 7, 0.1);
+  }
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.notification-icon {
+  font-size: 1.25rem;
+  color: var(--ion-color-warning);
+  background: rgba(255, 193, 7, 0.1);
+  padding: 0.4rem;
+  border-radius: 8px;
+  min-width: 2.25rem;
+  text-align: center;
+}
+
+.notification-text {
+  flex: 1;
+
+  h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ion-color-warning-shade);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  p {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.8rem;
+    color: var(--ion-color-medium);
+    line-height: 1.3;
+  }
+}
+
+.expand-icon {
+  font-size: 1.25rem;
+  color: var(--ion-color-warning);
+  transition: transform 0.3s ease;
+}
+
+.notification-body {
+  padding: 0 1rem 1rem 1rem;
+  border-top: 1px solid rgba(255, 193, 7, 0.2);
+  animation: slideDown 0.3s ease;
+}
+
+.notification-description {
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--ion-color-dark);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--ion-color-warning);
+}
+
+.migration-button {
+  --border-radius: 10px;
+  --box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 1rem 0 0.5rem 0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    --box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
+  }
+
+  ion-icon {
+    font-size: 1rem;
+  }
+}
+
+.migration-note {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-style: italic;
+
+  ion-icon {
+    font-size: 0.9rem;
+    color: var(--ion-color-warning);
+  }
+}
+
 .header-toolbar {
   --background: transparent;
   --color: #111;
@@ -97,6 +219,33 @@ ion-button {
 
   ion-item ion-icon {
     color: var(--ion-color-primary);
+  }
+
+  .migration-notification {
+    background: linear-gradient(135deg, rgba(92, 70, 0, 0.8), rgba(53, 39, 0, 0.9));
+    border-color: rgba(255, 193, 7, 0.7);
+  }
+
+  .notification-text h4,
+  .notification-description,
+  .migration-note {
+    color: #fdf2d0 !important;
+  }
+
+  .notification-description {
+    background: rgba(17, 24, 39, 0.45);
+    border-left-color: var(--ion-color-warning);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

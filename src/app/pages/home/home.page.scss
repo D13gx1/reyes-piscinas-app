@@ -202,7 +202,9 @@ ion-content {
 
 .cliente-card {
   margin: 0 0 16px;
-  border-radius: var(--radius);
+  border-radius: 22px !important;
+  --border-radius: 12px;
+  overflow: hidden;
   box-shadow: var(--shadow);
   border: 1px solid #f0f0f0;
   background: #ffffff;
@@ -286,7 +288,8 @@ ion-content {
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  background: #f8f9fa;
+  background: var(--app-surface-soft);
+  color: var(--ion-text-color);
   border-radius: var(--radius);
   margin: 20px 0;
 
@@ -297,9 +300,13 @@ ion-content {
   }
 
   h4 {
-    color: #2c3e50;
+    color: var(--ion-text-color);
     font-weight: 600;
     margin-bottom: 6px;
+  }
+
+  p {
+    color: var(--ion-color-medium);
   }
 }
 
@@ -363,6 +370,9 @@ body.dark {
   .cliente-card {
     background: var(--ion-card-background);
     border-color: var(--ion-border-color);
+    border-radius: 12px !important;
+    --border-radius: 12px;
+    overflow: hidden;
 
     .header-container {
       ion-card-title {

@@ -120,7 +120,7 @@ export class HomePage implements OnInit {
 
   async deshacerBorrado(clienteId: string) {
     if (!this.fechaSeleccionada) return;
-    const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
+    const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
 
     this.clienteService.getClienteById(clienteId).subscribe({
       next: (clienteCompleto) => {
@@ -345,7 +345,7 @@ export class HomePage implements OnInit {
             const diasProgramados = cliente.programacion.diasSemana || [];
             if (!diasProgramados.includes(diaSemana)) return;
             // Verificar si no hay historial para esta fecha (mantenimiento pendiente)
-            const fechaStr = fechaDia.toISOString().split('T')[0];
+            const fechaStr = this.formatearFechaLocal(fechaDia);
             const hasHistorial = cliente.historial.some(h => h.fecha === fechaStr);
             if (!hasHistorial && fechaDia >= hoy) {
               count++;
@@ -370,7 +370,7 @@ export class HomePage implements OnInit {
         console.log('Día seleccionado:', this.diaHoy);
         
         // Fecha seleccionada en formato string
-        const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
+        const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
 
         // Filtrar clientes que tienen mantenimiento en el día seleccionado y no han sido completados o marcados como saltados
         const clientesDelDia = clientes.filter(cliente => {
@@ -474,6 +474,13 @@ export class HomePage implements OnInit {
     return fecha1.getDate() === fecha2.getDate() &&
            fecha1.getMonth() === fecha2.getMonth() &&
            fecha1.getFullYear() === fecha2.getFullYear();
+  }
+
+  private formatearFechaLocal(fecha: Date): string {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   esMesActual(): boolean {
@@ -696,7 +703,7 @@ export class HomePage implements OnInit {
       estadoPh: data.estadoPh,
       cantidadCloro: cantidadCloro,
       cantidadPh: cantidadPh,
-      fecha: this.fechaSeleccionada.toISOString().split('T')[0],
+      fecha: this.formatearFechaLocal(this.fechaSeleccionada),
       hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
     };
 
@@ -833,7 +840,7 @@ export class HomePage implements OnInit {
             cliente.mantenimiento = undefined;
 
             // Remover la entrada del historial para la fecha seleccionada
-            this.removeHistorialEntry(cliente.id, this.fechaSeleccionada.toISOString().split('T')[0]);
+            this.removeHistorialEntry(cliente.id, this.formatearFechaLocal(this.fechaSeleccionada));
 
             this.clientesPendientes.push(cliente);
             this.clientesRealizados = this.clientesRealizados.filter(c => c.id !== cliente.id);
@@ -909,7 +916,7 @@ export class HomePage implements OnInit {
   }
 
   agregarRegistroSaltado(cliente: ClienteDelDia) {
-    const fechaSeleccionadaStr = this.fechaSeleccionada.toISOString().split('T')[0];
+    const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
     const ahora = new Date();
 
     this.clienteService.getClienteById(cliente.id).subscribe({

@@ -3,6 +3,9 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  background: linear-gradient(135deg, #08131d 0%, #101d2d 100%);
+  padding: 1rem;
+}
 
 .actions {
   display: flex;
@@ -12,7 +15,7 @@
 }
 
 .pay-button.whatsapp ion-icon {
-  color: #128C7E; /* whatsapp green */
+  color: #25d366;
 }
 
 .top-action {
@@ -33,37 +36,34 @@
 /* Use Ionic CSS variables to style ion-button reliably */
 .pay-button,
 .home-button {
-  --background: #f3f4f6;
-  --color: #111827;
+  --background: #0f172a;
+  --color: #ffffff;
   --border-radius: 10px;
   --padding-start: 12px;
   --padding-end: 12px;
   height: 44px;
   text-transform: none;
-  box-shadow: 0 1px 3px rgba(16,24,40,0.06);
-  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(16,24,40,0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pay-button ion-icon,
-.home-button ion-icon { font-size: 1rem; }
-
-.home-button {
-  /* ensure variables override Ionic defaults */
-  --background: #f3f4f6 !important;
-  --color: #111827 !important;
+.home-button ion-icon {
+  font-size: 1rem;
 }
 
-.success-title { text-transform: uppercase; }
-  padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.home-button {
+  --background: #0f172a !important;
+  --color: #ffffff !important;
 }
 
 .success-container {
   text-align: center;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(16, 29, 45, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   max-width: 400px;
   width: 100%;
   display: flex;
@@ -78,7 +78,7 @@
 
 .animated-check {
   font-size: 5rem;
-  color: #28a745;
+  color: #34d399;
   animation: checkmark 1s ease-in-out;
 }
 
@@ -100,14 +100,14 @@
 .success-title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: #e5f2ff;
   margin-bottom: 0.5rem;
   animation: fadeInUp 0.8s ease-out 0.5s both;
 }
 
 .success-message {
   font-size: 1rem;
-  color: #666;
+  color: #dfeaff;
   animation: fadeInUp 0.8s ease-out 0.7s both;
 }
 

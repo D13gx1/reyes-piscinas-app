@@ -81,6 +81,8 @@ body.dark .empty-state-modern p {
 
   .mantencion-card {
     box-shadow: var(--app-shadow-soft);
+    border-radius: 16px !important;
+    --border-radius: 16px;
   }
 
   .sub-card {

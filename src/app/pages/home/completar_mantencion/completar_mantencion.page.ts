@@ -169,7 +169,7 @@ export class CompletarMantencionPage implements OnInit {
     }
     
     const nuevoRegistro = {
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: this.formatearFechaLocal(new Date()),
       hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
       servicio: formValues.servicio,
       cloro: formValues.cloro,
@@ -210,6 +210,13 @@ export class CompletarMantencionPage implements OnInit {
         this.mostrarAlerta('Error', 'No se pudo guardar el registro de mantención');
       }
     });
+  }
+
+  private formatearFechaLocal(fecha: Date): string {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private toNumberOrZero(val: any): number {

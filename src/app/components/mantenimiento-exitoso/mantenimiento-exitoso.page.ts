@@ -41,6 +41,15 @@ export class MantenimientoExitosoPage implements OnInit {
     this.router.navigate(['/tabs/home']);
   }
 
+  private parseFechaLocal(fecha: string | Date): Date {
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      const [year, month, day] = fecha.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    return new Date(fecha);
+  }
+
   enviarWhatsApp() {
     const telefono = this.cliente?.telefono || this.cliente?.telefonoPrincipal || '';
     if (!telefono) {
@@ -58,7 +67,7 @@ export class MantenimientoExitosoPage implements OnInit {
       if (this.mantencion?.fecha) {
         const fechaRaw = this.mantencion.fecha;
         let fechaStr = '';
-        const fechaDate = new Date(fechaRaw);
+        const fechaDate = this.parseFechaLocal(fechaRaw);
         if (!isNaN(fechaDate.getTime())) {
           fechaStr = ('0' + fechaDate.getDate()).slice(-2) + '/' + ('0' + (fechaDate.getMonth() + 1)).slice(-2) + '/' + fechaDate.getFullYear();
         } else {
