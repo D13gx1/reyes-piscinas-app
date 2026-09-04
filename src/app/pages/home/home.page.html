@@ -115,13 +115,13 @@
         <ion-card-header class="header-container">
           <div class="cliente-header">
             <div class="cliente-info">
-              <ion-card-title>
-                {{ cliente.nombre }}
-                <ion-chip color="success">
+              <div class="cliente-title">
+                <span class="cliente-nombre">{{ cliente.nombre }}</span>
+                <div class="precio-badge">
                   <ion-icon name="cash-outline"></ion-icon>
-                  <ion-label>${{ formatearPrecio(cliente.precio) }}</ion-label>
-                </ion-chip>
-              </ion-card-title>
+                  <span>${{ formatearPrecio(cliente.precio) }}</span>
+                </div>
+              </div>
               <ion-card-subtitle>
                 <ion-icon name="location-outline"></ion-icon>
                 {{ cliente.direccion }}
@@ -186,13 +186,13 @@
         <ion-card-header class="header-container">
           <div class="cliente-header">
             <div class="cliente-info">
-              <ion-card-title>
-                {{ cliente.nombre }}
-                <ion-chip color="success">
+              <div class="cliente-title">
+                <span class="cliente-nombre">{{ cliente.nombre }}</span>
+                <div class="estado-badge">
                   <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  <ion-label>Completado</ion-label>
-                </ion-chip>
-              </ion-card-title>
+                  <span>Completado</span>
+                </div>
+              </div>
               <ion-card-subtitle>
                 <ion-icon name="location-outline"></ion-icon>
                 {{ cliente.direccion }}

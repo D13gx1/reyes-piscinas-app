@@ -1,9 +1,18 @@
 // ===== HISTORIAL DE MANTENCIONES COMPONENTE SCSS =====
 
+:host {
+  display: block;
+  width: 100%;
+}
+
 .historial-container {
   background: #f8fafc;
   padding: 20px;
   min-height: 100vh;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 body.dark .historial-container,
@@ -80,7 +89,7 @@ body.dark .empty-state-modern p {
   }
 
   .mantencion-card {
-    box-shadow: var(--app-shadow-soft);
+    box-shadow: none;
     border-radius: 16px !important;
     --border-radius: 16px;
   }
@@ -166,18 +175,6 @@ body.dark .empty-state-modern p {
     border-radius: 20px;
     position: relative;
     
-    // Indicador de deslizamiento
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      background: var(--ion-color-primary);
-      border-radius: 3px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
     .filter-tab {
       flex: 1;
       padding: 12px 20px;
@@ -188,22 +185,11 @@ body.dark .empty-state-modern p {
       font-size: 0.9rem;
       color: #64748b;
       cursor: pointer;
-      transition: all 0.3s ease;
       position: relative;
       
       &.active {
         background: var(--ion-color-primary);
         color: white;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-        
-        // Animar el indicador
-        &::after {
-          transform: translateX(calc(100% * var(--tab-index, 0)));
-        }
-      }
-      
-      &:hover:not(.active) {
-        background: rgba(255, 255, 255, 0.5);
       }
     }
   }
@@ -214,16 +200,12 @@ body.dark .empty-state-modern p {
   background: white;
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
   margin-bottom: 16px;
   border: none;
-  transition: all 0.3s ease;
   cursor: pointer;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  }
+  width: 100%;
+  box-sizing: border-box;
 }
 
 // Sub-cards - bloques visuales independientes
@@ -233,12 +215,6 @@ body.dark .empty-state-modern p {
   padding: 14px;
   margin-top: 12px;
   border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-  }
   
   &:first-of-type {
     margin-top: 16px;
@@ -310,18 +286,6 @@ body.dark .empty-state-modern p {
         z-index: 2;
       }
       
-      // Efecto de desvanecimiento para nombres largos
-      &::after {
-        content: '';
-        position: absolute;
-        right: 90px;
-        top: 0;
-        width: 30px;
-        height: 100%;
-        background: linear-gradient(to right, transparent, var(--ion-card-background));
-        pointer-events: none;
-        z-index: 1;
-      }
     }
     
     .mantencion-fecha {
@@ -396,16 +360,10 @@ body.dark .empty-state-modern p {
     background: #f1f5f9;
     border-radius: 10px;
     border: none;
-    transition: all 0.2s ease;
     text-align: center;
     justify-content: center;
     min-height: 44px;
     width: 100%;
-    
-    &:hover {
-      background: #e2e8f0;
-      transform: translateY(-1px);
-    }
     
     ion-icon {
       color: #64748b;
@@ -440,8 +398,7 @@ body.dark .empty-state-modern p {
   justify-content: center;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   
   .pago-icon {
     margin-right: 6px;
@@ -455,15 +412,8 @@ body.dark .empty-state-modern p {
   
   // Estado pendiente (estilo actual verde)
   &.pendiente {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
+    background: #16a34a;
     color: white;
-    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
-    
-    &:hover {
-      background: linear-gradient(135deg, #16a34a, #15803d);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-    }
     
     .pago-icon {
       color: white;
@@ -475,14 +425,7 @@ body.dark .empty-state-modern p {
     background: white;
     color: #15803d;
     border: 2px solid #22c55e;
-    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
-    
-    &:hover {
-      background: #f8fafc;
-      border-color: #16a34a;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
-    }
+    box-shadow: none;
     
     .pago-icon {
       color: #15803d;
@@ -501,18 +444,15 @@ body.dark .empty-state-modern p {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.3s ease;
   
   .borrar-icon {
     color: #ef4444;
     font-size: 18px;
-    transition: all 0.3s ease;
   }
   
   &:hover {
     background: #fef2f2;
     border-color: #fecaca;
-    transform: scale(1.05);
     
     .borrar-icon {
       color: #dc2626;
@@ -590,29 +530,31 @@ body.dark .empty-state-modern p {
     .historial-title {
       font-size: 1.3rem;
     }
-    
-    .filter-tabs {
-      flex-direction: column;
-      
-      .filter-tab {
-        text-align: center;
-      }
-    }
   }
   
   .mantencion-card {
-    // Cambiar a 1 columna solo en móviles pequeños
     .productos-grid {
-      grid-template-columns: 1fr !important;
+      grid-template-columns: 1fr 1fr !important;
     }
     
     .estado-agua {
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
+      flex-direction: row;
+      gap: 8px;
+      align-items: center;
       
       .estado-item {
+        flex: 1;
+        min-width: 0;
         justify-content: space-between;
+        gap: 4px;
+
+        .estado-label {
+          font-size: 0.85rem;
+        }
+
+        .estado-badge {
+          padding: 4px 8px;
+        }
       }
     }
   }

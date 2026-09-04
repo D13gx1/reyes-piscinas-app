@@ -102,10 +102,43 @@ h1 {
     .cliente-info {
       flex: 1;
       
-      ion-card-title {
+      .cliente-title {
         font-size: 1.1em;
         font-weight: 600;
         margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+
+        .cliente-nombre {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .estado-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          flex: 0 0 auto;
+          padding: 7px 10px;
+          border-radius: 999px;
+          font-size: 0.8em;
+          line-height: 1;
+          white-space: nowrap;
+
+          &.activo {
+            background: #dcfce7;
+            color: #15803d;
+          }
+
+          &.inactivo {
+            background: #fee2e2;
+            color: #dc2626;
+          }
+        }
       }
       
       ion-card-subtitle {
@@ -125,15 +158,6 @@ h1 {
       display: flex;
       align-items: center;
       gap: 8px;
-      
-      ion-chip {
-        font-size: 0.8em;
-        height: 28px;
-        
-        ion-icon {
-          font-size: 0.9em;
-        }
-      }
       
       ion-button {
         --padding-start: 8px;
@@ -285,7 +309,7 @@ ion-fab {
     color: #ffffff !important;
   }
 
-  .cliente-card ion-card-title,
+  .cliente-card .cliente-title,
   .cliente-card ion-card-subtitle,
   .cliente-card .detalle-item,
   .cliente-card .detalle-item strong,
@@ -295,30 +319,22 @@ ion-fab {
   .section-header h3,
   .section-header ion-badge,
   .cliente-card .cliente-header .cliente-info,
-  .cliente-card .cliente-header .cliente-info ion-card-title,
+  .cliente-card .cliente-header .cliente-info .cliente-title,
   .cliente-card .cliente-header .cliente-info ion-card-subtitle {
     color: #ffffff !important;
   }
 
-  .cliente-card ion-chip[color='success'],
-  .cliente-card ion-chip[color='danger'] {
-    --background: transparent !important;
-    background: transparent !important;
-  }
-
-  .cliente-card ion-chip[color='success'] {
-    --color: var(--ion-color-success-contrast) !important;
+  .cliente-card .estado-badge.activo {
     color: var(--ion-color-success-contrast) !important;
     background: var(--ion-color-success) !important;
   }
 
-  .cliente-card ion-chip[color='danger'] {
-    --color: var(--ion-color-danger-contrast) !important;
+  .cliente-card .estado-badge.inactivo {
     color: var(--ion-color-danger-contrast) !important;
     background: var(--ion-color-danger) !important;
   }
 
-  .cliente-card ion-card-title,
+  .cliente-card .cliente-title,
   .cliente-card ion-card-subtitle,
   .cliente-card .detalle-item,
   .cliente-card .detalle-item strong,
@@ -335,5 +351,18 @@ ion-fab {
   .header-container,
   .contenido-container {
     background: transparent !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .cliente-card {
+    .cliente-title {
+      gap: 8px;
+
+      .estado-badge {
+        padding: 6px 8px;
+        font-size: 0.75em;
+      }
+    }
   }
 }

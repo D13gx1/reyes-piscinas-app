@@ -72,10 +72,13 @@
           <div class="cliente-header">
             <div class="cliente-info">
 
-              <ion-card-title>{{ cliente.nombre }} <ion-chip color="success">
+              <div class="cliente-title">
+                <span class="cliente-nombre">{{ cliente.nombre }}</span>
+                <div class="estado-badge activo">
                   <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  <ion-label>Activo</ion-label>
-                </ion-chip></ion-card-title>
+                  <span>Activo</span>
+                </div>
+              </div>
 
               <ion-card-subtitle>
                 <ion-icon name="location-outline"></ion-icon>
@@ -127,10 +130,13 @@
         <ion-card-header class="header-container">
           <div class="cliente-header">
             <div class="cliente-info">
-              <ion-card-title>{{ cliente.nombre }} <ion-chip color="danger">
+              <div class="cliente-title">
+                <span class="cliente-nombre">{{ cliente.nombre }}</span>
+                <div class="estado-badge inactivo">
                   <ion-icon name="pause-circle-outline"></ion-icon>
-                  <ion-label>Inactivo</ion-label>
-                </ion-chip></ion-card-title>
+                  <span>Inactivo</span>
+                </div>
+              </div>
               <ion-card-subtitle>
                 <ion-icon name="location-outline"></ion-icon>
                 {{ cliente.direccion }}

@@ -205,15 +205,14 @@ ion-content {
   border-radius: 22px !important;
   --border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow);
-  border: 1px solid #f0f0f0;
+  box-shadow: none;
+  border: 1px solid #e2e8f0;
   background: #ffffff;
-  transition: var(--transition);
 
   .header-container {
     padding: 16px 16px 12px;
     
-    ion-card-title {
+    .cliente-title {
       font-size: 1.1rem;
       font-weight: 600;
       color: #2c3e50;
@@ -221,7 +220,38 @@ ion-content {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
+      gap: 12px;
+
+      .cliente-nombre {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .precio-badge,
+      .estado-badge {
+        flex: 0 0 auto;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 1rem;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .precio-badge {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .estado-badge {
+        background: #dcfce7;
+        color: #15803d;
+      }
     }
 
     ion-card-subtitle {
@@ -375,7 +405,7 @@ body.dark {
     overflow: hidden;
 
     .header-container {
-      ion-card-title {
+      .cliente-title {
         color: #ffffff;
       }
 
@@ -411,5 +441,32 @@ body.dark {
   .realizados-section .cliente-card.realizado {
     background: var(--ion-item-background);
     border-color: var(--ion-border-color);
+  }
+}
+
+@media (max-width: 480px) {
+  .cliente-card {
+    .header-container {
+      padding: 14px 14px 10px;
+
+      .cliente-title {
+        align-items: center;
+        flex-direction: row;
+        gap: 8px;
+
+        .cliente-nombre {
+          flex: 1 1 auto;
+          width: auto;
+        }
+
+        .precio-badge,
+        .estado-badge {
+          flex: 0 0 auto;
+          align-self: center;
+          padding: 7px 9px;
+          font-size: 0.9rem;
+        }
+      }
+    }
   }
 }

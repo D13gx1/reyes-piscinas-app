@@ -44,6 +44,37 @@ export class HistorialMantencionesComponent implements OnInit, OnChanges {
   filtroActual: string = 'todos';
   mantencionesFiltradas: Mantencion[] = [];
 
+  private readonly currencyFormatter = new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0
+  });
+
+  private readonly dateFormatter = new Intl.DateTimeFormat('es-CL', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  private readonly badgeStyles: Record<string, Record<string, string>> = {
+    success: {
+      background: '#dcfce7', color: '#15803d', padding: '4px 12px',
+      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+    },
+    warning: {
+      background: '#fef3c7', color: '#d97706', padding: '4px 12px',
+      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+    },
+    danger: {
+      background: '#fee2e2', color: '#dc2626', padding: '4px 12px',
+      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+    },
+    medium: {
+      background: '#f1f5f9', color: '#64748b', padding: '4px 12px',
+      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+    }
+  };
+
   constructor() { }
 
   ngOnInit() {
@@ -92,26 +123,20 @@ export class HistorialMantencionesComponent implements OnInit, OnChanges {
     }
   }
 
+  trackByMantencion(_index: number, mantencion: Mantencion): string {
+    return mantencion.id;
+  }
+
   // Métodos de formateo (deberían moverse a un servicio compartido)
   formatearPrecio(precio: number): string {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0
-    }).format(precio || 0);
+    return this.currencyFormatter.format(precio || 0);
   }
 
   formatearFechaCompleta(fecha: any): string {
     if (!fecha) return 'N/A';
     
     const date = this.parseFechaLocal(fecha);
-    const opciones: Intl.DateTimeFormatOptions = {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    };
-    
-    return date.toLocaleDateString('es-CL', opciones);
+    return this.dateFormatter.format(date);
   }
 
   private parseFechaLocal(fecha: string | Date): Date {
@@ -148,42 +173,7 @@ export class HistorialMantencionesComponent implements OnInit, OnChanges {
   }
 
   getBadgeStyle(color: string): any {
-    const styles: Record<string, any> = {
-      success: {
-        background: '#dcfce7',
-        color: '#15803d',
-        padding: '4px 12px',
-        borderRadius: '999px',
-        fontWeight: '600',
-        fontSize: '0.8rem'
-      },
-      warning: {
-        background: '#fef3c7',
-        color: '#d97706',
-        padding: '4px 12px',
-        borderRadius: '999px',
-        fontWeight: '600',
-        fontSize: '0.8rem'
-      },
-      danger: {
-        background: '#fee2e2',
-        color: '#dc2626',
-        padding: '4px 12px',
-        borderRadius: '999px',
-        fontWeight: '600',
-        fontSize: '0.8rem'
-      },
-      medium: {
-        background: '#f1f5f9',
-        color: '#64748b',
-        padding: '4px 12px',
-        borderRadius: '999px',
-        fontWeight: '600',
-        fontSize: '0.8rem'
-      }
-    };
-    
-    return styles[color as keyof typeof styles] || styles['medium'];
+    return this.badgeStyles[color] || this.badgeStyles['medium'];
   }
 
   // Event handlers

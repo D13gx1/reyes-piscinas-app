@@ -22,7 +22,7 @@
 
   <!-- Lista de mantenciones -->
   <ng-container *ngIf="mantenciones.length > 0; else noMantenciones">
-    <ion-card class="mantencion-card" *ngFor="let item of mantencionesFiltradas; let i = index">
+    <ion-card class="mantencion-card" *ngFor="let item of mantencionesFiltradas; trackBy: trackByMantencion">
       <!-- Header principal -->
       <div class="mantencion-header">
         <div class="mantencion-info">
