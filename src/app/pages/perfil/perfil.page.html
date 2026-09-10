@@ -60,6 +60,19 @@
       <ion-toggle slot="end" [checked]="isDarkMode" (ionChange)="toggleDarkMode($event)"></ion-toggle>
     </ion-item>
 
+    <ion-item detail="false">
+      <ion-icon name="notifications-outline" slot="start"></ion-icon>
+      <ion-label class="notification-setting">
+        <h3>Notificaciones</h3>
+        <p>Recibirás un recordatorio a las 20:00 con las mantenciones del día siguiente y avisos de fin de mes.</p>
+      </ion-label>
+      <ion-toggle
+        slot="end"
+        [checked]="notificacionesActivadas"
+        (ionChange)="toggleNotificaciones($event)">
+      </ion-toggle>
+    </ion-item>
+
     <ion-item button detail="false">
       <ion-icon name="help-circle-outline" slot="start"></ion-icon>
       <ion-label>Ayuda y soporte</ion-label>

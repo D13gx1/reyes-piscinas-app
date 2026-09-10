@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
@@ -17,6 +17,7 @@ import {
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { ClienteService } from '../../services/cliente.service';
+import { NotificacionesService } from '../../services/notificaciones.service';
 
 @Component({
   selector: 'app-perfil',
@@ -41,14 +42,14 @@ export class PerfilPage implements OnInit, OnDestroy {
   userName: string = 'Usuario';
   isDarkMode = false;
   isMigrationExpanded = false;
+  notificacionesActivadas = false;
   private userSub: Subscription | undefined;
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private clienteService: ClienteService,
-    private toastController: ToastController
-  ) {}
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private clienteService = inject(ClienteService);
+  private notificacionesService = inject(NotificacionesService);
+  private toastController = inject(ToastController);
 
   ngOnInit() {
     this.userSub = this.authService.getUserName().subscribe(name => {
@@ -64,6 +65,8 @@ export class PerfilPage implements OnInit, OnDestroy {
     }
 
     this.applyTheme(this.isDarkMode);
+
+    this.notificacionesActivadas = this.notificacionesService.notificacionesActivadas();
   }
 
   ngOnDestroy() {
@@ -85,6 +88,32 @@ export class PerfilPage implements OnInit, OnDestroy {
 
   toggleMigration() {
     this.isMigrationExpanded = !this.isMigrationExpanded;
+  }
+
+  async toggleNotificaciones(event: any) {
+    const activadas = !!event?.detail?.checked;
+
+    if (activadas) {
+      try {
+        const concedido = await this.notificacionesService.activar();
+        if (!concedido) {
+          this.notificacionesActivadas = false;
+          await this.mostrarToast(
+            'Para recibir notificaciones debes permitirlas en los ajustes del teléfono 😕'
+          );
+          return;
+        }
+        this.notificacionesActivadas = true;
+        await this.mostrarToast('Notificaciones activadas ✅');
+      } catch (error) {
+        this.notificacionesActivadas = false;
+        await this.mostrarToast('Las notificaciones solo funcionan en la app móvil');
+      }
+    } else {
+      await this.notificacionesService.desactivar();
+      this.notificacionesActivadas = false;
+      await this.mostrarToast('Notificaciones desactivadas');
+    }
   }
 
   async migrarPreciosHistorial() {
