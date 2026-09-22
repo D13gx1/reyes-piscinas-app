@@ -98,133 +98,242 @@
       <p>Cargando clientes del día...</p>
     </div>
 
-    <!-- Sección de clientes pendientes -->
+    <!-- Sección de mantenimientos del día -->
     <div *ngIf="!isLoading">
-      <div class="section-header">
-        <h3>Mantenimientos Pendientes</h3>
-        <ion-badge color="secondary">{{ clientesPendientes.length }}</ion-badge>
+      <!-- Pestañas de filtro -->
+      <div class="filter-tabs">
+        <button
+          class="filter-tab"
+          [class.active]="seccionActiva === 'porRealizar'"
+          (click)="setSeccion('porRealizar')"
+        >
+          Por realizar
+          <span class="tab-count" *ngIf="clientesPendientes.length > 0">{{ clientesPendientes.length }}</span>
+        </button>
+        <button
+          class="filter-tab"
+          [class.active]="seccionActiva === 'realizados'"
+          (click)="setSeccion('realizados')"
+        >
+          Realizados
+          <span class="tab-count" *ngIf="clientesRealizados.length > 0">{{ clientesRealizados.length }}</span>
+        </button>
+        <button
+          class="filter-tab"
+          [class.active]="seccionActiva === 'suspendidos'"
+          (click)="setSeccion('suspendidos')"
+        >
+          Suspendidos
+          <span class="tab-count" *ngIf="clientesSuspendidos.length > 0">{{ clientesSuspendidos.length }}</span>
+        </button>
       </div>
 
-      <div *ngIf="clientesPendientes.length === 0" class="empty-state">
-        <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
-        <h4>¡Excelente trabajo!</h4>
-        <p>No tienes mantenimientos pendientes para hoy</p>
-      </div>
+      <!-- PESTAÑA: POR REALIZAR -->
+      <div *ngIf="seccionActiva === 'porRealizar'">
+        <div *ngIf="clientesPendientes.length === 0" class="empty-state-modern">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <h3>No hay mantenciones por realizar</h3>
+          <p>Todos los mantenimientos del día fueron completados</p>
+        </div>
 
-      <ion-card *ngFor="let cliente of clientesPendientes" class="cliente-card">
-        <ion-card-header class="header-container">
-          <div class="cliente-header">
-            <div class="cliente-info">
-              <div class="cliente-title">
-                <span class="cliente-nombre">{{ cliente.nombre }}</span>
-                <div class="precio-badge">
+        <ion-card *ngFor="let cliente of clientesPendientes" class="mantencion-card">
+          <div class="mantencion-header">
+            <div class="mantencion-info">
+              <div class="cliente-container">
+                <h3 class="cliente-nombre">{{ cliente.nombre }}</h3>
+                <div class="precio-badge" (click)="editarPrecioCliente(cliente)">
                   <ion-icon name="cash-outline"></ion-icon>
-                  <span>${{ formatearPrecio(cliente.precio) }}</span>
+                  ${{ formatearPrecio(cliente.precio) }}
                 </div>
               </div>
-              <ion-card-subtitle>
+              <div class="mantencion-fecha">
                 <ion-icon name="location-outline"></ion-icon>
                 {{ cliente.direccion }}
-              </ion-card-subtitle>
+              </div>
             </div>
           </div>
-        </ion-card-header>
 
-        <ion-card-content class="contenido-container">
-          <div class="detalles-cliente">
+          <div class="sub-card">
+            <div class="detalle-item" *ngIf="cliente.servicio">
+              <ion-icon name="build-outline"></ion-icon>
+              <strong>Servicio:</strong> {{ cliente.servicio }}
+            </div>
+            <div class="detalle-item" *ngIf="cliente.horaPreferida">
+              <ion-icon name="time-outline"></ion-icon>
+              <strong>Horario preferido:</strong> {{ formatearHora(cliente.horaPreferida) }}
+            </div>
             <div class="detalle-item" *ngIf="cliente.telefono">
               <ion-icon name="call-outline"></ion-icon>
               <strong>Teléfono:</strong> {{ cliente.telefono }}
             </div>
-            <div class="detalle-item" *ngIf="cliente.horaPreferida">
-              <ion-icon name="time-outline"></ion-icon>
-              <strong>Horario preferido:</strong> {{
-              formatearHora(cliente.horaPreferida) }}
+          </div>
+
+          <div class="acciones-mantencion">
+            <div class="pago-button pendiente" (click)="irACompletar(cliente)">
+              <ion-icon name="checkmark-circle-outline" class="pago-icon"></ion-icon>
+              <span class="pago-text">Completar</span>
             </div>
-            <div class="action-buttons">
-              <ion-button
-                fill="solid"
-                color="secondary"
-                size="small"
-                [routerLink]="['/tabs/home/completar_mantencion', cliente.id]"
-                class="btn-rounded"
-              >
-                <ion-icon
-                  name="checkmark-circle-outline"
-                  slot="start"
-                ></ion-icon>
-                Completar
-              </ion-button>
-              <ion-button
-                fill="clear"
-                color="danger"
-                size="medium"
-                (click)="borrarMantenimiento(cliente)"
-              >
-                <ion-icon name="trash-outline"></ion-icon>
-              </ion-button>
+            <div class="suspend-button" (click)="suspenderCliente(cliente)">
+              <ion-icon name="pause-circle-outline" class="suspend-icon"></ion-icon>
             </div>
           </div>
-        </ion-card-content>
-      </ion-card>
-    </div>
+        </ion-card>
 
-    <!-- Sección de mantenciones realizadas -->
-    <div *ngIf="clientesRealizados.length > 0" class="realizados-section">
-      <div class="section-header">
-        <h3>
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
-          Mantenciones Realizadas
-        </h3>
-        <ion-badge color="success">{{ clientesRealizados.length }}</ion-badge>
+        <div class="agregar-clientes-footer">
+          <ion-button
+            fill="outline"
+            expand="block"
+            class="btn-rounded"
+            (click)="agregarClienteDia()"
+          >
+            <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+            Agregar Clientes
+          </ion-button>
+        </div>
       </div>
 
-      <ion-card
-        *ngFor="let cliente of clientesRealizados"
-        class="cliente-card realizado"
-      >
-        <ion-card-header class="header-container">
-          <div class="cliente-header">
-            <div class="cliente-info">
-              <div class="cliente-title">
-                <span class="cliente-nombre">{{ cliente.nombre }}</span>
-                <div class="estado-badge">
-                  <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  <span>Completado</span>
+      <!-- PESTAÑA: REALIZADOS -->
+      <div *ngIf="seccionActiva === 'realizados'">
+        <div *ngIf="clientesRealizados.length === 0" class="empty-state-modern">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <h3>No hay mantenciones realizadas</h3>
+          <p>Completa una mantención para verla aquí</p>
+        </div>
+
+        <ion-card *ngFor="let cliente of clientesRealizados" class="mantencion-card realizado">
+          <div class="mantencion-header">
+            <div class="mantencion-info">
+              <div class="cliente-container">
+                <h3 class="cliente-nombre">{{ cliente.nombre }}</h3>
+                <div class="precio-badge">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  ${{ formatearPrecio(cliente.precio) }}
                 </div>
               </div>
-              <ion-card-subtitle>
-                <ion-icon name="location-outline"></ion-icon>
-                {{ cliente.direccion }}
-              </ion-card-subtitle>
+              <div class="mantencion-fecha">
+                <ion-icon name="time-outline"></ion-icon>
+                Completado{{ cliente.mantenimiento && cliente.mantenimiento.hora ? ' a las ' + cliente.mantenimiento.hora : '' }}
+              </div>
             </div>
           </div>
-        </ion-card-header>
 
-        <ion-card-content class="contenido-container">
-          <div class="detalles-cliente">
-            <div class="detalle-item" *ngIf="cliente.mantenimiento">
-              <ion-icon name="time-outline"></ion-icon>
-              <strong>Completado:</strong> {{ cliente.mantenimiento.hora }}
+          <div class="sub-card">
+            <div class="sub-card-header">
+              <ion-icon name="water-outline"></ion-icon>
+              <h4 class="sub-card-title">Estado del agua</h4>
             </div>
-            <div class="detalle-item" *ngIf="cliente.precio">
-              <ion-icon name="cash-outline"></ion-icon>
-              <strong>Precio:</strong> ${{ formatearPrecio(cliente.precio) }}
-            </div>
-
-            <div class="action-buttons">
-              <ion-button
-                fill="clear"
-                color="medium"
-                size="medium"
-                (click)="deshacerMantenimiento(cliente)"
-              >
-                <ion-icon name="arrow-undo-outline"></ion-icon>
-              </ion-button>
+            <div class="estado-agua">
+              <div class="estado-item">
+                <span class="estado-label">Cloro</span>
+                <span class="estado-badge">
+                  {{ cliente.mantenimiento?.estadoCloro || '—' }}
+                </span>
+              </div>
+              <div class="estado-item">
+                <span class="estado-label">pH</span>
+                <span class="estado-badge">
+                  {{ cliente.mantenimiento?.estadoPh || '—' }}
+                </span>
+              </div>
             </div>
           </div>
-        </ion-card-content>
-      </ion-card>
+
+          <div class="sub-card">
+            <div class="sub-card-header">
+              <ion-icon name="flask-outline"></ion-icon>
+              <h4 class="sub-card-title">Productos usados</h4>
+            </div>
+            <div class="productos-grid">
+              <div class="producto-item">
+                <ion-icon name="water-outline"></ion-icon>
+                <span>Cloro</span>
+                <strong>{{ cliente.mantenimiento?.cantidadCloro || 0 }}g</strong>
+              </div>
+              <div class="producto-item">
+                <ion-icon name="flask-outline"></ion-icon>
+                <span>pH</span>
+                <strong>{{ cliente.mantenimiento?.cantidadPh || 0 }}g</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="deshacer-row">
+            <div class="deshacer-button" (click)="deshacerMantenimiento(cliente)">
+              <ion-icon name="arrow-undo-outline" class="deshacer-icon"></ion-icon>
+              <span>Deshacer</span>
+            </div>
+          </div>
+        </ion-card>
+
+        <div class="agregar-clientes-footer">
+          <ion-button
+            fill="outline"
+            expand="block"
+            class="btn-rounded"
+            (click)="agregarMantencionRealizada()"
+          >
+            <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+            Agregar mantención realizada
+          </ion-button>
+        </div>
+      </div>
+
+      <!-- PESTAÑA: SUSPENDIDOS -->
+      <div *ngIf="seccionActiva === 'suspendidos'">
+        <div *ngIf="clientesSuspendidos.length === 0" class="empty-state-modern">
+          <ion-icon name="pause-circle-outline"></ion-icon>
+          <h3>No hay clientes suspendidos</h3>
+          <p>Los clientes que suspendas aparecerán aquí</p>
+        </div>
+
+        <ion-card *ngFor="let cliente of clientesSuspendidos" class="mantencion-card suspendido">
+          <div class="mantencion-header">
+            <div class="mantencion-info">
+              <div class="cliente-container">
+                <h3 class="cliente-nombre">{{ cliente.nombre }}</h3>
+                <div class="precio-badge">
+                  <ion-icon name="cash-outline"></ion-icon>
+                  ${{ formatearPrecio(cliente.precio) }}
+                </div>
+              </div>
+              <div class="mantencion-fecha">
+                <ion-icon name="pause-circle-outline"></ion-icon>
+                Mantención suspendida
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-card">
+            <div class="detalle-item" *ngIf="cliente.direccion">
+              <ion-icon name="location-outline"></ion-icon>
+              <strong>Dirección:</strong> {{ cliente.direccion }}
+            </div>
+            <div class="detalle-item" *ngIf="cliente.telefono">
+              <ion-icon name="call-outline"></ion-icon>
+              <strong>Teléfono:</strong> {{ cliente.telefono }}
+            </div>
+          </div>
+
+          <div class="deshacer-row">
+            <div class="deshacer-button" (click)="deshacerBorrado(cliente.id)">
+              <ion-icon name="arrow-undo-outline" class="deshacer-icon"></ion-icon>
+              <span>Restaurar</span>
+            </div>
+          </div>
+        </ion-card>
+
+        <div class="agregar-clientes-footer">
+          <ion-button
+            fill="outline"
+            expand="block"
+            class="btn-rounded"
+            (click)="agregarClienteSuspendido()"
+          >
+            <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+            Agregar cliente suspendido
+          </ion-button>
+        </div>
+      </div>
     </div>
   </div>
 </ion-content>

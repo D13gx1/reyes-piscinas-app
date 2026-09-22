@@ -58,7 +58,7 @@ export class ResumenDeudaComponent implements OnChanges {
   }
 
   private calcularResumen() {
-    const mantencionesPendientes = this.mantenciones.filter(m => !m.pagado);
+    const mantencionesPendientes = this.mantenciones.filter(m => !m.pagado && !m.suspendida);
     const totalPendiente = mantencionesPendientes.reduce((sum, m) => sum + (m.precio || 0), 0);
 
     this.resumenDeuda = {
@@ -89,11 +89,7 @@ export class ResumenDeudaComponent implements OnChanges {
     lines.push(`Hola ${this.resumenDeuda.clienteNombre},`);
     lines.push('te envío el resumen de tus mantenciones pendientes de pago:\n');
     
-    lines.push('*💰 Total pendiente:*');
-    lines.push(this.formatearPrecio(this.resumenDeuda.totalPendiente));
-    lines.push('');
-    
-    lines.push('*🧾 Mantenciones sin pagar:*');
+    lines.push('*🧾 Servicios Pendientes de pago:*');
     lines.push(`${this.resumenDeuda.cantidadPendientes} servicio(s)`);
     lines.push('');
 
@@ -105,6 +101,10 @@ export class ResumenDeudaComponent implements OnChanges {
       });
       lines.push('');
     }
+
+    lines.push('*💰 Total pendiente:*');
+    lines.push(this.formatearPrecio(this.resumenDeuda.totalPendiente));
+    lines.push('');
 
     lines.push('¿Te gustaría coordinar el pago de estas mantenciones?');
     lines.push('\n*Gracias por tu preferencia!* 🏊‍♂️');

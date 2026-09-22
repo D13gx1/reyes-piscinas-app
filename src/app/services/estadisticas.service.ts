@@ -33,6 +33,8 @@ export interface Mantencion {
   pago?: boolean | string;
   estadoPago?: string;
   fechaPago?: string;
+  // Mantención suspendida (no realizada, precio 0)
+  suspendida?: boolean;
 }
 
 @Injectable({
@@ -123,13 +125,15 @@ export class EstadisticasService {
                 const historial = data['historial'] || [];
 
                 historial.forEach((mantencion: any) => {
+                  const esSaltada = mantencion.estadoCloro === 'saltada' || (mantencion.servicio && String(mantencion.servicio).toLowerCase().includes('saltada'));
+
                   if (mantencion.fecha === fecha) {
                     mantenciones.push({
                       id: `${doc.id}_${mantencion.fecha}_${mantencion.hora || '00:00'}`,
                       clienteId: doc.id,
                       clienteNombre: data['nombre'] || 'Cliente sin nombre',
                       fecha: mantencion.fecha,
-                      precio: mantencion.precioCobrado || data['precio'] || 0, // Usar precio cobrado en ese momento, si no existe usar precio actual
+                      precio: esSaltada ? (mantencion.precioCobrado || 0) : (mantencion.precioCobrado || data['precio'] || 0), // Usar precio cobrado en ese momento, si no existe usar precio actual
                       cloro: mantencion.cloro || 0,
                       ph: mantencion.ph || 0,
                       servicio: mantencion.servicio || 'Mantención',
@@ -144,7 +148,8 @@ export class EstadisticasService {
                       pagado: mantencion.pagado,
                       pago: mantencion.pago,
                       estadoPago: mantencion.estadoPago,
-                      fechaPago: mantencion.fechaPago
+                      fechaPago: mantencion.fechaPago,
+                      suspendida: esSaltada || undefined
                     });
                   }
                 });
@@ -199,13 +204,15 @@ export class EstadisticasService {
                 const historial = data['historial'] || [];
 
                 historial.forEach((mantencion: any) => {
+                  const esSaltada = mantencion.estadoCloro === 'saltada' || (mantencion.servicio && String(mantencion.servicio).toLowerCase().includes('saltada'));
+
                   if (mantencion.fecha >= fechaInicio && mantencion.fecha <= fechaFin) {
                     mantenciones.push({
                       id: `${doc.id}_${mantencion.fecha}_${mantencion.hora || '00:00'}`,
                       clienteId: doc.id,
                       clienteNombre: data['nombre'] || 'Cliente sin nombre',
                       fecha: mantencion.fecha,
-                      precio: mantencion.precioCobrado || data['precio'] || 0, // Usar precio cobrado en ese momento, si no existe usar precio actual
+                      precio: esSaltada ? (mantencion.precioCobrado || 0) : (mantencion.precioCobrado || data['precio'] || 0), // Usar precio cobrado en ese momento, si no existe usar precio actual
                       cloro: mantencion.cloro || 0,
                       ph: mantencion.ph || 0,
                       servicio: mantencion.servicio || 'Mantención',
@@ -220,7 +227,8 @@ export class EstadisticasService {
                       pagado: mantencion.pagado,
                       pago: mantencion.pago,
                       estadoPago: mantencion.estadoPago,
-                      fechaPago: mantencion.fechaPago
+                      fechaPago: mantencion.fechaPago,
+                      suspendida: esSaltada || undefined
                     });
                   }
                 });
@@ -256,8 +264,10 @@ export class EstadisticasService {
     fechaInicio: string, 
     fechaFin: string
   ): EstadisticasRecaudacion {
-    const total = mantenciones.reduce((sum, mantencion) => sum + mantencion.precio, 0);
-    const cantidadMantenciones = mantenciones.length;
+    // Las suspendidas no generan dinero, se excluyen de los totales
+    const reales = mantenciones.filter(m => !m.suspendida);
+    const total = reales.reduce((sum, mantencion) => sum + mantencion.precio, 0);
+    const cantidadMantenciones = reales.length;
     const promedioPorMantencion = cantidadMantenciones > 0 ? total / cantidadMantenciones : 0;
 
     return {
@@ -281,15 +291,16 @@ export class EstadisticasService {
   getEstadisticasQuimicas(fechaInicio: string, fechaFin: string): Observable<any> {
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => {
-        const totalCloro = mantenciones.reduce((sum, m) => sum + (m.cantidadCloro || 0), 0);
-        const totalPh = mantenciones.reduce((sum, m) => sum + m.ph, 0);
-        const totalSubePh = mantenciones.reduce((sum, m) => sum + (m.cantidadSubePh || 0), 0);
-        const totalBajaPh = mantenciones.reduce((sum, m) => sum + (m.cantidadBajaPh || 0), 0);
-        const totalPastillas = mantenciones.reduce((sum, m) => sum + (m.cantidadPastillas || 0), 0);
-        const cantidad = mantenciones.length;
+        const reales = mantenciones.filter(m => !m.suspendida);
+        const totalCloro = reales.reduce((sum, m) => sum + (m.cantidadCloro || 0), 0);
+        const totalPh = reales.reduce((sum, m) => sum + m.ph, 0);
+        const totalSubePh = reales.reduce((sum, m) => sum + (m.cantidadSubePh || 0), 0);
+        const totalBajaPh = reales.reduce((sum, m) => sum + (m.cantidadBajaPh || 0), 0);
+        const totalPastillas = reales.reduce((sum, m) => sum + (m.cantidadPastillas || 0), 0);
+        const cantidad = reales.length;
 
         return {
-          promedioCloro: cantidad > 0 ? mantenciones.reduce((sum, m) => sum + m.cloro, 0) / cantidad : 0,
+          promedioCloro: cantidad > 0 ? reales.reduce((sum, m) => sum + m.cloro, 0) / cantidad : 0,
           promedioPh: cantidad > 0 ? totalPh / cantidad : 0,
           totalCloro,
           totalPh,
@@ -306,6 +317,8 @@ export class EstadisticasService {
   clientePagoListo(fechaInicio: string, fechaFin: string): Observable<{ dineroPagado: number; mantenciones: Mantencion[] }> {
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => {
+        // Las suspendidas no son deudas ni pagos
+        const reales = mantenciones.filter(m => !m.suspendida);
         const esPagado = (m: any) => {
           if (m == null) return false;
           // Soporta varias formas comunes de almacenar pago
@@ -317,7 +330,7 @@ export class EstadisticasService {
           return false;
         };
 
-        const pagadas = mantenciones.filter(m => esPagado(m));
+        const pagadas = reales.filter(m => esPagado(m));
         const dineroPagado = pagadas.reduce((sum, m) => sum + (m.precio || 0), 0);
         return { dineroPagado, mantenciones: pagadas };
       })
@@ -328,6 +341,8 @@ export class EstadisticasService {
   clientesPagoPendiente(fechaInicio: string, fechaFin: string): Observable<{ dineroPendiente: number; mantenciones: Mantencion[] }> {
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => {
+        // Las suspendidas no son deudas ni pagos
+        const reales = mantenciones.filter(m => !m.suspendida);
         const esPagado = (m: any) => {
           if (m == null) return false;
           if (m.pagado === true) return true;
@@ -338,7 +353,7 @@ export class EstadisticasService {
           return false;
         };
 
-        const pendientes = mantenciones.filter(m => !esPagado(m));
+        const pendientes = reales.filter(m => !esPagado(m));
         const dineroPendiente = pendientes.reduce((sum, m) => sum + (m.precio || 0), 0);
         return { dineroPendiente, mantenciones: pendientes };
       })

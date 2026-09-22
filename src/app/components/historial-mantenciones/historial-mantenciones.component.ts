@@ -1,7 +1,13 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { pauseCircleOutline } from 'ionicons/icons';
 import { Mantencion } from '../../services/estadisticas.service';
+
+addIcons({
+  'pause-circle-outline': pauseCircleOutline,
+});
 
 // Tipo intermedio para compatibilidad entre diferentes servicios
 interface HistorialItem {
@@ -19,6 +25,7 @@ interface HistorialItem {
   cantidadPastillas?: number;
   hora?: string;
   pagado?: boolean;
+  suspendida?: boolean;
 }
 
 @Component({

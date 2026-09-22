@@ -147,22 +147,26 @@ export class HistorialClientePage implements OnInit {
 
   // Método para transformar los datos del historial al formato esperado por el componente
   transformarHistorialParaComponente(historial: any[]): any[] {
-    return historial.map(item => ({
-      id: `${item.fecha}_${item.hora || '00:00'}`,
-      clienteId: this.clienteId || '',
-      clienteNombre: this.cliente?.nombre || 'Cliente',
-      precio: this.cliente?.precio || 0,
-      fecha: item.fecha,
-      servicio: item.servicio || 'Mantenimiento',
-      cloro: item.cloro || 0,
-      ph: item.ph || 0,
-      cantidadCloro: item.cantidadCloro,
-      cantidadBajaPh: item.cantidadBajaPh,
-      cantidadSubePh: item.cantidadSubePh,
-      cantidadPastillas: item.cantidadPastillas,
-      hora: item.hora,
-      pagado: item.pagado || false
-    }));
+    return historial.map(item => {
+      const esSaltada = item.estadoCloro === 'saltada' || (item.servicio && item.servicio.toLowerCase().includes('saltada'));
+      return {
+        id: `${item.fecha}_${item.hora || '00:00'}`,
+        clienteId: this.clienteId || '',
+        clienteNombre: this.cliente?.nombre || 'Cliente',
+        precio: esSaltada ? (item.precioCobrado || 0) : (this.cliente?.precio || 0),
+        fecha: item.fecha,
+        servicio: item.servicio || 'Mantenimiento',
+        cloro: item.cloro || 0,
+        ph: item.ph || 0,
+        cantidadCloro: item.cantidadCloro,
+        cantidadBajaPh: item.cantidadBajaPh,
+        cantidadSubePh: item.cantidadSubePh,
+        cantidadPastillas: item.cantidadPastillas,
+        hora: item.hora,
+        pagado: item.pagado || false,
+        suspendida: esSaltada || undefined
+      };
+    });
   }
 
   // Métodos para manejar eventos del componente

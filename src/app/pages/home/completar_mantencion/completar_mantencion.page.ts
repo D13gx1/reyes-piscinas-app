@@ -140,6 +140,14 @@ export class CompletarMantencionPage implements OnInit {
     this.clienteService.getClienteById(id).subscribe({
       next: (cliente) => {
         this.cliente = cliente;
+        // Si hay un servicio extra para hoy, preseleccionarlo
+        const fechaHoy = this.formatearFechaLocal(new Date());
+        const extra = cliente.serviciosExtra?.find((s: any) => s.fecha === fechaHoy);
+        if (extra) {
+          this.mantencionForm.get('servicio')?.setValue(extra.servicio);
+        } else {
+          this.mantencionForm.get('servicio')?.setValue('Mantención de piscina');
+        }
       },
       error: (error) => {
         console.error('Error al cargar cliente:', error);
@@ -167,9 +175,13 @@ export class CompletarMantencionPage implements OnInit {
       this.mostrarAlerta('Datos incompletos', 'Por favor indique la hora para cortar el agua');
       return;
     }
-    
+
+    const fechaHoy = this.formatearFechaLocal(new Date());
+    const precioEspecial = this.cliente.preciosEspeciales?.[fechaHoy];
+    const precioCobrado = precioEspecial ?? this.cliente.precio;
+
     const nuevoRegistro = {
-      fecha: this.formatearFechaLocal(new Date()),
+      fecha: fechaHoy,
       hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
       servicio: formValues.servicio,
       cloro: formValues.cloro,
@@ -183,7 +195,7 @@ export class CompletarMantencionPage implements OnInit {
       notas: formValues.notas,
       piscinarLlenando: formValues.piscinarLlenando === 'si',
       horaCorte: formValues.horaCorte || null,
-      precioCobrado: this.cliente.precio // Guardar el precio actual que se está cobrando
+      precioCobrado: precioCobrado // Guardar el precio que se cobra (especial del día o el del cliente)
     };
 
     // Asegurarse de que el cliente tenga un array de historial

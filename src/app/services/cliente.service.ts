@@ -62,6 +62,8 @@ export interface Cliente {
     fechaPago?: string;
   }[];
   skippedDates?: string[]; // Fechas marcadas como "saltadas" (YYYY-MM-DD)
+  preciosEspeciales?: { [fecha: string]: number }; // Precios de una sola vez por fecha (YYYY-MM-DD)
+  serviciosExtra?: { fecha: string; servicio: string }[]; // Servicios agregados manualmente para una fecha
   activo: boolean;
 }
 
@@ -86,6 +88,21 @@ export class ClienteService {
       this.currentUserId = user?.uid || null;
       console.log('🆔 ID de usuario actualizado:', this.currentUserId);
     });
+  }
+
+  private sanitizarDatosFirestore<T>(data: T): T {
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizarDatosFirestore(item)) as unknown as T;
+    }
+    if (data && typeof data === 'object') {
+      const limpio: Record<string, any> = {};
+      for (const key of Object.keys(data)) {
+        const valor = (data as Record<string, any>)[key];
+        limpio[key] = valor === undefined ? null : this.sanitizarDatosFirestore(valor);
+      }
+      return limpio as unknown as T;
+    }
+    return data;
   }
 
   private ensureUserId(): string {
@@ -144,6 +161,8 @@ export class ClienteService {
                   },
                   historial: data['historial'] || [],
                   skippedDates: data['skippedDates'] || [],
+                  preciosEspeciales: data['preciosEspeciales'] || {},
+                  serviciosExtra: data['serviciosExtra'] || [],
                   activo: data['activo'] !== undefined ? data['activo'] : true
                 };
               });
@@ -200,6 +219,8 @@ export class ClienteService {
             },
             historial: data['historial'] || [],
             skippedDates: data['skippedDates'] || [],
+            preciosEspeciales: data['preciosEspeciales'] || {},
+            serviciosExtra: data['serviciosExtra'] || [],
             activo: data['activo'] !== undefined ? data['activo'] : true,
           } as Cliente;
         } else {
@@ -237,12 +258,14 @@ export class ClienteService {
       },
       historial: cliente.historial || [],
       skippedDates: cliente['skippedDates'] || [],
+      preciosEspeciales: cliente['preciosEspeciales'] || {},
+      serviciosExtra: cliente['serviciosExtra'] || [],
       activo: cliente.activo !== undefined ? cliente.activo : true,
     };
     
     console.log(' Cliente preparado para guardar:', clienteParaGuardar);
     
-    return from(addDoc(clientesRef, clienteParaGuardar)).pipe(
+    return from(addDoc(clientesRef, this.sanitizarDatosFirestore(clienteParaGuardar))).pipe(
       map(docRef => {
         console.log(' Cliente creado exitosamente con ID:', docRef.id);
         const clienteCreado = { id: docRef.id, ...clienteParaGuardar };
@@ -279,16 +302,16 @@ export class ClienteService {
           medidas: cliente.medidas || clienteActual.medidas,
           precio: cliente.precio !== undefined ? cliente.precio : clienteActual.precio,
           programacion: cliente.programacion || clienteActual.programacion,
-          historial: cliente.historial && cliente.historial.length > 0 
-  ? cliente.historial 
-  : clienteActual.historial,
+          historial: cliente.historial ?? clienteActual.historial,
           skippedDates: cliente.skippedDates || clienteActual.skippedDates,
+          preciosEspeciales: cliente.preciosEspeciales || (clienteActual as any).preciosEspeciales || {},
+          serviciosExtra: cliente.serviciosExtra || (clienteActual as any).serviciosExtra || [],
           activo: cliente.activo !== undefined ? cliente.activo : clienteActual.activo
         };
         
         console.log(' Datos a actualizar (historial preservado):', clienteData);
         
-        return from(updateDoc(clienteRef, clienteData)).pipe(
+        return from(updateDoc(clienteRef, this.sanitizarDatosFirestore(clienteData))).pipe(
           map(() => {
             console.log(' Cliente actualizado exitosamente (historial preservado)');
             return { ...cliente, historial: clienteActual.historial };

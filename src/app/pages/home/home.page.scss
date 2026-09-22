@@ -161,33 +161,6 @@ ion-content {
 }
 
 /* ==================== */
-/* Headers de Sección */
-/* ==================== */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .deleted-counter {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-right: 8px;
-  }
-
-  h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--ion-color-dark);
-  }
-}
-
-/* ==================== */
 /* Cards Minimalistas */
 /* ==================== */
 
@@ -196,157 +169,12 @@ ion-content {
   border-radius: 25px !important;
 }
 
+.agregar-clientes-footer {
+  padding: 4px 0 16px;
+}
+
 .btn-rounded::part(native) {
   border-radius: 25px !important;
-}
-
-.cliente-card {
-  margin: 0 0 16px;
-  border-radius: 22px !important;
-  --border-radius: 12px;
-  overflow: hidden;
-  box-shadow: none;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-
-  .header-container {
-    padding: 16px 16px 12px;
-    
-    .cliente-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-
-      .cliente-nombre {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .precio-badge,
-      .estado-badge {
-        flex: 0 0 auto;
-        margin: 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        font-size: 1rem;
-        line-height: 1;
-        white-space: nowrap;
-      }
-
-      .precio-badge {
-        background: #dcfce7;
-        color: #15803d;
-      }
-
-      .estado-badge {
-        background: #dcfce7;
-        color: #15803d;
-      }
-    }
-
-    ion-card-subtitle {
-      font-size: 0.85rem;
-      color: #6c757d;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-  }
-
-  .contenido-container {
-    padding: 0 16px 16px;
-
-    .detalle-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 0;
-      font-size: 0.85rem;
-      color: #495057;
-
-      ion-icon {
-        font-size: 1rem;
-        color: #6c757d;
-      }
-
-      strong {
-        color: #2c3e50;
-        font-weight: 500;
-      }
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-
-      ion-button {
-        margin: 0;
-        --border-radius: 8px;
-        font-size: 0.8rem;
-        height: 36px;
-
-        &:first-child {
-          --background: #2c3e50;
-          --color: white;
-          flex: 1;
-        }
-
-        &:last-child {
-          --background: #f8f9fa;
-          --color: #6c757d;
-          min-width: 36px;
-        }
-      }
-    }
-  }
-}
-
-/* ==================== */
-/* Estados Especiales */
-/* ==================== */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  background: var(--app-surface-soft);
-  color: var(--ion-text-color);
-  border-radius: var(--radius);
-  margin: 20px 0;
-
-  ion-icon {
-    font-size: 2.5rem;
-    color: #27ae60;
-    margin-bottom: 12px;
-  }
-
-  h4 {
-    color: var(--ion-text-color);
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-
-  p {
-    color: var(--ion-color-medium);
-  }
-}
-
-.realizados-section {
-  margin-top: 24px;
-
-  .cliente-card.realizado {
-    background: #f8f9fa;
-    border-color: #e9ecef;
-  }
 }
 
 /* ==================== */
@@ -392,81 +220,523 @@ body.dark {
       background: transparent;
     }
   }
+}
 
-  .section-header h3 {
+/* ==================== */
+/* Diseño tipo Historial de Mantenciones */
+/* ==================== */
+
+/* Pestañas de filtro */
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: var(--tab-track, #e2e8f0);
+  border-radius: 20px;
+  margin-bottom: 20px;
+
+  .filter-tab {
+    flex: 1;
+    padding: 12px 14px;
+    border: none;
+    background: transparent;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: var(--transition);
+
+    &.active {
+      background: var(--ion-color-primary);
+      color: white;
+    }
+
+    .tab-count {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+  }
+}
+
+body.dark .filter-tab {
+  color: #dfeaff;
+
+  &.active {
+    color: white;
+  }
+}
+
+/* Cards de mantención */
+.mantencion-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: none;
+  margin: 0 0 16px;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &.realizado {
+    background: #f8fafc;
+  }
+
+  &.suspendido {
+    opacity: 0.9;
+  }
+}
+
+.mantencion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+
+  .mantencion-info {
+    flex: 1;
+
+    .cliente-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 8px;
+
+      .cliente-nombre {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1.2;
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .precio-badge {
+        background: #dcfce7;
+        color: #15803d;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+
+        &:active {
+          transform: scale(0.95);
+        }
+
+        ion-icon {
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .mantencion-fecha {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 4px;
+
+      ion-icon {
+        color: #64748b;
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+/* Sub-cards */
+.sub-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+
+  &:first-of-type {
+    margin-top: 12px;
+  }
+
+  .detalle-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.88rem;
+    color: #495057;
+
+    ion-icon {
+      font-size: 1rem;
+      color: #6c757d;
+      flex-shrink: 0;
+    }
+
+    strong {
+      color: #2c3e50;
+      font-weight: 500;
+    }
+  }
+}
+
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  ion-icon {
+    color: var(--ion-color-primary);
+    font-size: 18px;
+  }
+
+  .sub-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+  }
+}
+
+.estado-agua {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+
+  .estado-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .estado-label {
+      font-weight: 500;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .estado-badge {
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+  }
+}
+
+.productos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+
+  .producto-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    min-height: 44px;
+    width: 100%;
+
+    ion-icon {
+      color: #64748b;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    span {
+      flex: 1;
+      font-weight: 500;
+      color: #374151;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    strong {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.9rem;
+      text-align: right;
+    }
+  }
+}
+
+/* Botones de acción */
+.acciones-mantencion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.pago-button {
+  flex: 1;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none;
+
+  .pago-icon {
+    margin-right: 6px;
+    font-size: 18px;
+  }
+
+  .pago-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  &.pendiente {
+    background: #16a34a;
+    color: white;
+
+    .pago-icon {
+      color: white;
+    }
+  }
+}
+
+.suspend-button {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: white;
+  color: #dc2626;
+  border: 2px solid #ef4444;
+
+  .suspend-icon {
+    font-size: 20px;
+    color: #dc2626;
+  }
+
+  &:hover {
+    background: #fef2f2;
+  }
+}
+
+.deshacer-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+
+  .deshacer-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    .deshacer-icon {
+      font-size: 16px;
+      color: #64748b;
+    }
+
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+}
+
+.agregar-clientes-footer {
+  padding: 4px 0 16px;
+}
+
+.empty-state-modern {
+  text-align: center;
+  padding: 48px 20px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin: 12px 0 20px;
+
+  ion-icon {
+    font-size: 3.5rem;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+/* Dark mode del nuevo diseño */
+body.dark {
+  .filter-tabs {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--ion-border-color);
+  }
+
+  .mantencion-card,
+  .sub-card,
+  .producto-item,
+  .empty-state-modern,
+  .deshacer-button {
+    background: var(--ion-card-background);
+    border-color: var(--ion-border-color);
+    color: var(--ion-text-color);
+  }
+
+  .mantencion-card {
+    border-radius: 16px;
+  }
+
+  .mantencion-header {
+    border-bottom-color: var(--ion-border-color);
+
+    .cliente-nombre,
+    .sub-card-title {
+      color: #ffffff;
+    }
+
+    .mantencion-fecha {
+      color: #dfeaff;
+    }
+  }
+
+  .sub-card {
+    background: rgba(255, 255, 255, 0.03);
+
+    .detalle-item {
+      color: #edf4ff;
+
+      strong {
+        color: #ffffff;
+      }
+    }
+  }
+
+  .sub-card-header .sub-card-title {
     color: #ffffff;
   }
 
-  .cliente-card {
-    background: var(--ion-card-background);
-    border-color: var(--ion-border-color);
-    border-radius: 12px !important;
-    --border-radius: 12px;
-    overflow: hidden;
-
-    .header-container {
-      .cliente-title {
-        color: #ffffff;
-      }
-
-      ion-card-subtitle {
-        color: #dfeaff;
-      }
+  .estado-agua .estado-item {
+    .estado-label {
+      color: #dfeaff;
     }
 
-    .contenido-container {
-      .detalle-item {
-        color: #edf4ff;
-
-        strong {
-          color: #ffffff;
-        }
-      }
-
-      .action-buttons ion-button:last-child {
-        --background: var(--ion-item-background);
-        --color: var(--ion-text-color);
-      }
-    }
-  }
-
-  .empty-state {
-    background: var(--ion-item-background);
-
-    h4 {
+    .estado-badge {
+      background: rgba(255, 255, 255, 0.08);
       color: #ffffff;
     }
   }
 
-  .realizados-section .cliente-card.realizado {
+  .producto-item {
+    background: rgba(255, 255, 255, 0.03);
+
+    span {
+      color: #edf4ff;
+    }
+
+    strong {
+      color: #ffffff;
+    }
+  }
+
+  .precio-badge {
+    background: rgba(34, 197, 94, 0.18);
+    color: #b7f7d1;
+  }
+
+  .pago-button {
+    &.pendiente {
+      background: linear-gradient(135deg, #1b8b50, #0f763e);
+      color: #ffffff;
+    }
+  }
+
+  .suspend-button {
+    background: var(--ion-card-background);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ff8f8f;
+
+    .suspend-icon {
+      color: #ff8f8f;
+    }
+  }
+
+  .deshacer-button {
     background: var(--ion-item-background);
-    border-color: var(--ion-border-color);
+
+    .deshacer-icon {
+      color: #dfeaff;
+    }
+  }
+
+  .empty-state-modern {
+    ion-icon {
+      color: var(--ion-color-medium);
+    }
+
+    h3 {
+      color: #ffffff;
+    }
+
+    p {
+      color: #dfeaff;
+    }
   }
 }
 
 @media (max-width: 480px) {
-  .cliente-card {
-    .header-container {
-      padding: 14px 14px 10px;
+  .filter-tabs .filter-tab {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+  }
 
-      .cliente-title {
-        align-items: center;
-        flex-direction: row;
-        gap: 8px;
-
-        .cliente-nombre {
-          flex: 1 1 auto;
-          width: auto;
-        }
-
-        .precio-badge,
-        .estado-badge {
-          flex: 0 0 auto;
-          align-self: center;
-          padding: 7px 9px;
-          font-size: 0.9rem;
-        }
-      }
+  .estado-agua {
+    .estado-item {
+      flex: 1;
+      min-width: 0;
+      justify-content: space-between;
     }
   }
 }

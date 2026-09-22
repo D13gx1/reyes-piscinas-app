@@ -28,19 +28,23 @@
         <div class="mantencion-info">
           <div class="cliente-container">
             <h3 class="cliente-nombre">{{ item.clienteNombre }}</h3>
-            <div class="precio-badge">
+            <div class="precio-badge" [ngClass]="{ 'suspendida-precio': item.suspendida && item.precio === 0 }">
               {{ formatearPrecio(item.precio) }}
             </div>
           </div>
           <div class="mantencion-fecha">
             <ion-icon name="calendar-outline"></ion-icon>
             {{ formatearFechaCompleta(item.fecha) }} · {{ item.hora || 'N/A' }}
+            <span class="suspendida-badge" *ngIf="item.suspendida">
+              <ion-icon name="pause-circle-outline"></ion-icon>
+              Suspendida
+            </span>
           </div>
         </div>
       </div>
 
       <!-- Sub-card: Estado del agua -->
-      <div class="sub-card">
+      <div class="sub-card" *ngIf="!item.suspendida">
         <div class="sub-card-header">
           <ion-icon name="water-outline"></ion-icon>
           <h4 class="sub-card-title">Estado del agua</h4>
@@ -64,7 +68,7 @@
       </div>
 
       <!-- Sub-card: Productos usados -->
-      <div class="sub-card">
+      <div class="sub-card" *ngIf="!item.suspendida">
         <div class="sub-card-header">
           <ion-icon name="flask-outline"></ion-icon>
           <h4 class="sub-card-title">Productos usados</h4>
@@ -93,20 +97,30 @@
         </div>
       </div>
 
+      <!-- Sub-card: Mantención suspendida -->
+      <div class="sub-card suspendida-card" *ngIf="item.suspendida">
+        <div class="sub-card-header">
+          <ion-icon name="pause-circle-outline"></ion-icon>
+          <h4 class="sub-card-title">Mantención suspendida</h4>
+        </div>
+        <p class="suspendida-text">Se suspendió esta mantención, no se realizó.</p>
+      </div>
+
       <!-- Sub-card: Mantenimiento -->
       <div class="sub-card" *ngIf="item.servicio">
         <div class="sub-card-header">
           <ion-icon name="build-outline"></ion-icon>
           <h4 class="sub-card-title">{{ item.servicio }}</h4>
         </div>
-        <!-- Botones de acción -->
+<!-- Botones de acción -->
         <div style="display: flex !important; align-items: center !important; gap: 12px !important; width: 100% !important; margin-top: 12px !important;">
-          <div [ngClass]="item.pagado ? 'pago-button pagado' : 'pago-button pendiente'" 
+          <div *ngIf="!item.suspendida"
+               [ngClass]="item.pagado ? 'pago-button pagado' : 'pago-button pendiente'"
                (click)="onPagoClick(item, $event)">
             <ion-icon [name]="item.pagado ? 'checkmark-circle' : 'checkmark-outline'" class="pago-icon"></ion-icon>
             <span class="pago-text">{{ item.pagado ? 'Pagado' : 'Marcar Pagado' }}</span>
           </div>
-          <div class="borrar-button" 
+          <div class="borrar-button"
                (click)="onBorrar(item, $event)">
             <ion-icon name="trash-outline" class="borrar-icon"></ion-icon>
           </div>

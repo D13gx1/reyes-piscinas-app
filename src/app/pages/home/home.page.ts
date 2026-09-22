@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import {
   refreshOutline,
@@ -13,9 +13,15 @@ import {
   chevronForwardOutline,
   cashOutline,
   arrowUndoOutline,
-  trashOutline
+  trashOutline,
+  addCircleOutline,
+  buildOutline,
+  calendarOutline,
+  pauseCircleOutline,
+  waterOutline,
+  flaskOutline
 } from 'ionicons/icons';
-import { ClienteService } from '../../services/cliente.service';
+import { ClienteService, Cliente } from '../../services/cliente.service';
 
 interface ClienteDelDia {
   id: string;
@@ -24,6 +30,7 @@ interface ClienteDelDia {
   telefono: string;
   horaPreferida: string;
   precio: number; // Agregamos el precio
+  servicio?: string; // Servicio a realizar (especial o por defecto)
   realizado: boolean;
   mantenimiento?: {
     estadoCloro: string;
@@ -53,7 +60,13 @@ addIcons({
   'chevron-forward-outline': chevronForwardOutline,
   'cash-outline': cashOutline,
   'arrow-undo-outline': arrowUndoOutline,
-  'trash-outline': trashOutline
+  'trash-outline': trashOutline,
+  'add-circle-outline': addCircleOutline,
+  'build-outline': buildOutline,
+  'calendar-outline': calendarOutline,
+  'pause-circle-outline': pauseCircleOutline,
+  'water-outline': waterOutline,
+  'flask-outline': flaskOutline
 });
 
 @Component({
@@ -74,6 +87,8 @@ export class HomePage implements OnInit {
   isToday = true;
   clientesPendientes: ClienteDelDia[] = [];
   clientesRealizados: ClienteDelDia[] = [];
+  clientesSuspendidos: ClienteDelDia[] = [];
+  seccionActiva: string = 'porRealizar';
   isLoading = false;
   progresoDelDia = 0;
   // Contador de clientes borrados (saltados) para la fecha seleccionada
@@ -108,7 +123,8 @@ export class HomePage implements OnInit {
     private alertController: AlertController,
     private toastController: ToastController,
     private actionSheetController: ActionSheetController,
-    private clienteService: ClienteService
+    private clienteService: ClienteService,
+    private router: Router
   ) {
     this.configurarFecha();
     this.generarCalendario();
@@ -149,24 +165,137 @@ export class HomePage implements OnInit {
     });
   }
 
-  async mostrarClientesBorrados() {
-    if (!this.deletedClientsList || this.deletedClientsList.length === 0) {
-      this.showToast('No hay clientes borrados para esta fecha', 'primary');
-      return;
+  setSeccion(seccion: string) {
+    this.seccionActiva = seccion;
+  }
+
+  irACompletar(cliente: ClienteDelDia) {
+    try {
+      this.router.navigate(['/tabs/home/completar_mantencion', cliente.id]);
+    } catch (error) {
+      console.error('❌ Error en navegación:', error);
+      this.showToast('Error al navegar a completar mantención ❌', 'danger');
     }
+  }
 
-    // Usar ActionSheet para permitir deshacer por cliente
-    const buttons = this.deletedClientsList.map(c => ({
-      text: `${c.nombre} — Deshacer`,
-      handler: () => this.deshacerBorrado(c.id)
-    }));
-    buttons.push({ text: 'Cancelar', role: 'cancel' } as any);
-
-    const action = await this.actionSheetController.create({
-      header: `Clientes borrados (${this.deletedTodayCount})`,
-      buttons
+  // Clientes activos disponibles para el día seleccionado (no completados ni suspendidos)
+  private filtrarDisponibles(clientes: Cliente[]): Cliente[] {
+    const fechaStr = this.formatearFechaLocal(this.fechaSeleccionada);
+    return clientes.filter(c => {
+      if (!c.activo) return false;
+      const yaCompletado = (c.historial || []).some(h => h.fecha === fechaStr && h.estadoCloro !== 'saltada');
+      const saltadoHist = (c.historial || []).some(h => h.fecha === fechaStr && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'))));
+      const saltadoArr = (c as any).skippedDates ? (c as any).skippedDates.includes(fechaStr) : false;
+      return !yaCompletado && !(saltadoHist || saltadoArr);
     });
-    await action.present();
+  }
+
+  // Agregar una mantención realizada: muestra clientes disponibles del día y navega a completarla
+  async agregarMantencionRealizada() {
+    this.clienteService.getClientes().subscribe({
+      next: async (clientes) => {
+        const disponibles = this.filtrarDisponibles(clientes);
+        if (disponibles.length === 0) {
+          this.showToast('No hay clientes disponibles para este día', 'warning');
+          return;
+        }
+
+        const alert = await this.alertController.create({
+          header: 'Agregar Mantención Realizada',
+          subHeader: this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }),
+          message: 'Selecciona el cliente cuya mantención realizaste:',
+          inputs: disponibles.map(cliente => ({
+            name: 'cliente',
+            type: 'radio' as const,
+            label: cliente.nombre,
+            value: cliente.id
+          })),
+          buttons: [
+            {
+              text: 'Cancelar',
+              role: 'cancel'
+            },
+            {
+              text: 'Continuar',
+              handler: (clienteId) => {
+                if (!clienteId) {
+                  this.showToast('Selecciona un cliente ❌', 'danger');
+                  return false;
+                }
+                this.router.navigate(['/tabs/home/completar_mantencion', clienteId]);
+                return true;
+              }
+            }
+          ]
+        });
+
+        await alert.present();
+      },
+      error: (err) => {
+        console.error('Error al cargar clientes:', err);
+        this.showToast('Error al cargar clientes ❌', 'danger');
+      }
+    });
+  }
+
+  // Agregar un cliente suspendido desde los disponibles del día seleccionado
+  async agregarClienteSuspendido() {
+    this.clienteService.getClientes().subscribe({
+      next: async (clientes) => {
+        const disponibles = this.filtrarDisponibles(clientes);
+        if (disponibles.length === 0) {
+          this.showToast('No hay clientes disponibles para este día', 'warning');
+          return;
+        }
+
+        const alert = await this.alertController.create({
+          header: 'Suspender Cliente',
+          subHeader: this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }),
+          message: 'Selecciona el cliente a suspender para este día:',
+          inputs: disponibles.map(cliente => ({
+            name: 'cliente',
+            type: 'radio' as const,
+            label: cliente.nombre,
+            value: cliente.id
+          })),
+          buttons: [
+            {
+              text: 'Cancelar',
+              role: 'cancel'
+            },
+            {
+              text: 'Continuar',
+              handler: (clienteId) => {
+                if (!clienteId) {
+                  this.showToast('Selecciona un cliente ❌', 'danger');
+                  return false;
+                }
+                const seleccionado = disponibles.find(c => c.id === clienteId);
+                if (seleccionado) {
+                  this.suspenderCliente({
+                    id: seleccionado.id || '',
+                    nombre: seleccionado.nombre,
+                    direccion: seleccionado.direccion,
+                    telefono: seleccionado.telefono,
+                    horaPreferida: seleccionado.programacion?.horaPreferida || 'Sin horario específico',
+                    precio: seleccionado.precio || 0,
+                    servicio: 'Mantención de piscina',
+                    realizado: false
+                  });
+                }
+                return true;
+              }
+            }
+          ]
+        });
+
+        await alert.present();
+      },
+      error: (err) => {
+        console.error('Error al cargar clientes:', err);
+        this.showToast('Error al cargar clientes ❌', 'danger');
+      }
+    });
   }
 
   configurarFecha() {
@@ -338,16 +467,22 @@ export class HomePage implements OnInit {
           fechaDia.setHours(0, 0, 0, 0);
           const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][fechaDia.getDay()];
 
-          // Contar clientes con mantenimiento programado para este día y pendiente
+          // Contar clientes con mantenimiento programado o servicio extra para este día y pendiente
           let count = 0;
           clientes.forEach(cliente => {
-            if (!cliente.activo || !cliente.programacion) return;
-            const diasProgramados = cliente.programacion.diasSemana || [];
-            if (!diasProgramados.includes(diaSemana)) return;
-            // Verificar si no hay historial para esta fecha (mantenimiento pendiente)
+            if (!cliente.activo) return;
             const fechaStr = this.formatearFechaLocal(fechaDia);
             const hasHistorial = cliente.historial.some(h => h.fecha === fechaStr);
-            if (!hasHistorial && fechaDia >= hoy) {
+            if (hasHistorial || fechaDia < hoy) return;
+
+            const extras = (cliente as any).serviciosExtra || [];
+            const extraDia = extras.find((s: any) => s.fecha === fechaStr);
+            const tieneExtra = !!extraDia;
+
+            const diasProgramados = cliente.programacion?.diasSemana || [];
+            const esProgramado = diasProgramados.includes(diaSemana);
+
+            if (tieneExtra || esProgramado) {
               count++;
             }
           });
@@ -393,29 +528,46 @@ export class HomePage implements OnInit {
           return tieneMantenimientoHoy && !yaCompletado && !estaSaltado;
         });
 
-        // Convertir a formato ClienteDelDia
-        this.clientesPendientes = clientesDelDia.map(cliente => ({
-          id: cliente.id || '',
-          nombre: cliente.nombre,
-          direccion: cliente.direccion,
-          telefono: cliente.telefono,
-          horaPreferida: cliente.programacion?.horaPreferida || 'Sin horario específico',
-          precio: cliente.precio || 0, // Agregamos el precio
-          realizado: false
-        }));
+        // Filtrar clientes con servicio extra agregado manualmente para el día
+        const clientesServicioExtra = clientes.filter(cliente => {
+          if (!cliente.activo) return false;
+          const extras = (cliente as any).serviciosExtra || [];
+          const extraDia = extras.find((s: any) => s.fecha === fechaSeleccionadaStr);
+          if (!extraDia) return false;
+          const yaCompletado = (cliente.historial || []).some(h => h.fecha === fechaSeleccionadaStr && h.estadoCloro !== 'saltada');
+          const estaSaltadoHist = (cliente.historial || []).some(h => h.fecha === fechaSeleccionadaStr && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'))));
+          const estaSaltadoArray = (cliente as any).skippedDates ? (cliente as any).skippedDates.includes(fechaSeleccionadaStr) : false;
+          return !yaCompletado && !estaSaltadoHist && !estaSaltadoArray && !clientesDelDia.some(c => c.id === cliente.id);
+        });
 
-        // Cargar clientes realizados (que tienen historial para el día seleccionado)
-        this.clientesRealizados = clientes.filter(cliente => {
-          return cliente.historial.some(h => h.fecha === fechaSeleccionadaStr);
-        }).map(cliente => {
-          const historialDia = cliente.historial.find(h => h.fecha === fechaSeleccionadaStr);
+        // Convertir a formato ClienteDelDia
+        this.clientesPendientes = [...clientesDelDia, ...clientesServicioExtra].map(cliente => {
+          const extraDia = ((cliente as any).serviciosExtra || []).find((s: any) => s.fecha === fechaSeleccionadaStr);
           return {
             id: cliente.id || '',
             nombre: cliente.nombre,
             direccion: cliente.direccion,
             telefono: cliente.telefono,
             horaPreferida: cliente.programacion?.horaPreferida || 'Sin horario específico',
-            precio: cliente.precio || 0,
+            precio: ((cliente as any).preciosEspeciales?.[fechaSeleccionadaStr] ?? cliente.precio) || 0,
+            servicio: extraDia?.servicio || 'Mantención de piscina',
+            realizado: false
+          };
+        });
+
+        // Cargar clientes realizados (con historial real del día, sin los suspendidos)
+        const esRegistroSaltado = (h: any) => h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'));
+        this.clientesRealizados = clientes.filter(cliente => {
+          return (cliente.historial || []).some(h => h.fecha === fechaSeleccionadaStr && !esRegistroSaltado(h));
+        }).map(cliente => {
+          const historialDia = (cliente.historial || []).find(h => h.fecha === fechaSeleccionadaStr && !esRegistroSaltado(h));
+          return {
+            id: cliente.id || '',
+            nombre: cliente.nombre,
+            direccion: cliente.direccion,
+            telefono: cliente.telefono,
+            horaPreferida: cliente.programacion?.horaPreferida || 'Sin horario específico',
+            precio: (historialDia?.precioCobrado ?? cliente.precio) || 0,
             realizado: true,
             mantenimiento: historialDia ? {
               estadoCloro: historialDia.estadoCloro || '',
@@ -431,16 +583,27 @@ export class HomePage implements OnInit {
         this.maintenanceCount = this.clientesPendientes.length;
         this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
 
-        // Calcular clientes borrados (saltados) para la fecha seleccionada
+        // Calcular clientes suspendidos (saltados) para la fecha seleccionada
         const fechaSeleccionadaStrLocal = fechaSeleccionadaStr; // alias local
-        this.deletedClientsList = clientes.filter(c => {
-          const saltadoHist = (c.historial || []).some(h => h.fecha === fechaSeleccionadaStrLocal && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'))));
-          const saltadoArr = (c as any).skippedDates ? (c as any).skippedDates.includes(fechaSeleccionadaStrLocal) : false;
-          return saltadoHist || saltadoArr;
-        }).map(c => ({ id: c.id || '', nombre: c.nombre }));
-        this.deletedTodayCount = this.deletedClientsList.length;
-        console.log('Deleted clients computed:', this.deletedTodayCount, this.deletedClientsList);
-        console.log('Deleted clients computed:', this.deletedTodayCount, this.deletedClientsList);
+        this.clientesSuspendidos = clientes
+          .filter(c => {
+            const saltadoHist = (c.historial || []).some(h => h.fecha === fechaSeleccionadaStrLocal && (h.estadoCloro === 'saltada' || (h.servicio && h.servicio.toLowerCase().includes('saltada'))));
+            const saltadoArr = (c as any).skippedDates ? (c as any).skippedDates.includes(fechaSeleccionadaStrLocal) : false;
+            return saltadoHist || saltadoArr;
+          })
+          .map(cliente => ({
+            id: cliente.id || '',
+            nombre: cliente.nombre,
+            direccion: cliente.direccion,
+            telefono: cliente.telefono,
+            horaPreferida: cliente.programacion?.horaPreferida || 'Sin horario específico',
+            precio: ((cliente as any).preciosEspeciales?.[fechaSeleccionadaStrLocal] ?? cliente.precio) || 0,
+            servicio: 'Mantención suspendida',
+            realizado: false
+          }));
+        this.deletedClientsList = this.clientesSuspendidos.map(c => ({ id: c.id, nombre: c.nombre }));
+        this.deletedTodayCount = this.clientesSuspendidos.length;
+        console.log('Clientes suspendidos computed:', this.deletedTodayCount, this.clientesSuspendidos);
 
         this.calcularProgreso();
         this.actualizarEventosCalendario();
@@ -466,6 +629,267 @@ export class HomePage implements OnInit {
     return precio.toLocaleString('es-CL', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
+    });
+  }
+
+  // Editar el precio del cliente desde el home
+  async editarPrecioCliente(cliente: ClienteDelDia) {
+    const alert = await this.alertController.create({
+      header: 'Editar Precio',
+      subHeader: `Cliente: ${cliente.nombre}`,
+      inputs: [
+        {
+          name: 'nuevoPrecio',
+          type: 'number',
+          min: '1',
+          placeholder: 'Nuevo precio (CLP)',
+          value: cliente.precio || ''
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Continuar',
+          handler: (data) => {
+            const nuevoPrecio = parseFloat(data.nuevoPrecio);
+            if (!nuevoPrecio || nuevoPrecio <= 0) {
+              this.showToast('Ingresa un precio válido ❌', 'danger');
+              return false;
+            }
+            this.preguntarAlcancePrecio(cliente, nuevoPrecio);
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // Preguntar si el precio se aplica solo esta vez o para siempre
+  async preguntarAlcancePrecio(cliente: ClienteDelDia, nuevoPrecio: number) {
+    const alert = await this.alertController.create({
+      header: '¿Cómo aplicas el nuevo precio?',
+      subHeader: `${cliente.nombre} • $${this.formatearPrecio(nuevoPrecio)}`,
+      message: 'Elige el alcance del cambio de precio:',
+      inputs: [
+        {
+          name: 'alcance',
+          type: 'radio',
+          label: 'Solo por hoy',
+          value: 'una_vez',
+          checked: true
+        },
+        {
+          name: 'alcance',
+          type: 'radio',
+          label: 'Para siempre',
+          value: 'para_siempre'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Volver',
+          role: 'cancel'
+        },
+        {
+          text: 'Guardar',
+          handler: (data) => {
+            const alcance = data;
+            if (alcance === 'para_siempre') {
+              this.guardarPrecioPermanente(cliente, nuevoPrecio);
+            } else if (alcance === 'una_vez') {
+              this.guardarPrecioUnaVez(cliente, nuevoPrecio);
+            } else {
+              this.showToast('Selecciona una opción ❌', 'danger');
+              return false;
+            }
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // Guardar el precio nuevo como definitivo del cliente
+  guardarPrecioPermanente(cliente: ClienteDelDia, nuevoPrecio: number) {
+    this.clienteService.getClienteById(cliente.id).subscribe({
+      next: (clienteCompleto) => {
+        clienteCompleto.precio = nuevoPrecio;
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            cliente.precio = nuevoPrecio;
+            this.cargarClientesDelDia();
+            this.showToast(`Precio de ${cliente.nombre} actualizado a $${this.formatearPrecio(nuevoPrecio)} ✅`, 'success');
+          },
+          error: (err) => {
+            console.error('Error al actualizar precio permanente:', err);
+            this.showToast('Error al actualizar precio ❌', 'danger');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error obteniendo cliente:', err);
+        this.showToast('Error al obtener cliente ❌', 'danger');
+      }
+    });
+  }
+
+  // Guardar el precio nuevo solo para la fecha seleccionada
+  guardarPrecioUnaVez(cliente: ClienteDelDia, nuevoPrecio: number) {
+    const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
+    this.clienteService.getClienteById(cliente.id).subscribe({
+      next: (clienteCompleto) => {
+        (clienteCompleto as any).preciosEspeciales = (clienteCompleto as any).preciosEspeciales || {};
+        (clienteCompleto as any).preciosEspeciales[fechaSeleccionadaStr] = nuevoPrecio;
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            cliente.precio = nuevoPrecio;
+            this.cargarClientesDelDia();
+            this.showToast(`Precio asignado solo para hoy: $${this.formatearPrecio(nuevoPrecio)} ✅`, 'success');
+          },
+          error: (err) => {
+            console.error('Error al asignar precio de una vez:', err);
+            this.showToast('Error al asignar precio ❌', 'danger');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error obteniendo cliente:', err);
+        this.showToast('Error al obtener cliente ❌', 'danger');
+      }
+    });
+  }
+
+  // Agregar un cliente para el día seleccionado con un servicio puntual
+  async agregarClienteDia() {
+    this.clienteService.getClientes().subscribe({
+      next: async (clientes) => {
+        const activos = clientes.filter(c => c.activo);
+        if (activos.length === 0) {
+          this.showToast('No hay clientes activos para agregar', 'warning');
+          return;
+        }
+
+        const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
+        const yaPendientes = this.clientesPendientes.map(c => c.id);
+        const disponibles = activos.filter(c => {
+          const yaCompletado = (c.historial || []).some(h => h.fecha === fechaSeleccionadaStr && h.estadoCloro !== 'saltada');
+          const yaAgregado = (c as any).serviciosExtra?.some((s: any) => s.fecha === fechaSeleccionadaStr);
+          return !yaCompletado && !yaAgregado && !yaPendientes.includes(c.id || '');
+        });
+
+        if (disponibles.length === 0) {
+          this.showToast('No hay clientes disponibles para agregar este día', 'warning');
+          return;
+        }
+
+        const alertCliente = await this.alertController.create({
+          header: 'Agregar Cliente',
+          subHeader: this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }),
+          message: 'Selecciona el cliente a agregar:',
+          inputs: disponibles.map(cliente => ({
+            name: 'cliente',
+            type: 'radio' as const,
+            label: cliente.nombre,
+            value: cliente.id
+          })),
+          buttons: [
+            {
+              text: 'Cancelar',
+              role: 'cancel'
+            },
+            {
+              text: 'Siguiente',
+              handler: (clienteId) => {
+                if (!clienteId) {
+                  this.showToast('Selecciona un cliente ❌', 'danger');
+                  return false;
+                }
+                this.seleccionarServicioExtra(clienteId);
+                return true;
+              }
+            }
+          ]
+        });
+
+        await alertCliente.present();
+      },
+      error: (err) => {
+        console.error('Error al cargar clientes:', err);
+        this.showToast('Error al cargar clientes ❌', 'danger');
+      }
+    });
+  }
+
+  // Elegir el tipo de servicio para el cliente agregado
+  async seleccionarServicioExtra(clienteId: string) {
+    const servicios = [
+      'Mantención de piscina',
+      'Recuperación de agua',
+      'Cambio de cuarzo'
+    ];
+
+    const alertServicio = await this.alertController.create({
+      header: 'Tipo de Servicio',
+      message: 'Selecciona el servicio a realizar:',
+      inputs: servicios.map(servicio => ({
+        name: 'servicio',
+        type: 'radio' as const,
+        label: servicio,
+        value: servicio
+      })),
+      buttons: [
+        {
+          text: 'Volver',
+          role: 'cancel'
+        },
+        {
+          text: 'Agregar',
+          handler: (servicio) => {
+            if (!servicio) {
+              this.showToast('Selecciona un servicio ❌', 'danger');
+              return false;
+            }
+            this.guardarServicioExtra(clienteId, servicio);
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alertServicio.present();
+  }
+
+  // Guardar el servicio extra para la fecha seleccionada
+  guardarServicioExtra(clienteId: string, servicio: string) {
+    const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
+    this.clienteService.getClienteById(clienteId).subscribe({
+      next: (clienteCompleto) => {
+        (clienteCompleto as any).serviciosExtra = (clienteCompleto as any).serviciosExtra || [];
+        if (!(clienteCompleto as any).serviciosExtra.some((s: any) => s.fecha === fechaSeleccionadaStr)) {
+          (clienteCompleto as any).serviciosExtra.push({ fecha: fechaSeleccionadaStr, servicio });
+        }
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            this.cargarClientesDelDia();
+            this.showToast(`${servicio} agregado para hoy ✅`, 'success');
+          },
+          error: (err) => {
+            console.error('Error al agregar servicio extra:', err);
+            this.showToast('Error al agregar servicio ❌', 'danger');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error obteniendo cliente:', err);
+        this.showToast('Error al obtener cliente ❌', 'danger');
+      }
     });
   }
 
@@ -757,7 +1181,7 @@ export class HomePage implements OnInit {
           cantidadCloro: cliente.mantenimiento!.cantidadCloro,
           cantidadSubePh: cantidadSubePh,
           cantidadBajaPh: cantidadBajaPh,
-          tipoPh: tipoPh,
+          tipoPh: tipoPh ?? null,
           estadoCloro: cliente.mantenimiento!.estadoCloro,
           estadoPh: cliente.mantenimiento!.estadoPh,
           hora: cliente.mantenimiento!.hora,
@@ -855,23 +1279,23 @@ export class HomePage implements OnInit {
     await alert.present();
   }
 
-  // Método para borrar una mantención pendiente
-  async borrarMantenimiento(cliente: ClienteDelDia) {
+  // Método para suspender una mantención pendiente
+  async suspenderCliente(cliente: ClienteDelDia) {
     const alert = await this.alertController.create({
-      header: 'Borrar Mantención',
-      message: `¿Estás seguro de que quieres borrar la mantención de ${cliente.nombre} para hoy?`,
+      header: 'Suspender Mantención',
+      message: `¿Estás seguro de que quieres suspender la mantención de ${cliente.nombre} para el día seleccionado?`,
       buttons: [
         {
           text: 'Cancelar',
           role: 'cancel'
         },
         {
-          text: 'Borrar',
+          text: 'Suspender',
           cssClass: 'danger',
           handler: () => {
             // Actualizar UI inmediatamente para evitar que se vea el cliente re-aparecer
             this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
-            // Añadir al contador local y lista de borrados
+            // Añadir al contador local y lista de suspendidos
             this.deletedClientsList.push({ id: cliente.id, nombre: cliente.nombre });
             this.deletedTodayCount = this.deletedClientsList.length;
 
@@ -884,7 +1308,7 @@ export class HomePage implements OnInit {
             
             this.agregarRegistroSaltado(cliente);
 
-            this.showToast(`Mantención de ${cliente.nombre} borrada ❌`, 'danger');
+            this.showToast(`Mantención de ${cliente.nombre} suspendida ❌`, 'danger');
           }
         }
       ]
@@ -930,7 +1354,7 @@ export class HomePage implements OnInit {
           cantidadSubePh: 0,
           cantidadBajaPh: 0,
           cantidadPastillas: 0,
-          tipoPh: undefined,
+          tipoPh: null,
           estadoCloro: 'saltada',
           estadoPh: 'saltada',
           hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
@@ -957,7 +1381,7 @@ export class HomePage implements OnInit {
 
             // Recargar clientes para aplicar filtro y actualizar contador de borrados
             this.cargarClientesDelDia();
-            this.showToast(`Mantención de ${cliente.nombre} marcada como borrada ❌`, 'danger');
+            this.showToast(`Mantención de ${cliente.nombre} suspendida ❌`, 'danger');
           },
           error: (err) => {
             console.error('Error al agregar registro saltado:', err);

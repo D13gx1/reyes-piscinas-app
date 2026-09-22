@@ -299,7 +299,38 @@ body.dark .empty-state-modern p {
         color: #64748b;
         font-size: 16px;
       }
+
+      .suspendida-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #b45309;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
     }
+  }
+
+  .precio-badge.suspendida-precio {
+    background: #f1f5f9;
+    color: #94a3b8;
+    text-decoration: line-through;
+  }
+}
+
+// Mantención suspendida
+.suspendida-card {
+  .suspendida-text {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-style: italic;
   }
 }
 
@@ -557,5 +588,22 @@ body.dark .empty-state-modern p {
         }
       }
     }
+  }
+}
+
+:host-context(body.dark),
+:host-context(html.dark) {
+  .mantencion-fecha .suspendida-badge {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+  }
+
+  .precio-badge.suspendida-precio {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+  }
+
+  .suspendida-card .suspendida-text {
+    color: #94a3b8;
   }
 }

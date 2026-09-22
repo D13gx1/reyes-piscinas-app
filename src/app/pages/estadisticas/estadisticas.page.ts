@@ -586,7 +586,8 @@ export class EstadisticasPage implements OnInit {
       cantidadSubePh: item.cantidadSubePh,
       cantidadPastillas: item.cantidadPastillas,
       hora: item.hora,
-      pagado: item.pagado || false
+      pagado: item.pagado || false,
+      suspendida: item.suspendida || undefined
     }));
   }
 
