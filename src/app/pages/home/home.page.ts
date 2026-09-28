@@ -19,9 +19,13 @@ import {
   calendarOutline,
   pauseCircleOutline,
   waterOutline,
-  flaskOutline
+  flaskOutline,
+  arrowDownCircleOutline,
+  arrowUpCircleOutline,
+  discOutline
 } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../services/cliente.service';
+import { formatearKgValor, formatearGramos, formatearUnidades, CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../utils/unidades';
 
 interface ClienteDelDia {
   id: string;
@@ -35,8 +39,14 @@ interface ClienteDelDia {
   mantenimiento?: {
     estadoCloro: string;
     estadoPh: string;
+    /** Kilos de cloro granulado */
     cantidadCloro: number;
-    cantidadPh: number;
+    /** Kilos de baja pH */
+    cantidadBajaPh: number;
+    /** Kilos de sube pH */
+    cantidadSubePh: number;
+    /** Unidades de pastillas de cloro */
+    cantidadPastillas: number;
     fecha: string;
     hora: string;
   };
@@ -66,7 +76,10 @@ addIcons({
   'calendar-outline': calendarOutline,
   'pause-circle-outline': pauseCircleOutline,
   'water-outline': waterOutline,
-  'flask-outline': flaskOutline
+  'flask-outline': flaskOutline,
+  'arrow-down-circle-outline': arrowDownCircleOutline,
+  'arrow-up-circle-outline': arrowUpCircleOutline,
+  'disc-outline': discOutline
 });
 
 @Component({
@@ -77,6 +90,11 @@ addIcons({
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+
+  // Formato de unidades químicas (los valores llegan en kilos)
+  formatearKgValor = formatearKgValor;
+  formatearGramos = formatearGramos;
+  formatearUnidades = formatearUnidades;
 
   fechaHoy!: string;
   diaHoy!: string;
@@ -94,6 +112,11 @@ export class HomePage implements OnInit {
   // Contador de clientes borrados (saltados) para la fecha seleccionada
   deletedTodayCount = 0;
   deletedClientsList: { id: string; nombre: string }[] = [];
+
+  // Modal "cambiar de día"
+  mostrarSelectorDia = false;
+  clienteCambioDia: ClienteDelDia | null = null;
+  fechaNuevaCandidata = '';
   
   // Propiedades del calendario
   fechaActual = new Date();
@@ -572,8 +595,11 @@ export class HomePage implements OnInit {
             mantenimiento: historialDia ? {
               estadoCloro: historialDia.estadoCloro || '',
               estadoPh: historialDia.estadoPh || '',
+              // Cantidades en kilos
               cantidadCloro: historialDia.cantidadCloro || 0,
-              cantidadPh: (historialDia.cantidadBajaPh || 0) + (historialDia.cantidadSubePh || 0),
+              cantidadBajaPh: historialDia.cantidadBajaPh || 0,
+              cantidadSubePh: historialDia.cantidadSubePh || 0,
+              cantidadPastillas: historialDia.cantidadPastillas || 0,
               fecha: fechaSeleccionadaStr,
               hora: historialDia.hora || ''
             } : undefined
@@ -912,302 +938,6 @@ export class HomePage implements OnInit {
            this.mesVista.getFullYear() === this.fechaActual.getFullYear();
   }
 
-  // Resto de métodos existentes...
-  async marcarRealizado(cliente: ClienteDelDia) {
-    // Primero mostramos un alert para seleccionar el estado del cloro
-    const alertCloro = await this.alertController.create({
-      header: 'Mantención de Piscina',
-      subHeader: `Cliente: ${cliente.nombre}`,
-      message: 'Selecciona el estado actual del cloro:',
-      inputs: [
-        {
-          name: 'bajo',
-          type: 'radio',
-          label: 'Bajo: < 1.0 ppm',
-          value: 'bajo'
-        },
-        {
-          name: 'ideal_bajo',
-          type: 'radio',
-          label: 'Ideal Bajo: 1.0 - 1.4 ppm',
-          value: 'ideal bajo'
-        },
-        {
-          name: 'ideal',
-          type: 'radio',
-          label: 'Ideal: 1.5 - 2.0 ppm',
-          value: 'ideal',
-          checked: true
-        },
-        {
-          name: 'ideal_alto',
-          type: 'radio',
-          label: 'Ideal Alto: 2.1 - 3.0 ppm',
-          value: 'ideal alto'
-        },
-        {
-          name: 'alto',
-          type: 'radio',
-          label: 'Alto: > 3.0 ppm',
-          value: 'alto'
-        }
-      ],
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'secondary'
-        },
-        {
-          text: 'Siguiente',
-          handler: (estadoCloro) => {
-            this.mostrarAlertPh(cliente, estadoCloro);
-          }
-        }
-      ]
-    });
-
-    await alertCloro.present();
-  }
-
-  async mostrarAlertPh(cliente: ClienteDelDia, estadoCloro: string) {
-    // Luego mostramos un alert para seleccionar el estado del pH
-    const alertPh = await this.alertController.create({
-      header: 'Mantención de Piscina',
-      subHeader: `Cliente: ${cliente.nombre}`,
-      message: 'Selecciona el estado actual del pH:',
-      inputs: [
-        {
-          name: 'bajo',
-          type: 'radio',
-          label: 'Bajo: < 7.2',
-          value: 'bajo'
-        },
-        {
-          name: 'ideal_bajo',
-          type: 'radio',
-          label: 'Ideal Bajo: 7.2 - 7.3',
-          value: 'ideal bajo'
-        },
-        {
-          name: 'ideal',
-          type: 'radio',
-          label: 'Ideal: 7.4 - 7.6',
-          value: 'ideal',
-          checked: true
-        },
-        {
-          name: 'ideal_alto',
-          type: 'radio',
-          label: 'Ideal Alto: 7.7 - 7.8',
-          value: 'ideal alto'
-        },
-        {
-          name: 'alto',
-          type: 'radio',
-          label: 'Alto: > 7.8',
-          value: 'alto'
-        }
-      ],
-      buttons: [
-        {
-          text: 'Atrás',
-          handler: () => {
-            this.marcarRealizado(cliente);
-          }
-        },
-        {
-          text: 'Siguiente',
-          handler: (estadoPh) => {
-            this.mostrarAlertCantidades(cliente, estadoCloro, estadoPh);
-          }
-        }
-      ]
-    });
-
-    await alertPh.present();
-  }
-
-  async mostrarAlertCantidades(cliente: ClienteDelDia, estadoCloro: string, estadoPh: string) {
-    // Finalmente mostramos un alert para ingresar las cantidades
-    const alertCantidades = await this.alertController.create({
-      header: 'Mantención de Piscina',
-      subHeader: `Cliente: ${cliente.nombre}`,
-      message: 'Ingresa las cantidades:',
-      inputs: [
-        {
-          name: 'cantidadCloro',
-          type: 'text',
-          placeholder: 'Cantidad de cloro agregada (kg)'
-        },
-        {
-          name: 'cantidadPh',
-          type: 'text',
-          placeholder: 'Cantidad de pH agregado/corregido (kg)'
-        },
-        {
-          name: 'notas',
-          type: 'textarea',
-          placeholder: 'Notas adicionales (opcional)'
-        },
-        {
-          name: 'piscinarLlenando',
-          type: 'checkbox',
-          label: '¿Se dejó la piscina llenando?',
-          value: 'si'
-        },
-        {
-          name: 'horaCorte',
-          type: 'time',
-          placeholder: 'Hora para cortar el agua',
-          disabled: true
-        }
-      ],
-      buttons: [
-        {
-          text: 'Atrás',
-          handler: () => {
-            this.mostrarAlertPh(cliente, estadoCloro);
-          }
-        },
-        {
-          text: 'Completar Mantención',
-          cssClass: 'primary',
-          handler: (data) => {
-            // Validar que si está llenando, se ingrese la hora
-            if (data.piscinarLlenando && !data.horaCorte) {
-              this.showToast('Por favor ingresa la hora de corte', 'warning');
-              return false;
-            }
-
-            // Combinamos los datos de los tres alerts
-            const datosCompletos = {
-              estadoCloro: estadoCloro,
-              estadoPh: estadoPh,
-              cantidadCloro: data.cantidadCloro,
-              cantidadPh: data.cantidadPh,
-              piscinarLlenando: data.piscinarLlenando || false,
-              horaCorte: data.horaCorte || null
-            };
-            return this.completarMantenimiento(cliente, datosCompletos);
-          }
-        }
-      ]
-    });
-
-    await alertCantidades.present();
-  }
-
-  completarMantenimiento(cliente: ClienteDelDia, data: any): boolean {
-    // Validar que se hayan llenado los campos obligatorios
-    if (!data.estadoCloro || !data.estadoPh) {
-      this.showToast('Por favor, completa el estado del cloro y pH ❌', 'danger');
-      return false;
-    }
-
-    // Validar que si está llenando, tenga hora de corte
-    if (data.piscinarLlenando && !data.horaCorte) {
-      this.showToast('Por favor, indica la hora para cortar el agua ❌', 'danger');
-      return false;
-    }
-
-    // Convertir a números y validar que no sean negativos
-    const cantidadCloro = parseFloat(data.cantidadCloro) || 0;
-    const cantidadPh = parseFloat(data.cantidadPh) || 0;
-    
-    if (cantidadCloro < 0 || cantidadPh < 0) {
-      this.showToast('Las cantidades no pueden ser negativas ❌', 'danger');
-      return false;
-    }
-
-    // Crear registro de mantenimiento
-    const ahora = new Date();
-    cliente.mantenimiento = {
-      estadoCloro: data.estadoCloro,
-      estadoPh: data.estadoPh,
-      cantidadCloro: cantidadCloro,
-      cantidadPh: cantidadPh,
-      fecha: this.formatearFechaLocal(this.fechaSeleccionada),
-      hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
-    };
-
-    cliente.realizado = true;
-
-    // Mover cliente a realizados
-    this.clientesRealizados.push(cliente);
-    this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
-
-    // Guardar información adicional de llenado y notas
-    (cliente as any).piscinarLlenando = data.piscinarLlenando || false;
-    (cliente as any).horaCorte = data.horaCorte || null;
-    (cliente as any).notas = data.notas || '';
-
-    // Actualizar historial del cliente en el servicio
-    this.actualizarHistorialCliente(cliente);
-
-    this.calcularProgreso();
-    this.showToast(`Mantención de ${cliente.nombre} completada ✅`, 'success');
-
-    return true;
-  }
-
-  actualizarHistorialCliente(cliente: ClienteDelDia) {
-    if (!cliente.mantenimiento) return;
-
-    // Determinar el tipo de ajuste de pH basado en el estado seleccionado
-    let cantidadSubePh = 0;
-    let cantidadBajaPh = 0;
-    let tipoPh: 'Sube pH' | 'Baja pH' | undefined;
-
-    const estadoPh = cliente.mantenimiento.estadoPh;
-    const cantidadPh = cliente.mantenimiento.cantidadPh;
-
-    if (estadoPh === 'bajo' || estadoPh === 'ideal_bajo') {
-      cantidadSubePh = cantidadPh;
-      tipoPh = 'Sube pH';
-    } else if (estadoPh === 'alto' || estadoPh === 'ideal_alto') {
-      cantidadBajaPh = cantidadPh;
-      tipoPh = 'Baja pH';
-    }
-    // Si es 'ideal', no se asigna cantidad ni tipo
-
-    this.clienteService.getClienteById(cliente.id).subscribe({
-      next: (clienteCompleto) => {
-        const nuevoRegistro = {
-          fecha: cliente.mantenimiento!.fecha,
-          servicio: `Mantención ${this.getServicioTipo(clienteCompleto.programacion?.frecuencia || 'semanal')}`,
-          cloro: cliente.mantenimiento!.cantidadCloro,
-          ph: cliente.mantenimiento!.cantidadPh,
-          cantidadCloro: cliente.mantenimiento!.cantidadCloro,
-          cantidadSubePh: cantidadSubePh,
-          cantidadBajaPh: cantidadBajaPh,
-          tipoPh: tipoPh ?? null,
-          estadoCloro: cliente.mantenimiento!.estadoCloro,
-          estadoPh: cliente.mantenimiento!.estadoPh,
-          hora: cliente.mantenimiento!.hora,
-          piscinarLlenando: (cliente as any).piscinarLlenando || false,
-          horaCorte: (cliente as any).horaCorte || null,
-          notas: (cliente as any).notas || ''
-        };
-
-        clienteCompleto.historial = clienteCompleto.historial || [];
-        clienteCompleto.historial.push(nuevoRegistro);
-
-        this.clienteService.updateCliente(clienteCompleto).subscribe({
-          next: () => {
-            console.log('Historial actualizado para cliente:', cliente.nombre);
-          },
-          error: (err) => {
-            console.error('Error al actualizar historial:', err);
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Error al obtener cliente completo:', err);
-      }
-    });
-  }
-
   getServicioTipo(frecuencia: string): string {
     switch (frecuencia) {
       case 'semanal': return 'semanal';
@@ -1279,8 +1009,37 @@ export class HomePage implements OnInit {
     await alert.present();
   }
 
-  // Método para suspender una mantención pendiente
+  // Botón de suspender una mantención pendiente: ofrece las dos opciones
   async suspenderCliente(cliente: ClienteDelDia) {
+    const actionSheet = await this.actionSheetController.create({
+      header: `Mantención de ${cliente.nombre}`,
+      buttons: [
+        {
+          text: 'Suspender mantención',
+          icon: 'pause-circle-outline',
+          handler: () => {
+            this.confirmarSuspender(cliente);
+          }
+        },
+        {
+          text: 'Cambiar de día',
+          icon: 'calendar-outline',
+          handler: () => {
+            this.abrirSelectorCambioDia(cliente);
+          }
+        },
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        }
+      ]
+    });
+
+    await actionSheet.present();
+  }
+
+  // Confirmación de suspender la mantención del día seleccionado
+  async confirmarSuspender(cliente: ClienteDelDia) {
     const alert = await this.alertController.create({
       header: 'Suspender Mantención',
       message: `¿Estás seguro de que quieres suspender la mantención de ${cliente.nombre} para el día seleccionado?`,
@@ -1305,7 +1064,7 @@ export class HomePage implements OnInit {
             this.actualizarEventosCalendario();
 
             // Luego persistir como registro saltado en la base de datos (si falla, revertimos)
-            
+
             this.agregarRegistroSaltado(cliente);
 
             this.showToast(`Mantención de ${cliente.nombre} suspendida ❌`, 'danger');
@@ -1315,6 +1074,154 @@ export class HomePage implements OnInit {
     });
 
     await alert.present();
+  }
+
+  // Abre el selector de fecha para "cambiar de día"
+  async abrirSelectorCambioDia(cliente: ClienteDelDia) {
+    this.clienteCambioDia = cliente;
+    this.fechaNuevaCandidata = this.formatearFechaLocal(this.fechaSeleccionada);
+    this.mostrarSelectorDia = true;
+  }
+
+  // Al pulsar una fecha en el calendario se pregunta el alcance del cambio
+  seleccionarFechaNueva(event: any) {
+    const valor = event?.detail?.value;
+    if (!valor || !this.clienteCambioDia) return;
+
+    const fecha = this.parseFechaIso(String(valor));
+    if (!fecha) return;
+
+    this.mostrarSelectorDia = false;
+    this.preguntarCambioDia(this.clienteCambioDia, fecha);
+  }
+
+  cerrarSelectorDia() {
+    this.mostrarSelectorDia = false;
+    this.clienteCambioDia = null;
+  }
+
+  // ¿Quieres cambiar a {cliente} al {día}? Cancelar / Solo por este día / Para siempre
+  async preguntarCambioDia(cliente: ClienteDelDia, fechaNueva: Date) {
+    const texto = fechaNueva.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+    const leido = texto.charAt(0).toUpperCase() + texto.slice(1);
+
+    const alert = await this.alertController.create({
+      header: 'Cambiar de día',
+      message: `¿Quieres cambiar a ${cliente.nombre} al ${leido}?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Solo por este día',
+          handler: () => {
+            this.aplicarCambioDia(cliente, fechaNueva, 'una_vez');
+          }
+        },
+        {
+          text: 'Para siempre',
+          handler: () => {
+            this.aplicarCambioDia(cliente, fechaNueva, 'para_siempre');
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // Aplica el cambio de día según el alcance elegido
+  private aplicarCambioDia(cliente: ClienteDelDia, fechaNueva: Date, alcance: 'una_vez' | 'para_siempre') {
+    const fechaOrigenStr = this.formatearFechaLocal(this.fechaSeleccionada);
+    const fechaNuevaStr = this.formatearFechaLocal(fechaNueva);
+
+    if (fechaNuevaStr === fechaOrigenStr) {
+      this.showToast('La fecha elegida es el mismo día', 'warning');
+      return;
+    }
+
+    this.clienteService.getClienteById(cliente.id).subscribe({
+      next: (clienteCompleto) => {
+        // 1. Marcar el día original como saltado/cambiado
+        const ahora = new Date();
+        const nuevoRegistro = {
+          fecha: fechaOrigenStr,
+          servicio: `Mantención ${this.getServicioTipo(clienteCompleto.programacion?.frecuencia || 'semanal')} - Cambio de día`,
+          cloro: 0,
+          ph: 0,
+          cantidadCloro: 0,
+          cantidadBajaPh: 0,
+          cantidadSubePh: 0,
+          cantidadPastillas: 0,
+          tipoPh: null,
+          estadoCloro: 'saltada',
+          estadoPh: 'saltada',
+          hora: ahora.toTimeString().split(' ')[0].substring(0, 5),
+          [CAMPO_UNIDAD_MASA]: UNIDAD_MASA
+        };
+        clienteCompleto.historial = clienteCompleto.historial || [];
+        clienteCompleto.historial.unshift(nuevoRegistro);
+
+        clienteCompleto.skippedDates = clienteCompleto.skippedDates || [];
+        if (!clienteCompleto.skippedDates.includes(fechaOrigenStr)) {
+          clienteCompleto.skippedDates.push(fechaOrigenStr);
+        }
+
+        // 2. Según el alcance
+        if (alcance === 'una_vez') {
+          // Solo este día: aparece una vez en la fecha nueva
+          clienteCompleto.serviciosExtra = clienteCompleto.serviciosExtra || [];
+          if (!clienteCompleto.serviciosExtra.some(s => s.fecha === fechaNuevaStr)) {
+            clienteCompleto.serviciosExtra.push({ fecha: fechaNuevaStr, servicio: 'Mantención de piscina' });
+          }
+        } else {
+          // Para siempre: cambia el día recurrente de la semana
+          const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+          const diaOrigen = diasSemana[this.fechaSeleccionada.getDay()];
+          const diaNuevo = diasSemana[fechaNueva.getDay()];
+
+          clienteCompleto.programacion = clienteCompleto.programacion || {
+            frecuencia: 'semanal',
+            cantidadPorPeriodo: 1,
+            diasSemana: [],
+            horaPreferida: '',
+            notas: ''
+          };
+          const dias = clienteCompleto.programacion.diasSemana || [];
+          const sinOrigen = dias.filter(d => d !== diaOrigen);
+          if (!sinOrigen.includes(diaNuevo)) {
+            sinOrigen.push(diaNuevo);
+          }
+          clienteCompleto.programacion.diasSemana = sinOrigen;
+        }
+
+        // 3. Persistir y recargar
+        this.clienteService.updateCliente(clienteCompleto).subscribe({
+          next: () => {
+            const texto = fechaNueva.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+            this.seccionActiva = 'porRealizar';
+            this.showToast(`${cliente.nombre} movido a ${texto} ✅`, 'success');
+            this.cargarClientesDelDia();
+          },
+          error: (err) => {
+            console.error('Error al cambiar de día:', err);
+            this.showToast('Error al cambiar de día ❌', 'danger');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error obteniendo cliente:', err);
+        this.showToast('Error al obtener cliente ❌', 'danger');
+      }
+    });
+  }
+
+  // Convierte 'YYYY-MM-DD...' a Date local al mediodía local del día indicado
+  private parseFechaIso(valor: string): Date | null {
+    const match = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
   }
 
   removeHistorialEntry(clienteId: string, fecha: string) {
@@ -1357,7 +1264,8 @@ export class HomePage implements OnInit {
           tipoPh: null,
           estadoCloro: 'saltada',
           estadoPh: 'saltada',
-          hora: ahora.toTimeString().split(' ')[0].substring(0, 5)
+          hora: ahora.toTimeString().split(' ')[0].substring(0, 5),
+          [CAMPO_UNIDAD_MASA]: UNIDAD_MASA
         };
 
         clienteCompleto.historial = clienteCompleto.historial || [];

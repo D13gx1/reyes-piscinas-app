@@ -8,7 +8,8 @@ import {
   IonToolbar, 
   IonCard, 
   IonCardHeader, 
-  IonCardTitle, 
+  IonCardTitle,
+  IonCardSubtitle,
   IonCardContent,
   IonSegment,
   IonSegmentButton,
@@ -17,15 +18,12 @@ import {
   IonButtons,
   IonIcon,
   IonSpinner,
-  IonGrid,
-  IonRow,
-  IonCol,
   IonSelect,
   IonSelectOption,
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
-import { EstadisticasService, EstadisticasRecaudacion, Mantencion } from '../../services/estadisticas.service';
+import { EstadisticasService, EstadisticasRecaudacion, EstadisticasQuimicas, Mantencion } from '../../services/estadisticas.service';
 import { ClienteService } from '../../services/cliente.service';
 import { addIcons } from 'ionicons';
 import { 
@@ -40,9 +38,19 @@ import {
   trashOutline,
   trendingDownOutline,
   buildOutline,
-  checkmarkCircle
+  checkmarkCircle,
+  scaleOutline,
+  discOutline,
+  arrowDownCircleOutline,
+  arrowUpCircleOutline,
+  walletOutline,
+  receiptOutline,
+  hourglassOutline,
+  checkmarkDoneOutline,
+  calculatorOutline
 } from 'ionicons/icons';
 import { HistorialMantencionesComponent } from '../../components/historial-mantenciones/historial-mantenciones.component';
+import { formatearGramos, formatearUnidades, formatearKgValor } from '../../utils/unidades';
 
 addIcons({
   'calendar-outline': calendarOutline,
@@ -56,7 +64,16 @@ addIcons({
   'flask-outline': flaskOutline,
   'trash-outline': trashOutline,
   'build-outline': buildOutline,
-  'checkmark-circle': checkmarkCircle
+  'checkmark-circle': checkmarkCircle,
+  'scale-outline': scaleOutline,
+  'disc-outline': discOutline,
+  'arrow-down-circle-outline': arrowDownCircleOutline,
+  'arrow-up-circle-outline': arrowUpCircleOutline,
+  'wallet-outline': walletOutline,
+  'receipt-outline': receiptOutline,
+  'hourglass-outline': hourglassOutline,
+  'checkmark-done-outline': checkmarkDoneOutline,
+  'calculator-outline': calculatorOutline
 });
 
 @Component({
@@ -74,6 +91,7 @@ addIcons({
     IonCard,
     IonCardHeader,
     IonCardTitle,
+    IonCardSubtitle,
     IonCardContent,
     IonSegment,
     IonSegmentButton,
@@ -82,9 +100,6 @@ addIcons({
     IonButtons,
     IonIcon,
     IonSpinner,
-    IonGrid,
-    IonRow,
-    IonCol,
     IonSelect,
     IonSelectOption,
     HistorialMantencionesComponent,
@@ -98,7 +113,7 @@ export class EstadisticasPage implements OnInit {
   fechaSeleccionada: string = this.formatDateForInput(new Date());
   isLoading: boolean = false;
   estadisticas: EstadisticasRecaudacion | null = null;
-  estadisticasQuimicas: any = null;
+  estadisticasQuimicas: EstadisticasQuimicas | null = null;
   mantenciones: Mantencion[] = [];
   mantencionesFiltradas: Mantencion[] = [];
   filtroActual: string = 'todos';
@@ -537,33 +552,12 @@ export class EstadisticasPage implements OnInit {
     await toast.present();
   }
 
-  // Funciones para categorizar niveles químicos
-  getNivelCloro(cloro: number): string {
-    if (cloro < 1.0) return 'Bajo';
-    if (cloro < 1.5) return 'Ideal Bajo';
-    if (cloro < 2.0) return 'Ideal';
-    if (cloro < 2.5) return 'Ideal Alto';
-    return 'Alto';
-  }
+  // ===== Formato de unidades químicas =====
+  // Los valores llegan en kilos desde Firestore; el subtexto muestra el equivalente en gramos.
 
-  getNivelPh(ph: number): string {
-    if (ph < 7.2) return 'Bajo';
-    if (ph < 7.4) return 'Ideal Bajo';
-    if (ph < 7.6) return 'Ideal';
-    if (ph < 7.8) return 'Ideal Alto';
-    return 'Alto';
-  }
-
-  getColorNivel(nivel: string): string {
-    switch (nivel) {
-      case 'Bajo': return 'danger';
-      case 'Ideal Bajo': return 'warning';
-      case 'Ideal': return 'success';
-      case 'Ideal Alto': return 'warning';
-      case 'Alto': return 'danger';
-      default: return 'medium';
-    }
-  }
+  formatearKgValor = formatearKgValor;
+  formatearGramos = formatearGramos;
+  formatearUnidades = formatearUnidades;
 
   // Método para toggle de la notificación de migración
   toggleMigration() {

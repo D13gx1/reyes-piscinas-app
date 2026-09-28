@@ -47,6 +47,21 @@
     </div>
   </div>
 
+  <!-- Estado de unidades de químicos -->
+  <ion-list class="fade-in-up" *ngIf="!unidadesCargando && !unidadesEnKilos">
+    <ion-item>
+      <ion-icon name="scale-outline" slot="start" color="warning"></ion-icon>
+      <ion-label class="ion-text-wrap">
+        <h3>Unidades pendientes de actualizar</h3>
+        <p>Hay cantidades químicas guardadas en gramos. Actualízalas a kilos para que las estadísticas se calculen bien.</p>
+      </ion-label>
+      <ion-button slot="end" size="small" color="warning" (click)="migrarUnidadesAKilos()">
+        <ion-icon name="sync-outline" slot="start"></ion-icon>
+        Migrar
+      </ion-button>
+    </ion-item>
+  </ion-list>
+
   <!-- Opciones de Perfil -->
   <ion-list class="fade-in-up delay-1">
     <ion-item button detail="false">

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core'
 import { NgModel } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { IonicModule, ToastController, AlertController } from '@ionic/angular';
+import { IonicModule, ToastController, AlertController, IonContent } from '@ionic/angular';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { FirebaseTestService } from '../../../services/firebase-test.service';
@@ -32,6 +32,7 @@ interface DiaSemana {
 })
 export class CrearClientesPage implements OnInit {
   @ViewChild('cantidadPorPeriodo') cantidadPorPeriodoRef?: NgModel;
+  @ViewChild(IonContent) ionContent?: IonContent;
   
   private auth = inject(Auth);
   
@@ -286,32 +287,52 @@ export class CrearClientesPage implements OnInit {
 
     // Validaciones
     if (!this.nuevoCliente.nombre || this.nuevoCliente.nombre.trim() === '') {
-      this.showToast('El nombre es obligatorio ❌', 'danger');
+      this.rechazarCampo('nombre', 'El nombre es obligatorio ❌');
       return;
     }
 
     if (!this.nuevoCliente.direccion || this.nuevoCliente.direccion.trim() === '') {
-      this.showToast('La dirección es obligatoria ❌', 'danger');
+      this.rechazarCampo('direccion', 'La dirección es obligatoria ❌');
       return;
     }
 
     if (!this.telefonoValido()) {
-      this.showToast('El teléfono debe tener el formato +56 9 1234 5678 ❌', 'danger');
+      this.rechazarCampo('telefono', 'El teléfono debe tener el formato +56 9 1234 5678 ❌');
       return;
     }
 
     if (!this.emailValido()) {
-      this.showToast('El email no es válido ❌', 'danger');
+      this.rechazarCampo('email', 'El email no es válido ❌');
       return;
     }
 
     if (!this.medidasValidas()) {
-      this.showToast('Las medidas deben ser mayores a 0 ❌', 'danger');
+      const campoMedida = this.nuevoCliente.medidas.largo <= 0 ? 'largo'
+        : this.nuevoCliente.medidas.ancho <= 0 ? 'ancho'
+        : 'profundidad';
+      this.rechazarCampo(campoMedida, 'Las medidas deben ser mayores a 0 ❌');
       return;
     }
 
     if (!this.precioValido()) {
-      this.showToast('El precio no es válido ❌', 'danger');
+      this.rechazarCampo('monto', 'El precio no es válido ❌');
+      return;
+    }
+
+    if (!this.nuevoCliente.programacion.frecuencia) {
+      this.rechazarCampo('frecuencia', 'La frecuencia del servicio es obligatoria ❌');
+      return;
+    }
+
+    if (!this.nuevoCliente.programacion.cantidadPorPeriodo ||
+        this.nuevoCliente.programacion.cantidadPorPeriodo < 1 ||
+        this.nuevoCliente.programacion.cantidadPorPeriodo > this.getMaxServicios()) {
+      this.rechazarCampo('cantidadPorPeriodo', `Debe haber entre 1 y ${this.getMaxServicios()} servicios por ${this.getFrecuenciaText()} ❌`);
+      return;
+    }
+
+    if (!this.diasSeleccionadosValidos()) {
+      this.rechazarCampo('dias', `Debes seleccionar exactamente ${this.nuevoCliente.programacion.cantidadPorPeriodo} día(s) ❌`);
       return;
     }
 
@@ -381,6 +402,58 @@ export class CrearClientesPage implements OnInit {
       position: 'top'
     });
     toast.present();
+  }
+
+  // Muestra el toast y hace scroll hasta el campo obligatorio que falta
+  private rechazarCampo(campo: string, mensaje: string) {
+    this.showToast(mensaje, 'danger');
+    this.enfocarCampo(campo);
+  }
+
+  // Hace scroll hacia el campo indicado y lo resalta brevemente
+  private async enfocarCampo(campo: string) {
+    const el = this.obtenerElementoCampo(campo);
+    if (!el) return;
+
+    const item = el.closest('ion-item') as HTMLElement | null;
+    if (item) {
+      item.classList.add('campo-invalido-local');
+      setTimeout(() => item.classList.remove('campo-invalido-local'), 2500);
+    }
+
+    try {
+      const scrollEl = await this.ionContent?.getScrollElement();
+      if (scrollEl) {
+        const top = el.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop;
+        await this.ionContent!.scrollToPoint(0, Math.max(top - 120, 0), 400);
+        return;
+      }
+    } catch (err) {
+      console.warn('Scroll programático falló, usando scrollIntoView:', err);
+    }
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Selector del elemento según el campo lógico
+  private obtenerElementoCampo(campo: string): HTMLElement | null {
+    const selectores: Record<string, string> = {
+      nombre: 'ion-input[name="nombre"]',
+      direccion: 'ion-input[name="direccion"]',
+      telefono: 'ion-input[name="telefono"]',
+      email: 'ion-input[name="email"]',
+      largo: 'ion-input[name="largo"]',
+      ancho: 'ion-input[name="ancho"]',
+      profundidad: 'ion-input[name="profundidad"]',
+      monto: 'ion-input[name="monto"]',
+      frecuencia: 'ion-select[name="frecuencia"]',
+      cantidadPorPeriodo: 'ion-input[name="cantidadPorPeriodo"]',
+      dias: 'ion-checkbox'
+    };
+
+    const selector = selectores[campo];
+    if (!selector) return null;
+    return document.querySelector(selector) as HTMLElement | null;
   }
 
   telefonoValido(): boolean {

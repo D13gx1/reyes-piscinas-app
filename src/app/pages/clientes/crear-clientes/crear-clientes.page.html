@@ -313,8 +313,17 @@
         <ion-card-content>
 
         <ion-item>
-          <ion-label>Cliente Activo</ion-label>
+          <ion-label class="estado-label">
+            <span
+              class="estado-badge"
+              [class.activo]="nuevoCliente.activo"
+              [class.inactivo]="!nuevoCliente.activo"
+            >
+              {{ nuevoCliente.activo ? 'Cliente Activo' : 'Cliente Inactivo' }}
+            </span>
+          </ion-label>
           <ion-toggle
+            slot="end"
             [(ngModel)]="nuevoCliente.activo"
             name="activo"
             (ionChange)="onInputChange('activo', $event.target.checked)"
@@ -337,7 +346,7 @@
       <ion-button
         expand="block"
         color="primary"
-        [disabled]="!validarFormulario() || isLoading"
+        [disabled]="isLoading"
         (click)="crearClienteSinParametros()"
       >
         <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>

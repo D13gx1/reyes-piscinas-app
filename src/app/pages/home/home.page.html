@@ -241,18 +241,56 @@
           <div class="sub-card">
             <div class="sub-card-header">
               <ion-icon name="flask-outline"></ion-icon>
-              <h4 class="sub-card-title">Productos usados</h4>
+              <h4 class="sub-card-title">Productos aplicados</h4>
             </div>
             <div class="productos-grid">
-              <div class="producto-item">
-                <ion-icon name="water-outline"></ion-icon>
-                <span>Cloro</span>
-                <strong>{{ cliente.mantenimiento?.cantidadCloro || 0 }}g</strong>
+              <div class="producto-item cloro">
+                <div class="producto-icon">
+                  <ion-icon name="flask-outline"></ion-icon>
+                </div>
+                <div class="producto-texto">
+                  <span class="producto-nombre">Cloro granulado</span>
+                  <span class="producto-valor">
+                    {{ formatearKgValor(cliente.mantenimiento?.cantidadCloro) }}<small>kg</small>
+                  </span>
+                  <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadCloro) }}</span>
+                </div>
               </div>
-              <div class="producto-item">
-                <ion-icon name="flask-outline"></ion-icon>
-                <span>pH</span>
-                <strong>{{ cliente.mantenimiento?.cantidadPh || 0 }}g</strong>
+              <div class="producto-item sube">
+                <div class="producto-icon">
+                  <ion-icon name="arrow-up-circle-outline"></ion-icon>
+                </div>
+                <div class="producto-texto">
+                  <span class="producto-nombre">Sube pH</span>
+                  <span class="producto-valor">
+                    {{ formatearKgValor(cliente.mantenimiento?.cantidadSubePh) }}<small>kg</small>
+                  </span>
+                  <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadSubePh) }}</span>
+                </div>
+              </div>
+              <div class="producto-item baja">
+                <div class="producto-icon">
+                  <ion-icon name="arrow-down-circle-outline"></ion-icon>
+                </div>
+                <div class="producto-texto">
+                  <span class="producto-nombre">Baja pH</span>
+                  <span class="producto-valor">
+                    {{ formatearKgValor(cliente.mantenimiento?.cantidadBajaPh) }}<small>kg</small>
+                  </span>
+                  <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadBajaPh) }}</span>
+                </div>
+              </div>
+              <div class="producto-item pastillas">
+                <div class="producto-icon">
+                  <ion-icon name="disc-outline"></ion-icon>
+                </div>
+                <div class="producto-texto">
+                  <span class="producto-nombre">Pastillas cloro</span>
+                  <span class="producto-valor">
+                    {{ formatearUnidades(cliente.mantenimiento?.cantidadPastillas) }}<small>und.</small>
+                  </span>
+                  <span class="producto-sub">pastillas</span>
+                </div>
               </div>
             </div>
           </div>
@@ -337,3 +375,28 @@
     </div>
   </div>
 </ion-content>
+
+<!-- Modal para cambiar el día de la mantención -->
+<ion-modal [isOpen]="mostrarSelectorDia" [backdropDismiss]="false">
+  <ng-template>
+    <ion-header [translucent]="true">
+      <ion-toolbar color="primary">
+        <ion-title>Cambiar de día</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarSelectorDia()">Cancelar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="modal-cambio-dia">
+      <p class="modal-cambio-sub" *ngIf="clienteCambioDia">
+        Elige el día para {{ clienteCambioDia.nombre }}
+      </p>
+      <ion-datetime
+        presentation="date"
+        locale="es-CL"
+        [value]="fechaNuevaCandidata"
+        (ionChange)="seleccionarFechaNueva($event)">
+      </ion-datetime>
+    </ion-content>
+  </ng-template>
+</ion-modal>

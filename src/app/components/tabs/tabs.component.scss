@@ -1,100 +1,119 @@
+// ===== TABS (navbar flotante) =====
+
 .smart-navbar {
   --background: transparent;
+  --color: #8e8e93;
+  --color-selected: var(--ion-color-primary, #5145ff);
   position: absolute;
-  bottom: 20px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
-  height: 65px;
-  background: #ffffff;
-  border-radius: 20px;
+  width: 92%;
+  max-width: 520px;
+  height: 62px;
+  padding: 6px 8px;
+  box-sizing: border-box;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  padding: 0 10px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
 
   ion-tab-button {
     --ripple-color: transparent;
+    --background: transparent;
+    --background-focused: transparent;
+    --background-activated: transparent;
     position: relative;
     flex: 1;
+    height: 100%;
     border-radius: 16px;
-    transition: all 0.3s ease-in-out;
     display: flex;
-    justify-content: center;
     align-items: center;
-    text-align: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
 
-    ion-icon {
-      font-size: 24px;
-      color: #8e8e93;
-      transition: all 0.3s ease-in-out;
+    // Fondo redondeado del tab activo
+    .tab-fondo {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: rgba(var(--ion-color-primary-rgb, 81, 69, 255), 0.12);
+      opacity: 0;
+      transform: scale(0.72);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    ion-icon,
+    .tab-icono {
+      position: relative;
+      font-size: 23px;
+      color: #8e8e93;
+      transition: color 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    // Estado activo. Se acepta también la clase de Ionic por si el
+    // ion-tabs la llegara a aplicar.
+    &.activo,
     &.tab-selected {
-      ion-icon {
-        color: #3880ff;
-        transform: translateY(-8px) scale(1.3);
+      .tab-fondo {
+        opacity: 1;
+        transform: scale(1);
       }
 
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #3880ff;
-        animation: fadeIn 0.3s ease-in-out;
+      ion-icon,
+      .tab-icono {
+        color: var(--ion-color-primary, #5145ff);
+        transform: translateY(-2px) scale(1.18);
       }
     }
   }
 }
 
-:host-context(body.dark),
-:host-context(html.dark),
+/* ---------- Modo oscuro ---------- */
 body.dark,
 html.dark {
   .smart-navbar {
+    --color-selected: var(--ion-color-primary, #7c6dff);
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
     --background: #0f172a;
 
     ion-tab-button {
-      --color: #ffffff;
-      --color-selected: #ffffff;
-      --background: transparent;
+      --color: #94a3b8;
+      --color-selected: var(--ion-color-primary, #7c6dff);
 
-      ion-icon {
-        color: #ffffff !important;
-        opacity: 0.9;
+      .tab-fondo {
+        background: rgba(var(--ion-color-primary-rgb, 124, 109, 255), 0.22);
       }
 
-      &.tab-selected {
-        ion-icon {
-          color: #ffffff !important;
-          opacity: 1;
-        }
+      ion-icon,
+      .tab-icono {
+        color: #94a3b8;
+      }
 
-        &::after {
-          background: #ffffff;
+      &.activo,
+      &.tab-selected {
+        ion-icon,
+        .tab-icono {
+          color: var(--ion-color-primary, #7c6dff);
         }
       }
     }
   }
 }
 
-/* Animación para el puntito indicador */
-@keyframes fadeIn {
-  from {
-    transform: translateX(-50%) scale(0);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) scale(1);
-    opacity: 1;
+/* Respeta a quien tiene las animaciones desactivadas a nivel del sistema */
+@media (prefers-reduced-motion: reduce) {
+  .smart-navbar ion-tab-button {
+    .tab-fondo,
+    ion-icon,
+    .tab-icono {
+      transition: none;
+    }
   }
 }

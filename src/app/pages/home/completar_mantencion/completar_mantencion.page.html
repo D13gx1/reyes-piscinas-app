@@ -14,152 +14,253 @@
     </ion-toolbar>
   </ion-header>
 
-  <div class="ion-padding">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Detalles del Cliente</ion-card-title>
-        <ion-card-subtitle *ngIf="cliente">{{ cliente.nombre }}</ion-card-subtitle>
-      </ion-card-header>
+  <!-- Carga -->
+  <div class="loading-state" *ngIf="cargando">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando cliente...</p>
+  </div>
 
-      <ion-card-content *ngIf="cliente">
-        <ion-list>
-          <ion-item>
-            <ion-label>
-              <h2>Dirección</h2>
-              <p>{{ cliente.direccion }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label>
-              <h2>Dimensiones de la Piscina</h2>
-              <p>{{ cliente.medidas.largo }}x{{ cliente.medidas.ancho }}x{{ cliente.medidas.profundidad }}m</p>
-            </ion-label>
-          </ion-item>
-        </ion-list>
+  <form
+    class="form-shell"
+    *ngIf="!cargando && cliente"
+    (ngSubmit)="guardarMantencion()"
+    [formGroup]="mantencionForm">
 
-        <ion-list-header>
-          <ion-label>Registro de Mantención</ion-label>
-        </ion-list-header>
+    <!-- ============ CLIENTE ============ -->
+    <section class="card cliente-card">
+      <div class="cliente-head">
+        <div class="cliente-avatar">{{ iniciales }}</div>
+        <div class="cliente-datos">
+          <h2 class="cliente-nombre">{{ cliente.nombre }}</h2>
+          <p class="cliente-sub">
+            <ion-icon name="location-outline"></ion-icon>
+            {{ cliente.direccion }}
+          </p>
+          <p class="cliente-sub">
+            <ion-icon name="resize-outline"></ion-icon>
+            {{ dimensiones }}
+          </p>
+        </div>
+      </div>
+    </section>
 
-        <form (ngSubmit)="guardarMantencion()" [formGroup]="mantencionForm">
-          <div class="levels-container">
-            <!-- Columna de Cloro -->
-            <div class="level-column">
-              <ion-list-header>
-                <ion-label>Nivel de Cloro (ppm)</ion-label>
-              </ion-list-header>
-              <div class="button-container">
-                <ion-button expand="block" fill="outline" class="cloro-alto" [class.selected]="cloroSeleccionado === 'alto'" (click)="seleccionarCloro('alto', 3.5)">
-                  Alto: &gt; 3.0
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="cloro-ideal-alto" [class.selected]="cloroSeleccionado === 'ideal alto'" (click)="seleccionarCloro('ideal alto', 2.5)">
-                  Ideal Alto: 2.1 - 3.0
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="cloro-ideal" [class.selected]="cloroSeleccionado === 'ideal'" (click)="seleccionarCloro('ideal', 1.7)">
-                  Ideal: 1.5 - 2.0
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="cloro-ideal-bajo" [class.selected]="cloroSeleccionado === 'ideal bajo'" (click)="seleccionarCloro('ideal bajo', 1.2)">
-                  Ideal Bajo: 1.0 - 1.4
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="cloro-bajo" [class.selected]="cloroSeleccionado === 'bajo'" (click)="seleccionarCloro('bajo', 0.5)">
-                  Bajo: &lt; 1.0
-                </ion-button>
-                
-                
-              </div>
+    <!-- ============ NIVELES DE AGUA ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon niveles">
+          <ion-icon name="water-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Niveles del agua</h2>
+          <p>Selecciona el rango medido en la piscina</p>
+        </div>
+      </div>
+
+      <div class="levels-grid">
+        <!-- Cloro -->
+        <div class="levels-col">
+          <div class="levels-col-head">
+            <span class="levels-col-title">
+              <ion-icon name="water-outline"></ion-icon>
+              Cloro
+            </span>
+            <span class="levels-col-valor" [class.vacio]="cloroActual === null">
+              {{ cloroActual !== null ? cloroActual + ' ppm' : '—' }}
+            </span>
+          </div>
+
+          <div class="levels-list">
+            <button
+              *ngFor="let opcion of opcionesCloro"
+              type="button"
+              class="nivel-btn"
+              [class.selected]="cloroSeleccionado === opcion.estado"
+              [style.--nivel-color]="opcion.color"
+              (click)="seleccionarCloro(opcion)">
+              <span class="nivel-dot"></span>
+              <span class="nivel-texto">
+                <span class="nivel-etiqueta">{{ opcion.etiqueta }}</span>
+                <span class="nivel-rango">{{ opcion.rango }}</span>
+              </span>
+              <ion-icon name="checkmark-outline" class="nivel-check"></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- pH -->
+        <div class="levels-col">
+          <div class="levels-col-head">
+            <span class="levels-col-title">
+              <ion-icon name="flask-outline"></ion-icon>
+              pH
+            </span>
+            <span class="levels-col-valor" [class.vacio]="phActual === null">
+              {{ phActual !== null ? phActual : '—' }}
+            </span>
+          </div>
+
+          <div class="levels-list">
+            <button
+              *ngFor="let opcion of opcionesPh"
+              type="button"
+              class="nivel-btn"
+              [class.selected]="phSeleccionado === opcion.estado"
+              [style.--nivel-color]="opcion.color"
+              (click)="seleccionarPh(opcion)">
+              <span class="nivel-dot"></span>
+              <span class="nivel-texto">
+                <span class="nivel-etiqueta">{{ opcion.etiqueta }}</span>
+                <span class="nivel-rango">{{ opcion.rango }}</span>
+              </span>
+              <ion-icon name="checkmark-outline" class="nivel-check"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRODUCTOS APLICADOS ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon productos">
+          <ion-icon name="flask-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Productos aplicados</h2>
+          <p>Las cantidades se registran en kilos y en unidades de pastillas</p>
+        </div>
+        <div class="card-header-resumen" *ngIf="kilosTotales > 0 || pastillasTotales > 0">
+          <span class="resumen-item" *ngIf="kilosTotales > 0">
+            <ion-icon name="scale-outline"></ion-icon>
+            {{ kilosTotales }} kg
+          </span>
+          <span class="resumen-item" *ngIf="pastillasTotales > 0">
+            <ion-icon name="disc-outline"></ion-icon>
+            {{ pastillasTotales }}
+          </span>
+        </div>
+      </div>
+
+      <div class="productos-grid">
+        <div
+          class="producto-card"
+          *ngFor="let producto of productos"
+          [style.--producto-color]="producto.color">
+
+          <div class="producto-head">
+            <div class="producto-icon">
+              <ion-icon [name]="producto.icono"></ion-icon>
             </div>
-
-            <!-- Columna de pH -->
-            <div class="level-column">
-              <ion-list-header>
-                <ion-label>Nivel de pH</ion-label>
-              </ion-list-header>
-              <div class="button-container">
-                <ion-button expand="block" fill="outline" class="ph-alto" [class.selected]="phSeleccionado === 'alto'" (click)="seleccionarPh('alto', 8.0)">
-                  Alto: &gt; 7.8
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="ph-ideal-alto" [class.selected]="phSeleccionado === 'ideal alto'" (click)="seleccionarPh('ideal alto', 7.75)">
-                  Ideal Alto: 7.7 - 7.8
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="ph-ideal" [class.selected]="phSeleccionado === 'ideal'" (click)="seleccionarPh('ideal', 7.5)">
-                  Ideal: 7.4 - 7.6
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="ph-ideal-bajo" [class.selected]="phSeleccionado === 'ideal bajo'" (click)="seleccionarPh('ideal bajo', 7.25)">
-                  Ideal Bajo: 7.2 - 7.3
-                </ion-button>
-                <ion-button expand="block" fill="outline" class="ph-bajo" [class.selected]="phSeleccionado === 'bajo'" (click)="seleccionarPh('bajo', 7.0)">
-                  Bajo: &lt; 7.2
-                </ion-button>
-              </div>
+            <div class="producto-info">
+              <span class="producto-nombre">{{ producto.nombre }}</span>
+              <span class="producto-tipo">
+                {{ producto.unidad === 'kg' ? 'Por peso' : 'Por unidades' }}
+              </span>
             </div>
           </div>
-          
-          <!-- Cantidades debajo -->
-          <div class="quantities-container">
 
-            <ion-item>
-              <ion-label position="floating">Cloro granulado utilizada (gramos)</ion-label>
-              <ion-input type="number" formControlName="cantidadCloro" min="0"></ion-input>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label position="floating">Baja pH utilizada (gramos)</ion-label>
-              <ion-input type="number" formControlName="cantidadBajaPh" min="0"></ion-input>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="floating">Sube pH utilizada (gramos)</ion-label>
-              <ion-input type="number" formControlName="cantidadSubePh" min="0"></ion-input>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="floating">Pastillas de cloro utilizadas</ion-label>
-              <ion-input type="number" formControlName="cantidadPastillas" min="0"></ion-input>
-            </ion-item>
-
+          <div class="producto-input-row">
+            <div class="producto-input">
+              <ion-input
+                type="number"
+                [formControlName]="producto.control"
+                [step]="producto.paso"
+                min="0"
+                inputmode="decimal"
+                [attr.aria-label]="producto.nombre">
+              </ion-input>
+              <span class="producto-sufijo">{{ producto.unidad }}</span>
+            </div>
+            <button
+              type="button"
+              class="producto-clear"
+              (click)="limpiarCantidad(producto.control)"
+              [attr.aria-label]="'Limpiar ' + producto.nombre">
+              <ion-icon name="close-outline"></ion-icon>
+            </button>
           </div>
 
-          <!-- Sección de llenado de piscina -->
-          <div class="quantities-container" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0;">
-            <ion-item>
-              <ion-label>¿Se dejó la piscina llenando?</ion-label>
-              <ion-select slot="end" formControlName="piscinarLlenando" (ionChange)="onLlenandoChange()">
-                <ion-select-option value="">No</ion-select-option>
-                <ion-select-option value="si">Sí</ion-select-option>
-              </ion-select>
-            </ion-item>
-
-            <ion-item *ngIf="mantencionForm.get('piscinarLlenando')?.value === 'si'">
-              <ion-label position="floating">Hora para cortar el agua</ion-label>
-              <ion-input type="time" formControlName="horaCorte" required></ion-input>
-            </ion-item>
+          <div class="producto-atajos">
+            <button
+              *ngFor="let atajo of producto.atajos"
+              type="button"
+              class="atajo"
+              [class.active]="esAtajoActivo(producto.control, atajo)"
+              (click)="usarAtajo(producto.control, atajo)">
+              {{ atajo }}
+            </button>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <ion-item>
-            <ion-label position="floating">Servicio Realizado</ion-label>
-            <ion-select formControlName="servicio">
-              <ion-select-option value="Mantención de piscina">Mantención de piscina</ion-select-option>
-              <ion-select-option value="Recuperación de agua">Recuperación de agua</ion-select-option>
-              <ion-select-option value="Cambio de cuarzo">Cambio de cuarzo</ion-select-option>
-              <ion-select-option value="Limpieza completa">Limpieza completa</ion-select-option>
-              <ion-select-option value="Ajuste químico">Ajuste químico</ion-select-option>
-              <ion-select-option value="Aspirado">Aspirado</ion-select-option>
-              <ion-select-option value="Mantenimiento general">Mantenimiento general</ion-select-option>
-            </ion-select>
+    <!-- ============ CIERRE DE LA MANTENCIÓN ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon cierre">
+          <ion-icon name="information-circle-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Cierre de la mantención</h2>
+          <p>Servicio realizado y observaciones</p>
+        </div>
+      </div>
+
+      <div class="filas">
+        <ion-item lines="none" class="fila">
+          <ion-icon name="water-outline" slot="start" class="fila-icon"></ion-icon>
+          <ion-label>¿Se dejó la piscina llenando?</ion-label>
+          <ion-toggle
+            slot="end"
+            formControlName="piscinarLlenando"
+            (ionChange)="onLlenandoChange()">
+          </ion-toggle>
+        </ion-item>
+
+        <div class="fila-corte" *ngIf="piscinaLlenando">
+          <ion-item lines="none" class="fila">
+            <ion-icon name="time-outline" slot="start" class="fila-icon"></ion-icon>
+            <ion-label>Hora para cortar el agua</ion-label>
+            <ion-input
+              type="time"
+              formControlName="horaCorte"
+              class="fila-input"
+              [class.invalido]="horaCorteInvalida">
+            </ion-input>
           </ion-item>
-          <ion-item>
-            <ion-label position="floating">Notas adicionales</ion-label>
-            <ion-textarea formControlName="notas" rows="3"></ion-textarea>
-          </ion-item>
+        </div>
 
-          <div class="ion-padding">
-            <ion-button expand="block" type="submit" [disabled]="!mantencionForm.valid" class="gradient-button">
-              <ion-icon name="save-outline" slot="start"></ion-icon>
-              Guardar Mantención
-            </ion-button>
-          </div>
-        </form>
-      </ion-card-content>
-    </ion-card>
+        <ion-item lines="none" class="fila">
+          <ion-icon name="build-outline" slot="start" class="fila-icon"></ion-icon>
+          <ion-label class="fila-label-stack">Servicio realizado</ion-label>
+          <ion-select formControlName="servicio" class="fila-select" interface="popover">
+            <ion-select-option *ngFor="let opcion of servicios" [value]="opcion">
+              {{ opcion }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item lines="none" class="fila fila-notas">
+          <ion-icon name="document-text-outline" slot="start" class="fila-icon"></ion-icon>
+          <ion-label position="stacked">Notas adicionales</ion-label>
+          <ion-textarea formControlName="notas" rows="3" placeholder="Algo que quieras recordar de esta visita"></ion-textarea>
+        </ion-item>
+      </div>
+    </section>
+  </form>
+
+  <!-- ============ GUARDAR (FIJO ABAJO) ============ -->
+  <!-- slot="fixed" lo saca del scroll: queda anclado al borde inferior de la pantalla -->
+  <div class="guardar-bar" slot="fixed" *ngIf="!cargando && cliente">
+    <ion-button
+      expand="block"
+      type="submit"
+      class="gradient-button"
+      [disabled]="guardando"
+      (click)="guardarMantencion()">
+      <ion-spinner name="crescent" *ngIf="guardando" slot="start"></ion-spinner>
+      <ion-icon name="save-outline" slot="start" *ngIf="!guardando"></ion-icon>
+      {{ guardando ? 'Guardando...' : 'Guardar mantención' }}
+    </ion-button>
   </div>
 </ion-content>

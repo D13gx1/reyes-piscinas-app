@@ -1,22 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ToastController, AlertController } from '@ionic/angular';
-import { 
-  IonNav,
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonContent, 
-  IonButtons, 
+import { ActivatedRoute, Router } from '@angular/router';
+import { ToastController, AlertController } from '@ionic/angular/standalone';
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonButtons,
   IonBackButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
-  IonList,
   IonItem,
   IonLabel,
   IonInput,
@@ -25,16 +18,140 @@ import {
   IonTextarea,
   IonButton,
   IonIcon,
-  IonListHeader
+  IonToggle,
+  IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { saveOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import {
+  saveOutline,
+  waterOutline,
+  flaskOutline,
+  arrowDownCircleOutline,
+  arrowUpCircleOutline,
+  discOutline,
+  locationOutline,
+  resizeOutline,
+  checkmarkOutline,
+  buildOutline,
+  documentTextOutline,
+  timeOutline,
+  scaleOutline,
+  closeOutline,
+  informationCircleOutline
+} from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
+import { CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../../utils/unidades';
 
 addIcons({
   'save-outline': saveOutline,
-  'checkmark-circle-outline': checkmarkCircleOutline
+  'water-outline': waterOutline,
+  'flask-outline': flaskOutline,
+  'arrow-down-circle-outline': arrowDownCircleOutline,
+  'arrow-up-circle-outline': arrowUpCircleOutline,
+  'disc-outline': discOutline,
+  'location-outline': locationOutline,
+  'resize-outline': resizeOutline,
+  'checkmark-outline': checkmarkOutline,
+  'build-outline': buildOutline,
+  'document-text-outline': documentTextOutline,
+  'time-outline': timeOutline,
+  'scale-outline': scaleOutline,
+  'close-outline': closeOutline,
+  'information-circle-outline': informationCircleOutline
 });
+
+/** Una opción de nivel de cloro o pH, con su color para pintar el botón. */
+interface OpcionNivel {
+  estado: string;
+  etiqueta: string;
+  rango: string;
+  valor: number;
+  color: string;
+}
+
+/** Un producto químico que se puede aplicar, con su control del formulario. */
+interface ProductoQuimico {
+  control: string;
+  nombre: string;
+  unidad: string;
+  icono: string;
+  color: string;
+  paso: string;
+  atajos: number[];
+}
+
+/**
+ * Colores de los niveles del agua: los mismos que usa el resto de la app para
+ * los estados del agua (ámbar = bajo, verde = ideal, rojo = alto), que es la
+ * paleta de `historial-mantenciones` y `estadisticas`.
+ * Los dos niveles "ideal" extra quedan dentro de la familia verde.
+ *
+ * El orden va de mayor a menor: arriba "Alto" y abajo del todo "Bajo".
+ */
+const OPCIONES_CLORO: OpcionNivel[] = [
+  { estado: 'alto', etiqueta: 'Alto', rango: '> 3.0', valor: 3.5, color: '#dc2626' },
+  { estado: 'ideal alto', etiqueta: 'Ideal Alto', rango: '2.1 - 3.0', valor: 2.5, color: '#16a34a' },
+  { estado: 'ideal', etiqueta: 'Ideal', rango: '1.5 - 2.0', valor: 1.7, color: '#15803d' },
+  { estado: 'ideal bajo', etiqueta: 'Ideal Bajo', rango: '1.0 - 1.4', valor: 1.2, color: '#4ade80' },
+  { estado: 'bajo', etiqueta: 'Bajo', rango: '< 1.0', valor: 0.5, color: '#d97706' }
+];
+
+const OPCIONES_PH: OpcionNivel[] = [
+  { estado: 'alto', etiqueta: 'Alto', rango: '> 7.8', valor: 8.0, color: '#dc2626' },
+  { estado: 'ideal alto', etiqueta: 'Ideal Alto', rango: '7.7 - 7.8', valor: 7.75, color: '#16a34a' },
+  { estado: 'ideal', etiqueta: 'Ideal', rango: '7.4 - 7.6', valor: 7.5, color: '#15803d' },
+  { estado: 'ideal bajo', etiqueta: 'Ideal Bajo', rango: '7.2 - 7.3', valor: 7.25, color: '#4ade80' },
+  { estado: 'bajo', etiqueta: 'Bajo', rango: '< 7.2', valor: 7.0, color: '#d97706' }
+];
+
+const PRODUCTOS: ProductoQuimico[] = [
+  {
+    control: 'cantidadCloro',
+    nombre: 'Cloro granulado',
+    unidad: 'kg',
+    icono: 'flask-outline',
+    color: '#0ea5e9',
+    paso: '0.01',
+    atajos: [0.25, 0.5, 1, 2]
+  },
+  {
+    control: 'cantidadBajaPh',
+    nombre: 'Baja pH',
+    unidad: 'kg',
+    icono: 'arrow-down-circle-outline',
+    color: '#f97316',
+    paso: '0.01',
+    atajos: [0.25, 0.5, 1, 2]
+  },
+  {
+    control: 'cantidadSubePh',
+    nombre: 'Sube pH',
+    unidad: 'kg',
+    icono: 'arrow-up-circle-outline',
+    color: '#8b5cf6',
+    paso: '0.01',
+    atajos: [0.25, 0.5, 1, 2]
+  },
+  {
+    control: 'cantidadPastillas',
+    nombre: 'Pastillas de cloro',
+    unidad: 'uni.',
+    icono: 'disc-outline',
+    color: '#10b981',
+    paso: '1',
+    atajos: [1, 2, 3, 5]
+  }
+];
+
+const SERVICIOS = [
+  'Mantención de piscina',
+  'Recuperación de agua',
+  'Cambio de cuarzo',
+  'Limpieza completa',
+  'Ajuste químico',
+  'Aspirado',
+  'Mantenimiento general'
+];
 
 @Component({
   selector: 'app-completar-mantencion',
@@ -50,12 +167,6 @@ addIcons({
     IonContent,
     IonButtons,
     IonBackButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonCardContent,
-    IonList,
     IonItem,
     IonLabel,
     IonInput,
@@ -64,17 +175,25 @@ addIcons({
     IonTextarea,
     IonButton,
     IonIcon,
-    IonListHeader
+    IonToggle,
+    IonSpinner
   ]
 })
 export class CompletarMantencionPage implements OnInit {
   cliente: Cliente | null = null;
   clienteId: string | null = null;
   mantencionForm: FormGroup;
-  
+  cargando = true;
+  guardando = false;
+
   // Variables para controlar la selección de botones
   cloroSeleccionado: string | null = null;
   phSeleccionado: string | null = null;
+
+  readonly opcionesCloro = OPCIONES_CLORO;
+  readonly opcionesPh = OPCIONES_PH;
+  readonly productos = PRODUCTOS;
+  readonly servicios = SERVICIOS;
 
   constructor(
     private route: ActivatedRoute,
@@ -85,54 +204,121 @@ export class CompletarMantencionPage implements OnInit {
     private alertController: AlertController
   ) {
     this.mantencionForm = this.formBuilder.group({
-      cloro: ['', [Validators.required, Validators.min(0), Validators.max(10)]],
-      ph: ['', [Validators.required, Validators.min(0), Validators.max(14)]],
-      cantidadCloro: [null, [Validators.min(0)]],
-      cantidadBajaPh: [null, [Validators.min(0)]],
-      cantidadSubePh: [null, [Validators.min(0)]],
-      cantidadPastillas: [null, [Validators.min(0)]],
-      servicio: ['Mantenimiento general', Validators.required],
+      cloro: [null as number | null, [Validators.required, Validators.min(0), Validators.max(10)]],
+      ph: [null as number | null, [Validators.required, Validators.min(0), Validators.max(14)]],
+      cantidadCloro: [0, [Validators.min(0)]],
+      cantidadBajaPh: [0, [Validators.min(0)]],
+      cantidadSubePh: [0, [Validators.min(0)]],
+      cantidadPastillas: [0, [Validators.min(0)]],
+      servicio: ['Mantención de piscina', Validators.required],
       notas: [''],
-      piscinarLlenando: [''],
+      piscinarLlenando: [false],
       horaCorte: ['']
     });
   }
-  
-  // Método para seleccionar el nivel de cloro
-  seleccionarCloro(estado: string, valor: number) {
-    this.cloroSeleccionado = estado;
-    this.mantencionForm.get('cloro')?.setValue(valor);
-  }
-  
-  // Método para seleccionar el nivel de pH
-  seleccionarPh(estado: string, valor: number) {
-    this.phSeleccionado = estado;
-    this.mantencionForm.get('ph')?.setValue(valor);
+
+  /** Iniciales para el avatar del cliente. */
+  get iniciales(): string {
+    const nombre = this.cliente?.nombre?.trim() || '';
+    if (!nombre) return '?';
+    return nombre
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p.charAt(0).toUpperCase())
+      .join('');
   }
 
-  // Método para manejar cambio en el checkbox de llenado
+  /** Dimensiones de la piscina en un solo string: "8 x 4 x 1.5 m". */
+  get dimensiones(): string {
+    const m = this.cliente?.medidas;
+    if (!m) return 'Sin datos';
+    return `${m.largo} x ${m.ancho} x ${m.profundidad} m`;
+  }
+
+  /** Valor de cloro seleccionado en ppm (o guion si no hay selección). */
+  get cloroActual(): number | null {
+    return this.mantencionForm.get('cloro')?.value ?? null;
+  }
+
+  get phActual(): number | null {
+    return this.mantencionForm.get('ph')?.value ?? null;
+  }
+
+  get piscinaLlenando(): boolean {
+    return this.mantencionForm.get('piscinarLlenando')?.value === true;
+  }
+
+  /** Suma total de kilos de productos en polvo/líquido, para el resumen del encabezado. */
+  get kilosTotales(): number {
+    return (['cantidadCloro', 'cantidadBajaPh', 'cantidadSubePh'] as const).reduce(
+      (total, control) => total + (Number(this.mantencionForm.get(control)?.value) || 0),
+      0
+    );
+  }
+
+  get pastillasTotales(): number {
+    return Number(this.mantencionForm.get('cantidadPastillas')?.value) || 0;
+  }
+
+  /** Marca el campo de hora de corte en rojo cuando falta y se pidió llenando la piscina. */
+  get horaCorteInvalida(): boolean {
+    const control = this.mantencionForm.get('horaCorte');
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  // Método para seleccionar el nivel de cloro
+  seleccionarCloro(opcion: OpcionNivel) {
+    this.cloroSeleccionado = opcion.estado;
+    this.mantencionForm.get('cloro')?.setValue(opcion.valor);
+    this.mantencionForm.get('cloro')?.markAsDirty();
+  }
+
+  // Método para seleccionar el nivel de pH
+  seleccionarPh(opcion: OpcionNivel) {
+    this.phSeleccionado = opcion.estado;
+    this.mantencionForm.get('ph')?.setValue(opcion.valor);
+    this.mantencionForm.get('ph')?.markAsDirty();
+  }
+
+  /** Escribe un valor de atajo en el campo del producto. */
+  usarAtajo(control: string, valor: number) {
+    this.mantencionForm.get(control)?.setValue(valor);
+    this.mantencionForm.get(control)?.markAsDirty();
+  }
+
+  /** ¿El valor actual del campo coincide con este atajo? (para pintarlo activo) */
+  esAtajoActivo(control: string, valor: number): boolean {
+    return Number(this.mantencionForm.get(control)?.value) === valor;
+  }
+
+  /** Pone en 0 el campo del producto. */
+  limpiarCantidad(control: string) {
+    this.mantencionForm.get(control)?.setValue(0);
+    this.mantencionForm.get(control)?.markAsDirty();
+  }
+
+  // Método para manejar cambio en el toggle de llenado
   onLlenandoChange() {
-    const piscinarLlenando = this.mantencionForm.get('piscinarLlenando')?.value;
+    const llenando = this.piscinaLlenando;
     const horaCorteControl = this.mantencionForm.get('horaCorte');
-    
-    if (piscinarLlenando === 'si') {
+
+    if (llenando) {
       horaCorteControl?.setValidators([Validators.required]);
-      horaCorteControl?.updateValueAndValidity();
     } else {
       horaCorteControl?.clearValidators();
       horaCorteControl?.setValue('');
-      horaCorteControl?.updateValueAndValidity();
     }
+    horaCorteControl?.updateValueAndValidity();
   }
 
   ngOnInit() {
     this.clienteId = this.route.snapshot.paramMap.get('id');
-    
+
     if (this.clienteId) {
       this.cargarCliente(this.clienteId);
     } else {
       this.mostrarAlerta('Error', 'No se ha especificado un cliente');
-      this.router.navigate(['/home']);
+      this.router.navigate(['/tabs/home']);
     }
   }
 
@@ -145,20 +331,26 @@ export class CompletarMantencionPage implements OnInit {
         const extra = cliente.serviciosExtra?.find((s: any) => s.fecha === fechaHoy);
         if (extra) {
           this.mantencionForm.get('servicio')?.setValue(extra.servicio);
-        } else {
-          this.mantencionForm.get('servicio')?.setValue('Mantención de piscina');
         }
+        this.cargando = false;
       },
       error: (error) => {
         console.error('Error al cargar cliente:', error);
         this.mostrarAlerta('Error', 'No se pudo cargar la información del cliente');
-        this.router.navigate(['/home']);
+        this.router.navigate(['/tabs/home']);
       }
     });
   }
 
-  guardarMantencion() {
-    if (!this.mantencionForm.valid || !this.cliente || !this.clienteId) {
+  async guardarMantencion() {
+    this.mantencionForm.markAllAsTouched();
+
+    if (!this.cliente || !this.clienteId) {
+      return;
+    }
+
+    if (!this.mantencionForm.valid) {
+      this.mostrarAlerta('Datos incompletos', 'Revisa los campos obligatorios antes de guardar');
       return;
     }
 
@@ -171,7 +363,7 @@ export class CompletarMantencionPage implements OnInit {
     const formValues = this.mantencionForm.value;
 
     // Validar que si está llenando, tenga hora de corte
-    if (formValues.piscinarLlenando === 'si' && !formValues.horaCorte) {
+    if (this.piscinaLlenando && !formValues.horaCorte) {
       this.mostrarAlerta('Datos incompletos', 'Por favor indique la hora para cortar el agua');
       return;
     }
@@ -186,6 +378,7 @@ export class CompletarMantencionPage implements OnInit {
       servicio: formValues.servicio,
       cloro: formValues.cloro,
       ph: formValues.ph,
+      // Las cantidades se guardan en kilos (cantidadPastillas va en unidades)
       cantidadCloro: this.toNumberOrZero(formValues.cantidadCloro),
       cantidadBajaPh: this.toNumberOrZero(formValues.cantidadBajaPh),
       cantidadSubePh: this.toNumberOrZero(formValues.cantidadSubePh),
@@ -193,8 +386,10 @@ export class CompletarMantencionPage implements OnInit {
       estadoCloro: this.cloroSeleccionado,
       estadoPh: this.phSeleccionado,
       notas: formValues.notas,
-      piscinarLlenando: formValues.piscinarLlenando === 'si',
+      piscinarLlenando: this.piscinaLlenando,
       horaCorte: formValues.horaCorte || null,
+      // Marca de unidad: evita que una futura migración divida estos kilos otra vez
+      [CAMPO_UNIDAD_MASA]: UNIDAD_MASA,
       precioCobrado: precioCobrado // Guardar el precio que se cobra (especial del día o el del cliente)
     };
 
@@ -210,7 +405,9 @@ export class CompletarMantencionPage implements OnInit {
     if (!this.cliente.id) {
       this.cliente.id = this.clienteId;
     }
-    
+
+    this.guardando = true;
+
     // Actualizar el cliente en la base de datos
     this.clienteService.updateCliente(this.cliente).subscribe({
       next: () => {
@@ -219,6 +416,7 @@ export class CompletarMantencionPage implements OnInit {
       },
       error: (error) => {
         console.error('Error al guardar mantención:', error);
+        this.guardando = false;
         this.mostrarAlerta('Error', 'No se pudo guardar el registro de mantención');
       }
     });
@@ -234,24 +432,6 @@ export class CompletarMantencionPage implements OnInit {
   private toNumberOrZero(val: any): number {
     const n = Number(val);
     return isNaN(n) ? 0 : n;
-  }
-
-  evaluarEstadoCloro(valor: number): string {
-    if (valor < 1.0) return 'bajo';
-    if (valor >= 1.0 && valor <= 1.4) return 'ideal bajo';
-    if (valor >= 1.5 && valor <= 2.0) return 'ideal';
-    if (valor >= 2.1 && valor <= 3.0) return 'ideal alto';
-    if (valor > 3.0) return 'alto';
-    return 'ideal'; // valor por defecto
-  }
-
-  evaluarEstadoPh(valor: number): string {
-    if (valor < 7.2) return 'bajo';
-    if (valor >= 7.2 && valor <= 7.3) return 'ideal bajo';
-    if (valor >= 7.4 && valor <= 7.6) return 'ideal';
-    if (valor >= 7.7 && valor <= 7.8) return 'ideal alto';
-    if (valor > 7.8) return 'alto';
-    return 'ideal'; // valor por defecto
   }
 
   async mostrarToast(mensaje: string) {

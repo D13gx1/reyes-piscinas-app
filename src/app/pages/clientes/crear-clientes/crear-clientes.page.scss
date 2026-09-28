@@ -253,3 +253,41 @@ ion-text[color="danger"] {
     border-color: var(--ion-color-light-shade);
   }
 }
+
+// Resaltado temporal del campo obligatorio faltante al pulsar Guardar
+ion-item.campo-invalido-local {
+  --background: rgba(var(--ion-color-danger-rgb, 255, 59, 48), 0.08);
+  --border-color: var(--ion-color-danger);
+
+  ion-label,
+  ion-input,
+  ion-select,
+  ion-datetime {
+    color: var(--ion-color-danger);
+  }
+}
+
+// Estado del cliente (activo/inactivo)
+.estado-label {
+  display: flex;
+  align-items: center;
+
+  .estado-badge {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    display: inline-block;
+
+    &.activo {
+      color: #16a34a;
+      background: rgba(22, 163, 74, 0.14);
+    }
+
+    &.inactivo {
+      color: #dc2626;
+      background: rgba(220, 38, 38, 0.14);
+    }
+  }
+}

@@ -1,1171 +1,377 @@
-// ===== DISEÑO MINIMALISTA TIPO APP BANCARIA =====
+// ===== ESTADÍSTICAS =====
+// Nota: el historial de mantenciones lo renderiza `app-historial-mantenciones`,
+// que tiene sus propios estilos encapsulados. Acá solo va lo de esta página.
 
-// Contenedor principal
-.mantenciones-container {
-  background: #f8fafc;
-  padding: 20px;
-  min-height: 100vh;
-}
-
-body.dark .mantenciones-container,
-body.dark app-historial-mantenciones,
-body.dark app-historial-mantenciones .historial-container,
-body.dark .mantencion-card,
-body.dark .sub-card,
-body.dark .empty-state-modern,
-body.dark .producto-item,
-body.dark .mantenciones-header {
-  background: var(--ion-background-color) !important;
-  border-color: var(--ion-border-color) !important;
-}
-
-body.dark .mantenciones-container,
-body.dark app-historial-mantenciones,
-body.dark app-historial-mantenciones .historial-container,
-body.dark .mantenciones-title,
-body.dark .sub-card-title,
-body.dark .cliente-nombre,
-body.dark .estado-label,
-body.dark .mantencion-fecha,
-body.dark .producto-item span,
-body.dark .producto-item strong,
-body.dark .filter-tab,
-body.dark .empty-state-modern h3,
-body.dark .empty-state-modern p {
-  color: #ffffff !important;
-}
-
-// Header con filtros
-.mantenciones-header {
-  margin-bottom: 24px;
-  
-  .mantenciones-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 20px 0;
-    
-    ion-icon {
-      color: var(--ion-color-primary);
-      font-size: 1.8rem;
-    }
-  }
-  
-  .filter-tabs {
-    display: flex;
-    gap: 8px;
-    padding: 4px;
-    background: #e2e8f0;
-    border-radius: 20px;
-    position: relative;
-    
-    // Indicador de deslizamiento
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      background: var(--ion-color-primary);
-      border-radius: 3px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .filter-tab {
-      flex: 1;
-      padding: 12px 20px;
-      border: none;
-      background: transparent;
-      border-radius: 16px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #64748b;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      
-      &.active {
-        background: var(--ion-color-primary);
-        color: white;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-        
-        // Animar el indicador
-        &::after {
-          transform: translateX(calc(100% * var(--tab-index, 0)));
-        }
-      }
-      
-      &:hover:not(.active) {
-        background: rgba(255, 255, 255, 0.5);
-      }
-    }
-  }
-}
-
-// Card principal - diseño minimalista
-.mantencion-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  margin-bottom: 16px;
-  border: none;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  }
-}
-
-// Sub-cards - bloques visuales independientes
-.sub-card {
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 14px;
-  margin-top: 12px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-  }
-  
-  &:first-of-type {
-    margin-top: 16px;
-  }
-}
-
-// Header de sub-cards
-.sub-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  
-  ion-icon {
-    color: var(--ion-color-primary);
-    font-size: 18px;
-  }
-  
-  .sub-card-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #374151;
-    margin: 0;
-  }
-}
-
-// Header compacto
-.mantencion-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  
-  .mantencion-info {
-    flex: 1;
-    
-    .cliente-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      position: relative;
-      
-      .cliente-nombre {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0;
-        line-height: 1.2;
-        flex: 1;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        padding-right: 8px;
-      }
-      
-      .precio-badge {
-        background: #dcfce7;
-        color: #15803d;
-        padding: 8px 16px;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 1rem;
-        border: none;
-        flex-shrink: 0;
-        position: relative;
-        z-index: 2;
-      }
-      
-      // Efecto de desvanecimiento para nombres largos
-      &::after {
-        content: '';
-        position: absolute;
-        right: 90px;
-        top: 0;
-        width: 30px;
-        height: 100%;
-        background: linear-gradient(to right, transparent, white);
-        pointer-events: none;
-        z-index: 1;
-      }
-    }
-    
-    .mantencion-fecha {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.85rem;
-      color: #64748b;
-      
-      ion-icon {
-        color: #64748b;
-        font-size: 16px;
-      }
-    }
-  }
-}
-
-// Estado del agua - dentro de sub-card
-.estado-agua {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  
-  .estado-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    .estado-label {
-      font-weight: 500;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
-    
-    .estado-badge {
-      font-weight: 600;
-      font-size: 0.8rem;
-      padding: 4px 12px;
-      border-radius: 999px;
-      
-      // Colores específicos para los estados
-      &[color="danger"] {
-        --background: #fee2e2;
-        --color: #dc2626;
-      }
-      
-      &[color="success"] {
-        --background: #dcfce7;
-        --color: #15803d;
-      }
-      
-      &[color="warning"] {
-        --background: #fef3c7;
-        --color: #d97706;
-      }
-    }
-  }
-}
-
-// Productos grid - dentro de sub-card
-.productos-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px;
-  width: 100%;
-  
-  .producto-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    border: none;
-    transition: all 0.2s ease;
-    text-align: center;
-    justify-content: center;
-    min-height: 44px;
-    width: 100%;
-    
-    &:hover {
-      background: #e2e8f0;
-      transform: translateY(-1px);
-    }
-    
-    ion-icon {
-      color: #64748b;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-    
-    span {
-      flex: 1;
-      font-weight: 500;
-      color: #374151;
-      font-size: 0.85rem;
-      text-align: left;
-    }
-    
-    strong {
-      font-weight: 600;
-      color: #1e293b;
-      font-size: 0.9rem;
-      text-align: right;
-    }
-  }
-}
-
-// Mantenimiento tipo - dentro de sub-card
-.mantencion-tipo {
-  padding: 12px 16px;
-  background: #f1f5f9;
-  border-radius: 8px;
-  border-left: 4px solid var(--ion-color-primary);
-  font-weight: 500;
-  color: #64748b;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-// Botones de acción - estilo app bancaria
-.mantencion-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px;
-  width: 100%;
-  
-  .pago-btn {
-    flex: 1;
-    height: 44px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    border-radius: 12px;
-    --background: linear-gradient(135deg, #22c55e, #16a34a);
-    --color: white;
-    --box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
-    border: none;
-    
-    &:hover {
-      --box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-      transform: translateY(-1px);
-    }
-    
-    ion-icon {
-      margin-right: 6px;
-      font-size: 18px;
-    }
-  }
-  
-  .eliminar-btn {
-    width: 100px;
-    height: 44px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    border-radius: 12px;
-    --background: white;
-    --color: #ef4444;
-    --border-color: #e5e7eb;
-    --border-width: 1px;
-    --box-shadow: none;
-    
-    &:hover {
-      --background: #fef2f2;
-      --border-color: #fecaca;
-    }
-    
-    ion-icon {
-      font-size: 16px;
-    }
-  }
-  
-  .eliminar-btn-circular {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-    border-radius: 50% !important;
-    --background: white !important;
-    --color: #ef4444 !important;
-    --border-color: #e5e7eb !important;
-    --border-width: 1px !important;
-    --box-shadow: none !important;
-    flex-shrink: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    
-    &:hover {
-      --background: #fef2f2 !important;
-      --border-color: #fecaca !important;
-    }
-    
-    ion-icon {
-      font-size: 18px !important;
-      margin: 0 !important;
-    }
-  }
-}
-
-// Empty state moderno
-.empty-state-modern {
-  text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  margin: 20px 0;
-  
-  ion-icon {
-    font-size: 4rem;
-    color: #cbd5e1;
-    margin-bottom: 20px;
-  }
-  
-  h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 8px 0;
-  }
-  
-  p {
-    color: #64748b;
-    font-size: 0.95rem;
-    margin: 0;
-    line-height: 1.5;
-  }
-}
-
-// Responsive design
-@media (max-width: 768px) {
-  .mantenciones-container {
-    padding: 16px;
-  }
-  
-  .mantenciones-header {
-    .filter-tabs {
-      .filter-tab {
-        padding: 10px 16px;
-        font-size: 0.85rem;
-      }
-    }
-  }
-  
-  .mantencion-card {
-    padding: 14px;
-    
-    .mantencion-header {
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
-      
-      .precio-badge {
-        align-self: flex-start;
-      }
-    }
-    
-    // Mantener 2 columnas en tablets
-    .productos-grid {
-      grid-template-columns: 1fr 1fr !important;
-    }
-    
-    .mantencion-actions {
-      flex-direction: column;
-      
-      .eliminar-btn {
-        width: 100%;
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .mantenciones-header {
-    .mantenciones-title {
-      font-size: 1.3rem;
-    }
-    
-    .filter-tabs {
-      flex-direction: column;
-      
-      .filter-tab {
-        text-align: center;
-      }
-    }
-  }
-  
-  .mantencion-card {
-    // Cambiar a 1 columna solo en móviles pequeños
-    .productos-grid {
-      grid-template-columns: 1fr !important;
-    }
-    
-    .estado-agua {
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
-      
-      .estado-item {
-        justify-content: space-between;
-      }
-    }
-  }
-}
-
-// Animaciones suaves
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.mantencion-card {
-  animation: fadeInUp 0.5s ease forwards;
-}
-
-// Estilos para la página de estadísticas
-
-// Estilos para la notificación de migración compacta
-.migration-notification {
-  margin: 1rem;
-  background: linear-gradient(135deg, #fff9e6 0%, #fef3c7 100%);
-  border-radius: 12px;
-  border: 1px solid var(--ion-color-warning);
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
-  overflow: hidden;
-  transition: all 0.3s ease;
-
-  &.expanded {
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-  }
-}
-
-.notification-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: rgba(255, 193, 7, 0.1);
-  }
-}
-
-.notification-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.notification-icon {
-  font-size: 1.25rem;
-  color: var(--ion-color-warning);
-  background: rgba(255, 193, 7, 0.1);
-  padding: 0.4rem;
-  border-radius: 8px;
-  min-width: 2.25rem;
-  text-align: center;
-}
-
-.notification-text {
-  flex: 1;
-
-  h4 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--ion-color-warning-shade);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  p {
-    margin: 0.25rem 0 0 0;
-    font-size: 0.8rem;
-    color: var(--ion-color-medium);
-    line-height: 1.3;
-  }
-}
-
-.expand-icon {
-  font-size: 1.25rem;
-  color: var(--ion-color-warning);
-  transition: transform 0.3s ease;
-}
-
-.notification-body {
-  padding: 0 1rem 1rem 1rem;
-  border-top: 1px solid rgba(255, 193, 7, 0.2);
-  animation: slideDown 0.3s ease;
-}
-
-.notification-description {
-  margin: 1rem 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: var(--ion-color-dark);
-  background: rgba(255, 255, 255, 0.7);
-  padding: 0.75rem;
-  border-radius: 8px;
-  border-left: 3px solid var(--ion-color-warning);
-}
-
-.migration-button {
-  --border-radius: 10px;
-  --box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
-  font-weight: 600;
-  font-size: 0.95rem;
-  margin: 1rem 0 0.5rem 0;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    --box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
-  }
-
-  ion-icon {
-    font-size: 1rem;
-  }
-}
-
-.migration-note {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.8rem;
-  color: var(--ion-color-medium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-style: italic;
-
-  ion-icon {
-    font-size: 0.9rem;
-    color: var(--ion-color-warning);
-  }
-}
-
-// Animación para el expand/collapse
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Ajuste para tabs flotantes
 ion-content {
   --padding-bottom: 100px;
+  --background: var(--ion-background-color, #f4f8ff);
 }
 
-.selectores-fecha {
-  margin-top: 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 18px;
-  padding: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  
-  .selector-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    
-    ion-label {
-      margin-right: 1rem;
-      min-width: 60px;
-      font-weight: 500;
-    }
-    
-    input[type="date"] {
-      flex: 1;
-      padding: 0.7rem 0.9rem;
-      border: 1px solid var(--ion-color-medium);
-      border-radius: 12px;
-      background: var(--ion-color-light);
-      min-height: 42px;
-    }
-    
-    ion-select {
-      flex: 1;
-      --background: var(--ion-color-light);
-      --border-radius: 12px;
-      border-radius: 12px;
-      min-height: 42px;
-      overflow: hidden;
-    }
-  }
-  
-  .selectores-mes {
-    display: flex;
-    gap: 1rem;
-    
-    .selector-item {
-      flex: 1;
-      margin-bottom: 0;
-    }
-  }
-}
-
-.stat-item {
-  text-align: center;
-  padding: 1rem;
-  background: var(--ion-color-light);
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  flex: 1;
-  min-width: 0;
-  
-  .stat-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--ion-color-primary);
-    margin-bottom: 0.25rem;
-  }
-  
-  .stat-label {
-    font-size: 0.825rem;
-    color: var(--ion-color-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
-  }
-}
-
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  width: 100%;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 1rem;
-  background: var(--ion-color-light);
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  
-  .stat-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--ion-color-primary);
-    margin-bottom: 0.25rem;
-  }
-  
-  .stat-label {
-    font-size: 0.825rem;
-    color: var(--ion-color-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
-  }
-}
-
-.mantencion-item {
-  --padding-start: 0;
-  --padding-end: 0;
-  --inner-padding-end: 0;
-  margin-bottom: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--ion-color-light);
-  
-  .mantencion-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    
-    h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--ion-color-dark);
-    }
-    
-    ion-chip {
-      margin: 0;
-      font-weight: 600;
-    }
-  }
-  
-  .mantencion-detail {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--ion-color-medium);
-    margin-bottom: 0.25rem;
-    
-    ion-icon {
-      color: var(--ion-color-primary);
-      font-size: 1rem;
-    }
-    
-    span {
-      flex: 1;
-    }
-  }
-}
-
-.chemical-levels {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-
-  .level-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-
-    ion-icon {
-      color: var(--ion-color-primary);
-      font-size: 1rem;
-    }
-
-    strong {
-      color: var(--ion-color-dark);
-    }
-
-    ion-chip {
-      margin-left: 0.25rem;
-    }
-  }
-}
-
-.chemical-amounts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-
-  .amount-item {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.8rem;
-    color: var(--ion-color-medium);
-    background: var(--ion-color-light);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-
-    ion-icon {
-      color: var(--ion-color-primary);
-      font-size: 0.9rem;
-    }
-  }
-}
-
-ion-button[color="danger"] {
-  --padding-start: 8px;
-  --padding-end: 8px;
-  height: 30px;
-  margin-top: 5px;
-}
-
-/* Estilo personalizado para botones de pago */
-.pay-button {
-  --background: transparent;
-  background: #f3f4f6;
-  color: #1f2937;
-  border-radius: 10px;
-  padding: 6px 10px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 1px 3px rgba(16,24,40,0.06);
-  border: 1px solid rgba(0,0,0,0.06);
-}
-
-.pay-button ion-icon {
-  font-size: 1rem;
-  color: #065f46;
-}
-
-.pay-button span {
-  margin-left: 6px;
-  text-transform: none;
-}
-
-// Estilos para las tarjetas
+/* ---------- Tarjetas ---------- */
 ion-card {
-  margin: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  
+  margin: 12px 14px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  background: var(--ion-card-background, #ffffff);
+  border: 1px solid var(--ion-border-color, #dfeafc);
+  max-width: 900px;
+  margin-inline: auto;
+
   ion-card-header {
-    padding-bottom: 0.5rem;
-    
+    padding: 16px 16px 8px;
+
     ion-card-title {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ion-text-color, #0f172a);
+
       ion-icon {
         color: var(--ion-color-primary);
-      }
-      
-      ion-badge {
-        margin-left: auto;
+        font-size: 1.15rem;
+        flex-shrink: 0;
       }
     }
+
+    ion-card-subtitle {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: var(--ion-color-medium);
+    }
   }
-  
+
   ion-card-content {
-    padding-top: 0.5rem;
+    padding: 12px 16px 16px;
   }
 }
 
-// Estilos para el segment
+/* ---------- Selector de período ---------- */
+.card-periodo {
+  margin-top: 14px;
+}
+
 ion-segment {
-  margin-bottom: 1rem;
-  --background: rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  overflow: hidden;
+  --background: var(--ion-color-light);
+  border-radius: 12px;
   padding: 4px;
-  
+
   ion-segment-button {
     --indicator-color: var(--ion-color-primary);
-    --color-checked: var(--ion-color-primary);
-    --border-radius: 12px;
-    border-radius: 12px;
-    font-weight: 500;
+    --color-checked: #fff;
+    --border-radius: 9px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    min-height: 34px;
   }
 }
 
-// Estilos para el grid de estadísticas
-ion-grid {
-  padding: 0;
-  
-  ion-row {
-    margin-bottom: 0.5rem;
-    
-    &:last-child {
-      margin-bottom: 0;
+.selectores-fecha {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .selector-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .selector-icon {
+      font-size: 17px;
+      color: var(--ion-color-primary);
+      flex-shrink: 0;
+    }
+
+    ion-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      min-width: 44px;
+    }
+
+    input[type="date"],
+    ion-select {
+      flex: 1;
+      min-width: 0;
+    }
+
+    input[type="date"] {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--ion-border-color, #dfeafc);
+      border-radius: 10px;
+      background: var(--ion-color-light);
+      color: var(--ion-text-color, #0f172a);
+      font-weight: 600;
+      min-height: 42px;
+      box-sizing: border-box;
+    }
+
+    ion-select {
+      --background: var(--ion-color-light);
+      --border-radius: 10px;
+      --padding-start: 12px;
+      --padding-end: 10px;
+      --color: var(--ion-text-color, #0f172a);
+      font-weight: 600;
+      min-height: 42px;
+      border-radius: 10px;
+      overflow: hidden;
     }
   }
-  
-  ion-col {
-    padding: 0.25rem;
+
+  .selectores-mes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 }
 
-// Estilos para la lista de mantenciones
-ion-list {
-  padding: 0;
-  
-  ion-item {
-    --padding-start: 1rem;
-    --padding-end: 1rem;
-    --inner-padding-end: 0;
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
+/* ---------- Loading ---------- */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: var(--ion-color-medium);
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
   }
 }
 
-body.dark {
-  .selectores-fecha {
-    background: #0f172a !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+/* ---------- Grilla de estadísticas ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
 
-    .selector-item {
-      background: transparent !important;
-      color: #ffffff !important;
-    }
+  &.dos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 14px 10px 12px;
+  background: var(--ion-color-light);
+  border: 1px solid var(--ion-border-color, #dfeafc);
+  border-radius: 14px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  background: rgba(var(--ion-color-primary-rgb, 81, 69, 255), 0.12);
+  color: var(--ion-color-primary);
+
+  ion-icon {
+    font-size: 18px;
   }
 
-  .stat-item {
-    background: var(--ion-item-background);
-    border: 1px solid var(--ion-border-color);
+  &.ingresos { background: rgba(16, 185, 129, 0.14); color: #059669; }
+  &.cantidad { background: rgba(83, 162, 212, 0.16); color: #0369a1; }
+  &.pendiente { background: rgba(245, 158, 11, 0.16); color: #d97706; }
+  &.pagado { background: rgba(34, 197, 94, 0.14); color: #15803d; }
+  &.promedio { background: rgba(139, 92, 246, 0.14); color: #7c3aed; }
+  &.cloro { background: rgba(14, 165, 233, 0.15); color: #0284c7; }
+  &.baja { background: rgba(249, 115, 22, 0.15); color: #ea580c; }
+  &.sube { background: rgba(139, 92, 246, 0.15); color: #7c3aed; }
+  &.pastillas { background: rgba(16, 185, 129, 0.15); color: #059669; }
+  &.ph { background: rgba(20, 184, 166, 0.15); color: #0d9488; }
+}
+
+.stat-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ion-text-color, #0f172a);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+
+  small {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--ion-color-medium);
+    margin-left: 3px;
+  }
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--ion-color-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 2px;
+}
+
+.stat-quimico {
+  // Los tiles se distinguen por el color de su ícono, sin franjas de color
+  &.sin-datos {
+    opacity: 0.55;
 
     .stat-value {
-      color: #ffffff;
-    }
-
-    .stat-label {
-      color: #dfeaff;
+      color: var(--ion-color-medium);
     }
   }
+}
 
-  .mantenciones-container,
-  .mantenciones-header,
-  .mantencion-card,
-  .sub-card,
-  .producto-item,
-  .empty-state-modern,
-  .migration-notification {
-    background: var(--ion-background-color);
+/* Total recaudado: va abajo de los 4 números, a todo el ancho */
+.total-destacado {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ion-color-primary) 14%, var(--ion-card-background, #ffffff)),
+    color-mix(in srgb, var(--ion-color-secondary) 12%, var(--ion-card-background, #ffffff))
+  );
+  border: 1px solid var(--ion-border-color, #dfeafc);
+  box-sizing: border-box;
+
+  .total-texto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .total-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--ion-color-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .total-valor {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--ion-text-color, #0f172a);
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+  }
+}
+
+/* ---------- Historial ---------- */
+.mantenciones-container {
+  background: var(--ion-background-color, #f4f8ff);
+  padding: 0 0 20px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 50px 20px;
+  color: var(--ion-color-medium);
+  text-align: center;
+
+  ion-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* ---------- Modo oscuro ---------- */
+:host-context(body.dark),
+:host-context(html.dark) {
+  ion-card {
+    background: var(--ion-card-background);
     border-color: var(--ion-border-color);
-  }
+    box-shadow: none;
 
-  .mantenciones-container {
-    background: var(--ion-background-color);
-  }
-
-  .mantenciones-title,
-  .sub-card-title,
-  .cliente-nombre,
-  .mantencion-fecha,
-  .estado-label,
-  .product-item span,
-  .producto-item span,
-  .producto-item strong,
-  .mantencion-header h3,
-  .empty-state-modern h3,
-  .empty-state-modern p,
-  .filter-tab {
-    color: #ffffff !important;
-  }
-
-  .mantencion-item {
-    background: var(--ion-item-background);
-    border-color: var(--ion-border-color);
-
-    .mantencion-header h3,
-    .chemical-levels .level-item strong,
-    .chemical-amounts .amount-item,
-    .mantencion-detail {
+    ion-card-title {
       color: var(--ion-text-color);
     }
   }
 
-  .pay-button {
-    background: var(--ion-item-background);
-    color: var(--ion-text-color);
+  .stat-item {
+    background: rgba(255, 255, 255, 0.04);
     border-color: var(--ion-border-color);
   }
 
-  .section-header h3,
-  ion-card ion-card-title,
-  ion-card ion-card-title ion-icon,
-  ion-card ion-card-content,
-  ion-card ion-card-subtitle,
-  .selector-item ion-label,
-  .selector-item input[type="date"],
-  .selectores-mes .selector-item,
+  .stat-value {
+    color: var(--ion-text-color);
+  }
+
+  .total-destacado {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ion-color-primary) 22%, var(--ion-card-background)),
+      color-mix(in srgb, var(--ion-color-secondary) 18%, var(--ion-card-background))
+    );
+    border-color: var(--ion-border-color);
+  }
+
   .selectores-fecha .selector-item {
-    color: #ffffff;
+    input[type="date"] {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ion-text-color);
+      border-color: var(--ion-border-color);
+      color-scheme: dark;
+    }
+
+    ion-select {
+      --background: rgba(255, 255, 255, 0.04);
+      --color: var(--ion-text-color);
+      border: 1px solid var(--ion-border-color);
+    }
   }
 
-  ion-card {
-    background: var(--ion-card-background);
-    box-shadow: var(--app-shadow-soft);
-    border: 1px solid var(--ion-border-color);
-  }
-
-  ion-item,
-  ion-list,
-  ion-segment {
-    --background: var(--ion-item-background);
-    --color: var(--ion-text-color);
-  }
-
-  input[type="date"] {
-    background: var(--ion-item-background);
-    color: var(--ion-text-color);
-    border-color: var(--ion-border-color);
-    color-scheme: dark;
-  }
-
-  .selectores-fecha .selector-item input[type="date"] {
-    background: var(--ion-item-background) !important;
-    color: var(--ion-text-color) !important;
-    border-color: var(--ion-border-color) !important;
-  }
-
-  ion-select {
-    --background: #0f172a !important;
-    --background-hover: #0f172a !important;
-    --background-activated: #0f172a !important;
-    --background-focused: #0f172a !important;
-    --color: #ffffff !important;
-    --placeholder-color: rgba(255, 255, 255, 0.7) !important;
-    --border-radius: 12px;
-    --highlight-color-focused: rgba(255, 255, 255, 0.2);
-    --highlight-color: rgba(255, 255, 255, 0.2);
-    background: #0f172a !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: none;
-  }
-
-  ion-select::part(container),
-  ion-select::part(text),
-  ion-select::part(text-wrapper),
-  ion-select::part(icon),
-  ion-select::part(label),
-  ion-select::part(native),
-  ion-select::part(selected-text),
-  ion-select::part(icon-inner),
-  ion-select .select-text,
-  ion-select .select-icon,
-  ion-select .native-wrapper {
-    color: #ffffff !important;
-    background: #0f172a !important;
-    --background: #0f172a !important;
-  }
-
-  ion-select::part(text),
-  ion-select::part(native) {
-    background: transparent !important;
-  }
-
-  ion-select::part(icon) {
-    opacity: 1;
-    color: #ffffff !important;
+  .mantenciones-container {
+    background: var(--ion-background-color);
   }
 }
 
-// Responsive design
+/* ---------- Responsive ---------- */
 @media (max-width: 576px) {
+  ion-card {
+    margin: 10px 12px;
+  }
+
   .selectores-mes {
-    flex-direction: column;
-    gap: 0.5rem;
+    grid-template-columns: 1fr;
   }
-  
-  .stat-item {
-    .stat-value {
-      font-size: 1.25rem;
-    }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  .mantencion-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    
-    ion-chip {
-      align-self: flex-end;
-    }
+
+  .stat-value {
+    font-size: 1.15rem;
   }
 }

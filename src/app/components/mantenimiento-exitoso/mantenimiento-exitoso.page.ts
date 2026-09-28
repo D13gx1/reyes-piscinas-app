@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { checkmarkCircleOutline } from 'ionicons/icons';
 import { logoWhatsapp } from 'ionicons/icons';
+import { formatearKgParaTexto, formatearUnidades } from '../../utils/unidades';
 
 addIcons({
   'checkmark-circle-outline': checkmarkCircleOutline
@@ -88,19 +89,16 @@ export class MantenimientoExitosoPage implements OnInit {
       lines.push('• pH: ' + (this.mantencion.estadoPh || ''));
       lines.push('');
       
-      // Químicos utilizados
+      // Químicos utilizados (las cantidades llegan en kilos)
       lines.push('*Químicos utilizados:*');
-      if (this.mantencion.cantidadCloro !== undefined && this.mantencion.cantidadCloro !== null) {
-        lines.push('• Cloro: ' + this.mantencion.cantidadCloro + ' g');
-      }
-      if (this.mantencion.cantidadSubePh !== undefined && this.mantencion.cantidadSubePh !== null) {
-        lines.push('• Sube pH: ' + this.mantencion.cantidadSubePh + ' g');
-      }
-      if (this.mantencion.cantidadBajaPh !== undefined && this.mantencion.cantidadBajaPh !== null) {
-        lines.push('• Baja pH: ' + this.mantencion.cantidadBajaPh + ' g');
-      }
-      if (this.mantencion.cantidadPastillas !== undefined && this.mantencion.cantidadPastillas !== null) {
-        lines.push('• Pastillas: ' + this.mantencion.cantidadPastillas + ' unidad(es)');
+      const cloro = formatearKgParaTexto(this.mantencion.cantidadCloro);
+      const subePh = formatearKgParaTexto(this.mantencion.cantidadSubePh);
+      const bajaPh = formatearKgParaTexto(this.mantencion.cantidadBajaPh);
+      if (cloro) lines.push('• Cloro granulado: ' + cloro);
+      if (subePh) lines.push('• Sube pH: ' + subePh);
+      if (bajaPh) lines.push('• Baja pH: ' + bajaPh);
+      if (this.mantencion.cantidadPastillas) {
+        lines.push('• Pastillas: ' + formatearUnidades(this.mantencion.cantidadPastillas) + ' unidad(es)');
       }
       lines.push('');
       

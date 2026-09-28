@@ -18,6 +18,7 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { ClienteService } from '../../services/cliente.service';
 import { NotificacionesService } from '../../services/notificaciones.service';
+import { MigracionUnidadesService } from '../../services/migracion-unidades.service';
 
 @Component({
   selector: 'app-perfil',
@@ -43,6 +44,9 @@ export class PerfilPage implements OnInit, OnDestroy {
   isDarkMode = false;
   isMigrationExpanded = false;
   notificacionesActivadas = false;
+  /** true = las cantidades químicas ya están en kilos */
+  unidadesEnKilos = true;
+  unidadesCargando = false;
   private userSub: Subscription | undefined;
 
   private authService = inject(AuthService);
@@ -50,11 +54,18 @@ export class PerfilPage implements OnInit, OnDestroy {
   private clienteService = inject(ClienteService);
   private notificacionesService = inject(NotificacionesService);
   private toastController = inject(ToastController);
+  private migracionService = inject(MigracionUnidadesService);
 
   ngOnInit() {
     this.userSub = this.authService.getUserName().subscribe(name => {
       this.userName = name;
     });
+
+    this.userSub.add(
+      this.authService.getCurrentUser().subscribe(u => {
+        if (u) this.revisarEstadoUnidades(u.uid);
+      })
+    );
 
     const savedTheme = localStorage.getItem('theme-mode');
     const isExplicitDarkTheme = savedTheme === 'dark';
@@ -88,6 +99,36 @@ export class PerfilPage implements OnInit, OnDestroy {
 
   toggleMigration() {
     this.isMigrationExpanded = !this.isMigrationExpanded;
+  }
+
+  private revisarEstadoUnidades(uid: string) {
+    this.unidadesCargando = true;
+    this.migracionService.yaMigrado(uid).subscribe((migrado) => {
+      this.unidadesEnKilos = migrado;
+      this.unidadesCargando = false;
+    });
+  }
+
+  /** Convierte a mano las cantidades que quedaron en gramos (por si la migración automática falló). */
+  async migrarUnidadesAKilos() {
+    const usuario = await firstValueFrom(this.authService.getCurrentUser());
+    if (!usuario) return;
+
+    this.unidadesCargando = true;
+    const resultado = await firstValueFrom(
+      this.migracionService.ejecutarMigracion(usuario.uid, true)
+    );
+
+    this.unidadesEnKilos = await firstValueFrom(
+      this.migracionService.yaMigrado(usuario.uid)
+    );
+    this.unidadesCargando = false;
+
+    await this.mostrarToast(
+      resultado.ejecutada
+        ? `✅ ${resultado.mensaje}`
+        : `ℹ️ ${resultado.mensaje}`
+    );
   }
 
   async toggleNotificaciones(event: any) {

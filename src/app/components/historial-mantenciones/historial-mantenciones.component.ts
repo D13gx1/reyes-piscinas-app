@@ -2,11 +2,34 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { pauseCircleOutline } from 'ionicons/icons';
+import {
+  pauseCircleOutline,
+  waterOutline,
+  flaskOutline,
+  arrowDownCircleOutline,
+  arrowUpCircleOutline,
+  discOutline,
+  calendarOutline,
+  buildOutline,
+  trashOutline,
+  checkmarkCircle,
+  checkmarkOutline
+} from 'ionicons/icons';
 import { Mantencion } from '../../services/estadisticas.service';
+import { formatearKgValor, formatearGramos, formatearUnidades } from '../../utils/unidades';
 
 addIcons({
   'pause-circle-outline': pauseCircleOutline,
+  'water-outline': waterOutline,
+  'flask-outline': flaskOutline,
+  'arrow-down-circle-outline': arrowDownCircleOutline,
+  'arrow-up-circle-outline': arrowUpCircleOutline,
+  'disc-outline': discOutline,
+  'calendar-outline': calendarOutline,
+  'build-outline': buildOutline,
+  'trash-outline': trashOutline,
+  'checkmark-circle': checkmarkCircle,
+  'checkmark-outline': checkmarkOutline,
 });
 
 // Tipo intermedio para compatibilidad entre diferentes servicios
@@ -19,9 +42,13 @@ interface HistorialItem {
   servicio?: string;
   cloro: number;
   ph: number;
+  /** Kilos de cloro granulado */
   cantidadCloro?: number;
+  /** Kilos de baja pH */
   cantidadBajaPh?: number;
+  /** Kilos de sube pH */
   cantidadSubePh?: number;
+  /** Unidades de pastillas de cloro */
   cantidadPastillas?: number;
   hora?: string;
   pagado?: boolean;
@@ -154,6 +181,13 @@ export class HistorialMantencionesComponent implements OnInit, OnChanges {
 
     return new Date(fecha);
   }
+
+  // ===== Formato de unidades químicas =====
+  // Los valores llegan en kilos; cada producto muestra el kg grande y el equivalente en gramos debajo.
+
+  formatearKgValor = formatearKgValor;
+  formatearGramos = formatearGramos;
+  formatearUnidades = formatearUnidades;
 
   // Métodos para determinar niveles (deberían moverse a un servicio compartido)
   getNivelCloro(cloro: number): string {

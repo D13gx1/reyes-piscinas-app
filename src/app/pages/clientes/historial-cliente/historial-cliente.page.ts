@@ -8,6 +8,7 @@ import { addIcons } from 'ionicons';
 import { timeOutline, constructOutline, beakerOutline, flaskOutline, cashOutline, trashOutline, logoWhatsapp } from 'ionicons/icons';
 import { HistorialMantencionesComponent } from '../../../components/historial-mantenciones/historial-mantenciones.component';
 import { ResumenDeudaComponent } from '../../../components/resumen-deuda/resumen-deuda.component';
+import { formatearKgParaTexto, formatearUnidades } from '../../../utils/unidades';
 
 addIcons({
   'time-outline': timeOutline,
@@ -76,19 +77,16 @@ export class HistorialClientePage implements OnInit {
     lines.push('• pH: ' + (item.estadoPh || ''));
     lines.push('');
     
-    // Químicos utilizados
+    // Químicos utilizados (las cantidades llegan en kilos)
     lines.push('*🧴 Químicos utilizados:*');
-    if (item.cantidadCloro !== undefined && item.cantidadCloro !== null) {
-      lines.push('• Cloro: ' + item.cantidadCloro + ' g');
-    }
-    if (item.cantidadSubePh !== undefined && item.cantidadSubePh !== null) {
-      lines.push('• Sube pH: ' + item.cantidadSubePh + ' g');
-    }
-    if (item.cantidadBajaPh !== undefined && item.cantidadBajaPh !== null) {
-      lines.push('• Baja pH: ' + item.cantidadBajaPh + ' g');
-    }
-    if (item.cantidadPastillas !== undefined && item.cantidadPastillas !== null) {
-      lines.push('• Pastillas: ' + item.cantidadPastillas + ' unidad(es)');
+    const cloro = formatearKgParaTexto(item.cantidadCloro);
+    const subePh = formatearKgParaTexto(item.cantidadSubePh);
+    const bajaPh = formatearKgParaTexto(item.cantidadBajaPh);
+    if (cloro) lines.push('• Cloro granulado: ' + cloro);
+    if (subePh) lines.push('• Sube pH: ' + subePh);
+    if (bajaPh) lines.push('• Baja pH: ' + bajaPh);
+    if (item.cantidadPastillas) {
+      lines.push('• Pastillas: ' + formatearUnidades(item.cantidadPastillas) + ' unidad(es)');
     }
     lines.push('');
     

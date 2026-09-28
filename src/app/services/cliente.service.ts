@@ -47,10 +47,10 @@ export interface Cliente {
     servicio: string;
     cloro: number;
     ph: number;
-    cantidadCloro?: number; // Cantidad de cloro utilizada en gramos
-    cantidadBajaPh?: number; // Cantidad de baja P H utilizada en gramos
-    cantidadSubePh?: number; // Cantidad de sube pH utilizada en gramos
-    cantidadPastillas?: number; // Cantidad de pastillas de cloro utilizadas
+    cantidadCloro?: number; // Cantidad de cloro granulado utilizada en kilos
+    cantidadBajaPh?: number; // Cantidad de baja P H utilizada en kilos
+    cantidadSubePh?: number; // Cantidad de sube pH utilizada en kilos
+    cantidadPastillas?: number; // Cantidad de pastillas de cloro utilizadas (unidades)
     estadoCloro?: string; // Nuevo campo para estado del cloro
     estadoPh?: string; // Nuevo campo para estado del pH
     hora?: string; // Nuevo campo para la hora del mantenimiento

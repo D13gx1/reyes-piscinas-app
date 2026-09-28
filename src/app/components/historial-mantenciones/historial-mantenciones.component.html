@@ -51,48 +51,84 @@
         </div>
         <div class="estado-agua">
           <div class="estado-item">
-            <span class="estado-label">Cloro</span>
+            <span class="estado-label">
+              <ion-icon name="water-outline"></ion-icon>
+              Cloro
+            </span>
+            <span class="estado-valor">{{ item.cloro }} <small>ppm</small></span>
             <div [ngClass]="'estado-badge ' + getColorNivel(getNivelCloro(item.cloro))" [style]="getBadgeStyle(getColorNivel(getNivelCloro(item.cloro)))">
-              <ion-icon name="water-outline" style="margin-right: 6px;"></ion-icon>
               <span>{{ getNivelCloro(item.cloro) }}</span>
             </div>
           </div>
           <div class="estado-item">
-            <span class="estado-label">pH</span>
+            <span class="estado-label">
+              <ion-icon name="flask-outline"></ion-icon>
+              pH
+            </span>
+            <span class="estado-valor">{{ item.ph }}</span>
             <div [ngClass]="'estado-badge ' + getColorNivel(getNivelPh(item.ph))" [style]="getBadgeStyle(getColorNivel(getNivelPh(item.ph)))">
-              <ion-icon name="flask-outline" style="margin-right: 6px;"></ion-icon>
               <span>{{ getNivelPh(item.ph) }}</span>
             </div>
           </div>
-        </div>
-      </div>
+        </div>      </div>
 
       <!-- Sub-card: Productos usados -->
       <div class="sub-card" *ngIf="!item.suspendida">
         <div class="sub-card-header">
           <ion-icon name="flask-outline"></ion-icon>
-          <h4 class="sub-card-title">Productos usados</h4>
+          <h4 class="sub-card-title">Productos aplicados</h4>
         </div>
         <div class="productos-grid">
-          <div class="producto-item">
-            <ion-icon name="water-outline"></ion-icon>
-            <span>Cloro</span>
-            <strong>{{ item.cantidadCloro || 0 }}g</strong>
+          <div class="producto-item cloro">
+            <div class="producto-icon">
+              <ion-icon name="flask-outline"></ion-icon>
+            </div>
+            <div class="producto-texto">
+              <span class="producto-nombre">Cloro granulado</span>
+              <span class="producto-valor">
+                {{ formatearKgValor(item.cantidadCloro) }}<small>kg</small>
+              </span>
+              <span class="producto-sub">{{ formatearGramos(item.cantidadCloro) }}</span>
+            </div>
           </div>
-          <div class="producto-item">
-            <ion-icon name="trending-up-outline"></ion-icon>
-            <span>pH+</span>
-            <strong>{{ item.cantidadSubePh || 0 }}g</strong>
+
+          <div class="producto-item sube">
+            <div class="producto-icon">
+              <ion-icon name="arrow-up-circle-outline"></ion-icon>
+            </div>
+            <div class="producto-texto">
+              <span class="producto-nombre">Sube pH</span>
+              <span class="producto-valor">
+                {{ formatearKgValor(item.cantidadSubePh) }}<small>kg</small>
+              </span>
+              <span class="producto-sub">{{ formatearGramos(item.cantidadSubePh) }}</span>
+            </div>
           </div>
-          <div class="producto-item">
-            <ion-icon name="cube-outline"></ion-icon>
-            <span>Pastillas</span>
-            <strong>{{ item.cantidadPastillas || 0 }}</strong>
+
+          <div class="producto-item pastillas">
+            <div class="producto-icon">
+              <ion-icon name="disc-outline"></ion-icon>
+            </div>
+            <div class="producto-texto">
+              <span class="producto-nombre">Pastillas cloro</span>
+              <span class="producto-valor">
+                {{ formatearUnidades(item.cantidadPastillas) }}<small>und.</small>
+              </span>
+              <span class="producto-sub">pastillas</span>
+            </div>
           </div>
-          <div class="producto-item">
-            <ion-icon name="trending-down-outline"></ion-icon>
-            <span>pH-</span>
-            <strong>{{ item.cantidadBajaPh || 0 }}g</strong>
+
+          <div class="producto-item baja">
+            <div class="producto-icon">
+              <ion-icon name="arrow-down-circle-outline"></ion-icon>
+            </div>
+            <div class="producto-texto">
+              <span class="producto-nombre">Baja pH</span>
+              <span class="producto-valor">
+                {{ formatearKgValor(item.cantidadBajaPh) }}<small>kg</small>
+              </span>
+              <span class="producto-sub">{{ formatearGramos(item.cantidadBajaPh) }}</span>
+            </div>
           </div>
         </div>
       </div>

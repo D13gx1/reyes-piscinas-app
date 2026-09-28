@@ -13,6 +13,30 @@ export interface EstadisticasRecaudacion {
   fechaFin: string;
 }
 
+export interface EstadisticasQuimicas {
+  /** Nivel de cloro promedio en ppm */
+  promedioCloro: number;
+  /** Nivel de pH promedio */
+  promedioPh: number;
+  /** Total de cloro granulado en KILOS */
+  totalCloro: number;
+  totalPh: number;
+  /** Total de sube pH en KILOS */
+  totalSubePh: number;
+  /** Total de baja pH en KILOS */
+  totalBajaPh: number;
+  /** Total de pastillas de cloro en UNIDADES */
+  totalPastillas: number;
+  /** Promedios por mantención (kg / unidades) */
+  promedioCloroKg: number;
+  promedioSubePhKg: number;
+  promedioBajaPhKg: number;
+  /** Promedio de kilos de producto pH (baja + sube) por mantención */
+  promedioPhKg: number;
+  promedioPastillas: number;
+  cantidadMantenciones: number;
+}
+
 export interface Mantencion {
   id: string;
   clienteId: string;
@@ -21,9 +45,13 @@ export interface Mantencion {
   precio: number;
   cloro: number;
   ph: number;
+  /** Kilos */
   cantidadCloro?: number;
+  /** Kilos */
   cantidadBajaPh?: number;
+  /** Kilos */
   cantidadSubePh?: number;
+  /** Unidades */
   cantidadPastillas?: number;
   servicio: string;
   hora?: string;
@@ -76,14 +104,15 @@ export class EstadisticasService {
 
   // Obtener estadísticas por mes
   getEstadisticasMes(anio: number, mes: number): Observable<EstadisticasRecaudacion> {
-    const fechaInicio = `${anio}-${mes.toString().padStart(2, '0')}-01`;
-    
-    // Calcular el último día correcto del mes
-    const ultimoDiaMes = new Date(anio, mes + 1, 0).getDate(); 
-    const fechaFin = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${ultimoDiaMes}`;
-    
-    console.log(`Estadísticas mes ${mes}/${anio}: ${fechaInicio} a ${fechaFin}`);
-    
+    const mesTexto = mes.toString().padStart(2, '0');
+    const fechaInicio = `${anio}-${mesTexto}-01`;
+
+    // Calcular el último día correcto del mes (mes es 0-based, así que el día 0 del mes siguiente)
+    const ultimoDiaMes = new Date(anio, mes + 1, 0).getDate();
+    const fechaFin = `${anio}-${mesTexto}-${ultimoDiaMes.toString().padStart(2, '0')}`;
+
+    console.log(`Estadísticas mes ${mes + 1}/${anio}: ${fechaInicio} a ${fechaFin}`);
+
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => this.calcularEstadisticas(mantenciones, 'mes', fechaInicio, fechaFin))
     );
@@ -287,10 +316,14 @@ export class EstadisticasService {
     );
   }
 
-  // Obtener estadísticas de cloro y pH
-  getEstadisticasQuimicas(fechaInicio: string, fechaFin: string): Observable<any> {
+  /**
+   * Obtener estadísticas de químicos del rango.
+   * Los totales de cloro / baja pH / sube pH están en KILOS, las pastillas en unidades.
+   */
+  getEstadisticasQuimicas(fechaInicio: string, fechaFin: string): Observable<EstadisticasQuimicas> {
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => {
+        // Las suspendidas no usaron productos, se excluyen de los promedios
         const reales = mantenciones.filter(m => !m.suspendida);
         const totalCloro = reales.reduce((sum, m) => sum + (m.cantidadCloro || 0), 0);
         const totalPh = reales.reduce((sum, m) => sum + m.ph, 0);
@@ -298,15 +331,24 @@ export class EstadisticasService {
         const totalBajaPh = reales.reduce((sum, m) => sum + (m.cantidadBajaPh || 0), 0);
         const totalPastillas = reales.reduce((sum, m) => sum + (m.cantidadPastillas || 0), 0);
         const cantidad = reales.length;
+        const porMantencion = (total: number) => (cantidad > 0 ? total / cantidad : 0);
 
         return {
+          // Niveles medidos (ppm / pH)
           promedioCloro: cantidad > 0 ? reales.reduce((sum, m) => sum + m.cloro, 0) / cantidad : 0,
-          promedioPh: cantidad > 0 ? totalPh / cantidad : 0,
+          promedioPh: porMantencion(totalPh),
+          // Totales de consumo
           totalCloro,
           totalPh,
           totalSubePh,
           totalBajaPh,
           totalPastillas,
+          // Promedios por mantención
+          promedioCloroKg: porMantencion(totalCloro),
+          promedioSubePhKg: porMantencion(totalSubePh),
+          promedioBajaPhKg: porMantencion(totalBajaPh),
+          promedioPhKg: porMantencion(totalSubePh + totalBajaPh),
+          promedioPastillas: porMantencion(totalPastillas),
           cantidadMantenciones: cantidad
         };
       })

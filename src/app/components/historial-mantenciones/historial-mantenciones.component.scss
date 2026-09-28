@@ -31,8 +31,10 @@ body.dark .cliente-nombre,
 body.dark .sub-card-title,
 body.dark .estado-label,
 body.dark .mantencion-fecha,
-body.dark .producto-item span,
-body.dark .producto-item strong,
+body.dark .estado-valor,
+body.dark .producto-nombre,
+body.dark .producto-valor,
+body.dark .producto-sub,
 body.dark .filter-tab,
 body.dark .empty-state-modern h3,
 body.dark .empty-state-modern p {
@@ -55,8 +57,10 @@ body.dark .empty-state-modern p {
   .cliente-nombre,
   .sub-card-title,
   .estado-label,
-  .producto-item span,
-  .producto-item strong,
+  .estado-valor,
+  .producto-nombre,
+  .producto-valor,
+  .producto-sub,
   .mantencion-fecha,
   .empty-state-modern h3,
   .empty-state-modern p,
@@ -100,10 +104,11 @@ body.dark .empty-state-modern p {
 
   .producto-item {
     background: rgba(255, 255, 255, 0.03);
+    border-color: var(--ion-border-color);
+  }
 
-    ion-icon {
-      color: var(--ion-color-medium);
-    }
+  .estado-badge {
+    border: 1px solid transparent;
   }
 
   .mantencion-header {
@@ -112,6 +117,7 @@ body.dark .empty-state-modern p {
 
   .mantencion-fecha,
   .estado-label,
+  .estado-valor,
   .empty-state-modern p {
     color: #dfeaff !important;
   }
@@ -335,39 +341,76 @@ body.dark .empty-state-modern p {
 }
 
 // Estado del agua - dentro de sub-card
+// Cloro y pH van uno al lado del otro, como antes
 .estado-agua {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+
   .estado-item {
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 8px;
-    
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--ion-color-light, #f1f5f9);
+    border: 1px solid var(--ion-border-color, #e2e8f0);
+
     .estado-label {
-      font-weight: 500;
-      color: #64748b;
-      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: #475569;
+      font-size: 0.8rem;
+      white-space: nowrap;
+
+      ion-icon {
+        font-size: 14px;
+        color: var(--ion-color-primary);
+      }
     }
-    
+
+    .estado-valor {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #1e293b;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      margin-left: auto;
+
+      small {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-left: 2px;
+      }
+    }
+
     .estado-badge {
       font-weight: 600;
-      font-size: 0.8rem;
-      padding: 4px 12px;
+      font-size: 0.7rem;
+      padding: 3px 10px;
       border-radius: 999px;
-      
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+
       // Colores específicos para los estados
       &[color="danger"] {
         --background: #fee2e2;
         --color: #dc2626;
       }
-      
+
       &[color="success"] {
         --background: #dcfce7;
         --color: #15803d;
       }
-      
+
       &[color="warning"] {
         --background: #fef3c7;
         --color: #d97706;
@@ -380,41 +423,79 @@ body.dark .empty-state-modern p {
 .productos-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   
   .producto-item {
+    --producto-color: #64748b;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 10px;
     background: #f1f5f9;
-    border-radius: 10px;
-    border: none;
-    text-align: center;
-    justify-content: center;
-    min-height: 44px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+    min-height: 56px;
     width: 100%;
-    
-    ion-icon {
-      color: #64748b;
-      font-size: 16px;
+    box-sizing: border-box;
+
+    &.cloro { --producto-color: #0ea5e9; }
+    &.baja { --producto-color: #f97316; }
+    &.sube { --producto-color: #8b5cf6; }
+    &.pastillas { --producto-color: #10b981; }
+
+    .producto-icon {
+      width: 30px;
+      height: 30px;
       flex-shrink: 0;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--producto-color) 16%, transparent);
+      color: var(--producto-color);
+
+      ion-icon {
+        font-size: 17px;
+      }
     }
-    
-    span {
+
+    .producto-texto {
       flex: 1;
-      font-weight: 500;
-      color: #374151;
-      font-size: 0.85rem;
-      text-align: left;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
     }
-    
-    strong {
+
+    .producto-nombre {
       font-weight: 600;
+      color: #475569;
+      font-size: 0.75rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .producto-valor {
+      font-weight: 800;
       color: #1e293b;
-      font-size: 0.9rem;
-      text-align: right;
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+
+      small {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-left: 2px;
+      }
+    }
+
+    .producto-sub {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      font-variant-numeric: tabular-nums;
     }
   }
 }
