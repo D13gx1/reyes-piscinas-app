@@ -5,7 +5,6 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { IonicModule, ToastController, AlertController, IonContent } from '@ionic/angular';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
-import { FirebaseTestService } from '../../../services/firebase-test.service';
 import { addIcons } from 'ionicons';
 import { trashOutline, locationOutline } from 'ionicons/icons';
 import { Auth, onAuthStateChanged } from '@angular/fire/auth';
@@ -82,7 +81,6 @@ export class CrearClientesPage implements OnInit {
 
   constructor(
     private clienteService: ClienteService,
-    private firebaseTestService: FirebaseTestService,
     private router: Router,
     private route: ActivatedRoute,
     private toastController: ToastController,
@@ -114,21 +112,6 @@ export class CrearClientesPage implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-
-    // Verificación de conexión
-    this.firebaseTestService.simpleConnectionTest().subscribe({
-      next: (result) => {
-        if (result.success) {
-          console.log('✅ Conexión verificada:', result.message);
-        } else {
-          console.error('❌ Error de conexión:', result.message);
-          this.showToast(`Error de conexión: ${result.message}`, 'warning');
-        }
-      },
-      error: (err: any) => {
-        console.error('❌ Error en verificación:', err);
-      }
-    });
 
     // Verificar si estamos editando
     this.route.params.subscribe(params => {

@@ -41,6 +41,7 @@ import {
 } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../../utils/unidades';
+import { nuevoIdRegistro } from '../../../utils/mantencion';
 
 addIcons({
   'save-outline': saveOutline,
@@ -373,6 +374,7 @@ export class CompletarMantencionPage implements OnInit {
     const precioCobrado = precioEspecial ?? this.cliente.precio;
 
     const nuevoRegistro = {
+      id: nuevoIdRegistro(),
       fecha: fechaHoy,
       hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
       servicio: formValues.servicio,

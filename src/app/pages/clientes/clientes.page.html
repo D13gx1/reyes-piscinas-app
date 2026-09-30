@@ -44,17 +44,25 @@
       </div>
     </div>
 
-<!-- Botón para crear cliente -->
-    <div class="create-client-section">
-      <ion-button
-        (click)="irACrearCliente()"
-        expand="full"
-        color="secondary"
-        shape="round"
-        class="create-client-button">
-        <ion-icon name="add-outline" slot="start"></ion-icon>
-        Crear Cliente
-      </ion-button>
+    <!-- Búsqueda y orden -->
+    <div class="busqueda-section" *ngIf="clientes.length > 0">
+      <div class="busqueda-input">
+        <ion-icon name="search-outline"></ion-icon>
+        <input
+          type="search"
+          placeholder="Buscar cliente por nombre"
+          autocomplete="off"
+          [value]="busqueda"
+          (input)="onBusqueda($any($event.target).value)">
+      </div>
+      <button type="button" class="orden-btn orden-criterio" (click)="elegirOrden()" aria-label="Ordenar por">
+        <ion-icon name="funnel-outline"></ion-icon>
+        <span>{{ textoCriterio }}</span>
+      </button>
+      <button type="button" class="orden-btn" (click)="alternarDireccion()"
+              [attr.aria-label]="ascendente ? 'Orden ascendente' : 'Orden descendente'">
+        <ion-icon [name]="ascendente ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+      </button>
     </div>
 
     <!-- Spinner de carga -->
@@ -74,9 +82,13 @@
 
               <div class="cliente-title">
                 <span class="cliente-nombre">{{ cliente.nombre }}</span>
-                <div class="estado-badge activo">
-                  <ion-icon name="checkmark-circle-outline"></ion-icon>
-                  <span>Activo</span>
+                <div class="cliente-badges">
+                  <span class="precio-badge">${{ formatearPrecio(cliente.precio) }}</span>
+                  <button type="button" class="estado-badge activo" (click)="alternarEstado(cliente)"
+                          aria-label="Desactivar cliente">
+                    <ion-icon name="checkmark-circle-outline"></ion-icon>
+                    <span>Activo</span>
+                  </button>
                 </div>
               </div>
 
@@ -103,13 +115,15 @@
               <ion-icon name="mail-outline"></ion-icon>
               <strong>Email:</strong> {{ cliente.email }}
             </div>
-            <div class="action-buttons">
-              <ion-button fill="clear" size="medium" (click)="editarCliente(cliente)">
+            <div class="acciones-cliente">
+              <button type="button" class="accion-btn editar" (click)="editarCliente(cliente)">
                 <ion-icon name="pencil-outline"></ion-icon>
-              </ion-button>
-              <ion-button fill="clear" size="medium" (click)="verHistorial(cliente)">
+                <span>Editar</span>
+              </button>
+              <button type="button" class="accion-btn historial" (click)="verHistorial(cliente)">
                 <ion-icon name="time-outline"></ion-icon>
-              </ion-button>
+                <span>Historial</span>
+              </button>
             </div>
           </div>
         </ion-card-content>
@@ -132,9 +146,13 @@
             <div class="cliente-info">
               <div class="cliente-title">
                 <span class="cliente-nombre">{{ cliente.nombre }}</span>
-                <div class="estado-badge inactivo">
-                  <ion-icon name="pause-circle-outline"></ion-icon>
-                  <span>Inactivo</span>
+                <div class="cliente-badges">
+                  <span class="precio-badge">${{ formatearPrecio(cliente.precio) }}</span>
+                  <button type="button" class="estado-badge inactivo" (click)="alternarEstado(cliente)"
+                          aria-label="Activar cliente">
+                    <ion-icon name="pause-circle-outline"></ion-icon>
+                    <span>Inactivo</span>
+                  </button>
                 </div>
               </div>
               <ion-card-subtitle>
@@ -160,23 +178,27 @@
               <ion-icon name="mail-outline"></ion-icon>
               <strong>Email:</strong> {{ cliente.email }}
             </div>
-           <div class="buttons">
-            <div class="action-buttons">
-
-              <ion-button fill="clear" size="medium" (click)="editarCliente(cliente)">
+            <div class="acciones-cliente">
+              <button type="button" class="accion-btn editar" (click)="editarCliente(cliente)">
                 <ion-icon name="pencil-outline"></ion-icon>
-              </ion-button>
-
-              <ion-button fill="clear" size="medium" (click)="verHistorial(cliente)">
+                <span>Editar</span>
+              </button>
+              <button type="button" class="accion-btn historial" (click)="verHistorial(cliente)">
                 <ion-icon name="time-outline"></ion-icon>
-              </ion-button>
-
+                <span>Historial</span>
+              </button>
             </div>
-           </div>
           </div>
         </ion-card-content>
 
       </ion-card>
+    </div>
+
+    <!-- Sin resultados de búsqueda -->
+    <div *ngIf="!isLoading && clientes.length > 0 && clientesActivos.length === 0 && clientesInactivos.length === 0" class="empty-state">
+      <ion-icon name="search-outline" size="large"></ion-icon>
+      <h4>Sin resultados</h4>
+      <p>Ningún cliente coincide con "{{ busqueda }}"</p>
     </div>
 
     <!-- Estado vacío -->
@@ -190,5 +212,12 @@
       </ion-button>
     </div>
   </div>
+
+  <!-- Crear cliente: burbuja flotante sobre la barra de navegación -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="crear-fab">
+    <ion-fab-button (click)="irACrearCliente()" aria-label="Crear cliente">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 
 </ion-content>

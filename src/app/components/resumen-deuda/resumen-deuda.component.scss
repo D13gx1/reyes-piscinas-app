@@ -126,6 +126,14 @@
         font-size: 0.9rem;
         font-weight: 500;
       }
+
+      .detalle-monto {
+        margin-left: auto;
+        color: #4f46e5;
+        font-size: 1rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
     }
     
     .whatsapp-container {
@@ -337,6 +345,37 @@
       .sin-deuda-subtitulo {
         font-size: 0.8rem;
       }
+    }
+  }
+}
+
+/* ---------- Modo oscuro ---------- */
+:host-context(body.dark),
+:host-context(html.dark) {
+  .notificacion-contenido {
+    background: var(--ion-card-background);
+    border-top-color: var(--ion-border-color);
+
+    .contenido-detalles .detalle-item {
+      background: rgba(var(--ion-color-primary-rgb), 0.1);
+      border-color: var(--ion-border-color);
+
+      .detalle-icono {
+        color: var(--ion-color-primary-tint);
+      }
+
+      .detalle-texto {
+        color: var(--ion-text-color);
+      }
+
+      .detalle-monto {
+        color: var(--ion-color-primary-tint);
+      }
+    }
+
+    .whatsapp-container .whatsapp-button:disabled {
+      background: rgba(255, 255, 255, 0.06);
+      color: #64748b;
     }
   }
 }

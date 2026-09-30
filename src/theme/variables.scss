@@ -106,6 +106,15 @@ body.dark {
   --ion-item-background: #101d2d;
   --ion-border-color: #1d3250;
 
+  // Los estilos usan --ion-color-light como fondo de recuadros e inputs;
+  // sin redefinirlo quedaban blancos en modo oscuro
+  --ion-color-light: #16263b;
+  --ion-color-light-rgb: 22, 38, 59;
+  --ion-color-light-contrast: #e5f2ff;
+  --ion-color-light-contrast-rgb: 229, 242, 255;
+  --ion-color-light-shade: #13223a;
+  --ion-color-light-tint: #2d3c4f;
+
   --my-gradient: linear-gradient(90deg, #7c6dff 0%, #59b7ff 100%);
   --app-gradient: var(--my-gradient);
   --app-surface: #101d2d;

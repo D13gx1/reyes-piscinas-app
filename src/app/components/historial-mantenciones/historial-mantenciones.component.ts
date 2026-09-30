@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -17,6 +17,7 @@ import {
 } from 'ionicons/icons';
 import { Mantencion } from '../../services/estadisticas.service';
 import { formatearKgValor, formatearGramos, formatearUnidades } from '../../utils/unidades';
+import { esMantencionPagada } from '../../utils/mantencion';
 
 addIcons({
   'pause-circle-outline': pauseCircleOutline,
@@ -51,6 +52,8 @@ interface HistorialItem {
   /** Unidades de pastillas de cloro */
   cantidadPastillas?: number;
   hora?: string;
+  /** `id` del registro en el historial (ausente en registros antiguos) */
+  registroId?: string;
   pagado?: boolean;
   suspendida?: boolean;
 }
@@ -60,6 +63,11 @@ interface HistorialItem {
   templateUrl: './historial-mantenciones.component.html',
   styleUrls: ['./historial-mantenciones.component.scss'],
   standalone: true,
+  // El template llama a ~20 métodos por fila (formateo de precio, fecha, niveles
+  // de cloro y pH). Con la estrategia por defecto eso se re-ejecutaba en cada
+  // ciclo de detección aunque la lista no hubiera cambiado; con OnPush solo
+  // corre cuando el padre reemplaza el array de entrada.
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     IonicModule,
@@ -92,20 +100,16 @@ export class HistorialMantencionesComponent implements OnInit, OnChanges {
 
   private readonly badgeStyles: Record<string, Record<string, string>> = {
     success: {
-      background: '#dcfce7', color: '#15803d', padding: '4px 12px',
-      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+      background: '#dcfce7', color: '#15803d'
     },
     warning: {
-      background: '#fef3c7', color: '#d97706', padding: '4px 12px',
-      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+      background: '#fef3c7', color: '#d97706'
     },
     danger: {
-      background: '#fee2e2', color: '#dc2626', padding: '4px 12px',
-      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+      background: '#fee2e2', color: '#dc2626'
     },
     medium: {
-      background: '#f1f5f9', color: '#64748b', padding: '4px 12px',
-      borderRadius: '999px', fontWeight: '600', fontSize: '0.8rem'
+      background: '#f1f5f9', color: '#64748b'
     }
   };
 
@@ -146,15 +150,20 @@ export class HistorialMantencionesComponent implements OnInit, OnChanges {
   private aplicarFiltro() {
     switch (this.filtroActual) {
       case 'pagados':
-        this.mantencionesFiltradas = this.mantenciones.filter((m: any) => m.pagado);
+        this.mantencionesFiltradas = this.mantenciones.filter((m: any) => esMantencionPagada(m));
         break;
       case 'pendientes':
-        this.mantencionesFiltradas = this.mantenciones.filter((m: any) => !m.pagado);
+        this.mantencionesFiltradas = this.mantenciones.filter((m: any) => !esMantencionPagada(m));
         break;
       default:
         this.mantencionesFiltradas = this.mantenciones;
         break;
     }
+  }
+
+  /** Usado por el template para el botón de pago. */
+  esPagado(mantencion: Mantencion): boolean {
+    return esMantencionPagada(mantencion);
   }
 
   trackByMantencion(_index: number, mantencion: Mantencion): string {

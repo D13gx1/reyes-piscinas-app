@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonIcon, IonButton } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { cashOutline, logoWhatsapp, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
+import { esMantencionPagada } from '../../utils/mantencion';
 
 addIcons({
   'cash-outline': cashOutline,
@@ -25,6 +26,9 @@ export interface DeudaSummary {
   templateUrl: './resumen-deuda.component.html',
   styleUrls: ['./resumen-deuda.component.scss'],
   standalone: true,
+  // Solo depende de sus @Input y de su propio estado: no necesita re-renderizarse
+  // cuando el padre hace cualquier otra cosa.
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -58,7 +62,7 @@ export class ResumenDeudaComponent implements OnChanges {
   }
 
   private calcularResumen() {
-    const mantencionesPendientes = this.mantenciones.filter(m => !m.pagado && !m.suspendida);
+    const mantencionesPendientes = this.mantenciones.filter(m => !esMantencionPagada(m) && !m.suspendida);
     const totalPendiente = mantencionesPendientes.reduce((sum, m) => sum + (m.precio || 0), 0);
 
     this.resumenDeuda = {
@@ -70,12 +74,14 @@ export class ResumenDeudaComponent implements OnChanges {
     };
   }
 
+  private readonly currencyFormatter = new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0
+  });
+
   formatearPrecio(precio: number): string {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0
-    }).format(precio);
+    return this.currencyFormatter.format(precio);
   }
 
   enviarPorWhatsApp() {

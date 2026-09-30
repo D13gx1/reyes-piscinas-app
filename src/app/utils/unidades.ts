@@ -39,6 +39,13 @@ function aNumero(valor: number | null | undefined): number {
   return isNaN(n) ? 0 : n;
 }
 
+// Estos formatters se invocan varias veces por fila en las listas, así que se
+// construyen una sola vez. `toLocaleString()` crea uno internamente en cada
+// llamada, que es de las operaciones más caras de las que corren en cada ciclo
+// de detección de cambios.
+const FORMATTER_ENTEROS = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+const FORMATTER_DECIMALES = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
+
 /**
  * Cantidad de decimales según magnitud: los kilos chicos necesitan precisión
  * (0.25 kg) y los grandes se leen mejor redondos (3.4 kg).
@@ -76,13 +83,12 @@ export function formatearKgValor(valor: number | null | undefined): string {
 export function formatearGramos(valor: number | null | undefined): string {
   const kilos = aNumero(valor);
   const gramos = kilosAGramos(kilos);
-  return `${gramos.toLocaleString('es-CL', { maximumFractionDigits: 0 })} g`;
+  return `${FORMATTER_ENTEROS.format(gramos)} g`;
 }
 
 /** Formatea una cantidad de pastillas / unidades. */
 export function formatearUnidades(valor: number | null | undefined): string {
-  const n = aNumero(valor);
-  return n.toLocaleString('es-CL', { maximumFractionDigits: 2 });
+  return FORMATTER_DECIMALES.format(aNumero(valor));
 }
 
 /**

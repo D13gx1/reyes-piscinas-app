@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
@@ -26,6 +27,7 @@ import {
 } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../services/cliente.service';
 import { formatearKgValor, formatearGramos, formatearUnidades, CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../utils/unidades';
+import { nuevoIdRegistro, esMantencionSaltada } from '../../utils/mantencion';
 
 interface ClienteDelDia {
   id: string;
@@ -90,11 +92,19 @@ addIcons({
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  private destroyRef = inject(DestroyRef);
 
   // Formato de unidades químicas (los valores llegan en kilos)
   formatearKgValor = formatearKgValor;
   formatearGramos = formatearGramos;
   formatearUnidades = formatearUnidades;
+
+  // Se construye una vez: el template lo llama hasta 8 veces por fila y en cada
+  // ciclo de detección. `toLocaleString()` crea un formatter interno por llamada.
+  private readonly precioFormatter = new Intl.NumberFormat('es-CL', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
 
   fechaHoy!: string;
   diaHoy!: string;
@@ -154,7 +164,10 @@ export class HomePage implements OnInit {
   }
 
   ngOnInit() {
-    this.cargarClientesDelDia();
+    // Cada cambio en los clientes (de esta u otra pantalla) rearma el día al instante
+    this.clienteService.clientes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cargarClientesDelDia());
   }
 
   async deshacerBorrado(clienteId: string) {
@@ -432,10 +445,11 @@ export class HomePage implements OnInit {
     this.dayShort = this.diaHoy.substring(0, 3).toUpperCase();
     this.isToday = this.esMismaFecha(this.fechaSeleccionada, this.fechaActual);
 
+    // Al cambiar de día siempre se parte viendo lo pendiente
+    this.seccionActiva = 'porRealizar';
+
     // Recargar clientes para el día seleccionado
     this.cargarClientesDelDia();
-
-    
   }
 
   cambiarMes(direccion: number) {
@@ -651,11 +665,8 @@ export class HomePage implements OnInit {
     if (!precio || precio === 0) {
       return '0';
     }
-    
-    return precio.toLocaleString('es-CL', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    });
+
+    return this.precioFormatter.format(precio);
   }
 
   // Editar el precio del cliente desde el home
@@ -956,14 +967,10 @@ export class HomePage implements OnInit {
     this.progresoDelDia = (this.clientesRealizados.length / total) * 100;
   }
 
-  async refrescarClientes() {
-    this.isLoading = true;
-    
-    // Simular delay para mostrar loading
-    setTimeout(() => {
-      this.cargarClientesDelDia();
-      this.showToast('Lista actualizada ✅', 'success');
-    }, 1000);
+  // Los datos ya llegan en vivo; el botón solo rearma el día y lo confirma
+  refrescarClientes() {
+    this.cargarClientesDelDia();
+    this.showToast('Lista actualizada ✅', 'success');
   }
 
   async showToast(mensaje: string, color: string) {
@@ -1146,6 +1153,7 @@ export class HomePage implements OnInit {
         // 1. Marcar el día original como saltado/cambiado
         const ahora = new Date();
         const nuevoRegistro = {
+          id: nuevoIdRegistro(),
           fecha: fechaOrigenStr,
           servicio: `Mantención ${this.getServicioTipo(clienteCompleto.programacion?.frecuencia || 'semanal')} - Cambio de día`,
           cloro: 0,
@@ -1167,6 +1175,13 @@ export class HomePage implements OnInit {
         if (!clienteCompleto.skippedDates.includes(fechaOrigenStr)) {
           clienteCompleto.skippedDates.push(fechaOrigenStr);
         }
+
+        // Si la fecha nueva estaba suspendida, se quita la suspensión: el cliente
+        // movido debe quedar pendiente ese día
+        clienteCompleto.skippedDates = clienteCompleto.skippedDates.filter(f => f !== fechaNuevaStr);
+        clienteCompleto.historial = clienteCompleto.historial.filter(
+          h => !(h.fecha === fechaNuevaStr && esMantencionSaltada(h))
+        );
 
         // 2. Según el alcance
         if (alcance === 'una_vez') {
@@ -1253,6 +1268,7 @@ export class HomePage implements OnInit {
     this.clienteService.getClienteById(cliente.id).subscribe({
       next: (clienteCompleto) => {
         const nuevoRegistro = {
+          id: nuevoIdRegistro(),
           fecha: fechaSeleccionadaStr,
           servicio: `Mantención ${this.getServicioTipo(clienteCompleto.programacion?.frecuencia || 'semanal')} - Saltada`,
           cloro: 0,

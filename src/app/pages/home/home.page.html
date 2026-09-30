@@ -244,7 +244,7 @@
               <h4 class="sub-card-title">Productos aplicados</h4>
             </div>
             <div class="productos-grid">
-              <div class="producto-item cloro">
+              <div class="producto-item cloro" [class.vacio]="!cliente.mantenimiento?.cantidadCloro">
                 <div class="producto-icon">
                   <ion-icon name="flask-outline"></ion-icon>
                 </div>
@@ -256,7 +256,7 @@
                   <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadCloro) }}</span>
                 </div>
               </div>
-              <div class="producto-item sube">
+              <div class="producto-item sube" [class.vacio]="!cliente.mantenimiento?.cantidadSubePh">
                 <div class="producto-icon">
                   <ion-icon name="arrow-up-circle-outline"></ion-icon>
                 </div>
@@ -268,19 +268,7 @@
                   <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadSubePh) }}</span>
                 </div>
               </div>
-              <div class="producto-item baja">
-                <div class="producto-icon">
-                  <ion-icon name="arrow-down-circle-outline"></ion-icon>
-                </div>
-                <div class="producto-texto">
-                  <span class="producto-nombre">Baja pH</span>
-                  <span class="producto-valor">
-                    {{ formatearKgValor(cliente.mantenimiento?.cantidadBajaPh) }}<small>kg</small>
-                  </span>
-                  <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadBajaPh) }}</span>
-                </div>
-              </div>
-              <div class="producto-item pastillas">
+              <div class="producto-item pastillas" [class.vacio]="!cliente.mantenimiento?.cantidadPastillas">
                 <div class="producto-icon">
                   <ion-icon name="disc-outline"></ion-icon>
                 </div>
@@ -290,6 +278,18 @@
                     {{ formatearUnidades(cliente.mantenimiento?.cantidadPastillas) }}<small>und.</small>
                   </span>
                   <span class="producto-sub">pastillas</span>
+                </div>
+              </div>
+              <div class="producto-item baja" [class.vacio]="!cliente.mantenimiento?.cantidadBajaPh">
+                <div class="producto-icon">
+                  <ion-icon name="arrow-down-circle-outline"></ion-icon>
+                </div>
+                <div class="producto-texto">
+                  <span class="producto-nombre">Baja pH</span>
+                  <span class="producto-valor">
+                    {{ formatearKgValor(cliente.mantenimiento?.cantidadBajaPh) }}<small>kg</small>
+                  </span>
+                  <span class="producto-sub">{{ formatearGramos(cliente.mantenimiento?.cantidadBajaPh) }}</span>
                 </div>
               </div>
             </div>

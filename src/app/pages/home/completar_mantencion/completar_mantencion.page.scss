@@ -184,8 +184,9 @@ ion-content {
 /* ---------- Niveles ---------- */
 .levels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
+  // Cloro y pH siempre lado a lado, también en el teléfono, para no alargar la página
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .levels-col {
@@ -238,10 +239,10 @@ ion-content {
   --nivel-color: var(--ion-color-primary);
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   width: 100%;
-  min-height: 42px;
-  padding: 8px 10px;
+  min-height: 40px;
+  padding: 7px 8px;
   border: 1.5px solid var(--ion-border-color, #dfeafc);
   border-radius: 12px;
   background: var(--ion-color-light);
@@ -272,13 +273,14 @@ ion-content {
   }
 
   .nivel-etiqueta {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--ion-text-color, #0f172a);
   }
 
   .nivel-rango {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
+    white-space: nowrap;
     color: var(--ion-color-medium);
     font-variant-numeric: tabular-nums;
   }

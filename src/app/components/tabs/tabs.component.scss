@@ -74,8 +74,8 @@
 }
 
 /* ---------- Modo oscuro ---------- */
-body.dark,
-html.dark {
+:host-context(body.dark),
+:host-context(html.dark) {
   .smart-navbar {
     --color-selected: var(--ion-color-primary, #7c6dff);
     background: #0f172a;

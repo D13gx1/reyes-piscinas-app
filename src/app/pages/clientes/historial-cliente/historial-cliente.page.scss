@@ -27,7 +27,7 @@
   }
 }
 
-body.dark {
+:host-context(body.dark) {
   .modern-header {
     --background: var(--ion-toolbar-background);
 

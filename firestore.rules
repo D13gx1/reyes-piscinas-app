@@ -1,9 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permitir todo para desarrollo
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // El documento ya existente debe pertenecer al usuario conectado.
+    function esDuenioDelDoc() {
+      return autenticado() && resource.data.userId == request.auth.uid;
+    }
+
+    // El documento que se está escribiendo debe quedar a nombre del usuario conectado.
+    function esDuenioDelDocNuevo() {
+      return autenticado() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // "clientes": datos personales, precios e historial. Solo su dueño.
+    match /clientes/{clienteId} {
+      allow read:   if esDuenioDelDoc();
+      allow create: if esDuenioDelDocNuevo();
+      // Se exige también que el doc original ya fuera suyo: sin esto, un
+      // updatePodría reescribir el userId de un cliente ajeno y tomar su control.
+      allow update: if esDuenioDelDoc() && esDuenioDelDocNuevo();
+      allow delete: if esDuenioDelDoc();
+    }
+
+    // "migraciones": marcador de versión de la migración de unidades.
+    match /migraciones/{migracionId} {
+      allow read:        if esDuenioDelDoc();
+      allow create, update: if esDuenioDelDocNuevo();
+      allow delete:      if false;
+    }
+
+    // "test": colección de depuración. No debe existir en producción.
+    match /test/{testId} {
+      allow read, write: if false;
+    }
+
+    // Cualquier otra colección queda denegada.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
-} 
+}

@@ -268,7 +268,7 @@
     <!-- ===== HISTORIAL ===== -->
     <div class="mantenciones-container">
       <app-historial-mantenciones
-        [mantenciones]="transformarHistorialParaComponente(mantenciones)"
+        [mantenciones]="mantencionesParaComponente"
         [titulo]="'Historial de Mantenciones'"
         [mostrarFiltros]="true"
         (onMantencionClick)="verDetalleMantencion($event)"

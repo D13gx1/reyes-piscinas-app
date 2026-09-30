@@ -15,32 +15,6 @@
   box-sizing: border-box;
 }
 
-body.dark .historial-container,
-body.dark .historial-header,
-body.dark .mantencion-card,
-body.dark .sub-card,
-body.dark .empty-state-modern,
-body.dark .producto-item,
-body.dark .borrar-button {
-  background: var(--ion-background-color) !important;
-  border-color: var(--ion-border-color) !important;
-}
-
-body.dark .historial-title,
-body.dark .cliente-nombre,
-body.dark .sub-card-title,
-body.dark .estado-label,
-body.dark .mantencion-fecha,
-body.dark .estado-valor,
-body.dark .producto-nombre,
-body.dark .producto-valor,
-body.dark .producto-sub,
-body.dark .filter-tab,
-body.dark .empty-state-modern h3,
-body.dark .empty-state-modern p {
-  color: #ffffff !important;
-}
-
 :host-context(body.dark),
 :host-context(html.dark) {
   .historial-container,
@@ -275,7 +249,9 @@ body.dark .empty-state-modern p {
         flex: 1;
         overflow: hidden;
         white-space: nowrap;
-        text-overflow: ellipsis;
+        // Nombre largo: se desvanece hacia el precio en vez de cortar con "..."
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
         padding-right: 8px;
       }
       
@@ -341,7 +317,8 @@ body.dark .empty-state-modern p {
 }
 
 // Estado del agua - dentro de sub-card
-// Cloro y pH van uno al lado del otro, como antes
+// Cloro y pH van uno al lado del otro; el estado (Ideal/Bajo/Alto) va debajo,
+// centrado dentro de cada recuadro
 .estado-agua {
   display: flex;
   flex-direction: row;
@@ -352,12 +329,18 @@ body.dark .empty-state-modern p {
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
     padding: 8px 10px;
     border-radius: 12px;
     background: var(--ion-color-light, #f1f5f9);
     border: 1px solid var(--ion-border-color, #e2e8f0);
+
+    .estado-fila {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .estado-label {
       display: inline-flex;
@@ -391,11 +374,11 @@ body.dark .empty-state-modern p {
     }
 
     .estado-badge {
+      align-self: center;
       font-weight: 600;
-      font-size: 0.7rem;
-      padding: 3px 10px;
+      font-size: 0.6rem;
+      padding: 2px 10px;
       border-radius: 999px;
-      flex-shrink: 0;
       text-transform: uppercase;
       letter-spacing: 0.3px;
       white-space: nowrap;
@@ -427,6 +410,12 @@ body.dark .empty-state-modern p {
   width: 100%;
   
   .producto-item {
+    // Producto no usado (0): se atenúa para que no compita con los que sí se aplicaron
+    &.vacio {
+      opacity: 0.4;
+      filter: grayscale(1);
+    }
+
     --producto-color: #64748b;
     display: flex;
     align-items: center;
@@ -657,15 +646,10 @@ body.dark .empty-state-modern p {
       .estado-item {
         flex: 1;
         min-width: 0;
-        justify-content: space-between;
         gap: 4px;
 
         .estado-label {
           font-size: 0.85rem;
-        }
-
-        .estado-badge {
-          padding: 4px 8px;
         }
       }
     }
@@ -687,4 +671,15 @@ body.dark .empty-state-modern p {
   .suspendida-card .suspendida-text {
     color: #94a3b8;
   }
+}
+
+// Papelera junto al título de una mantención suspendida
+.sub-card-header .borrar-button.borrar-inline {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+}
+
+.sub-card-header .sub-card-title {
+  min-width: 0;
 }

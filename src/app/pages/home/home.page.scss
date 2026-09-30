@@ -190,7 +190,7 @@ ion-content {
   }
 }
 
-body.dark {
+:host-context(body.dark) {
   .calendario-completo {
     background: var(--ion-card-background);
     box-shadow: var(--app-shadow-soft);
@@ -266,7 +266,7 @@ body.dark {
   }
 }
 
-body.dark .filter-tab {
+:host-context(body.dark) .filter-tab {
   color: #dfeaff;
 
   &.active {
@@ -321,7 +321,9 @@ body.dark .filter-tab {
         flex: 1;
         overflow: hidden;
         white-space: nowrap;
-        text-overflow: ellipsis;
+        // Nombre largo: se desvanece hacia el precio en vez de cortar con "..."
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
       }
 
       .precio-badge {
@@ -451,6 +453,12 @@ body.dark .filter-tab {
   width: 100%;
 
   .producto-item {
+    // Producto no usado (0): se atenúa para que no compita con los que sí se aplicaron
+    &.vacio {
+      opacity: 0.4;
+      filter: grayscale(1);
+    }
+
     --producto-color: #64748b;
     display: flex;
     align-items: center;
@@ -651,7 +659,7 @@ body.dark .filter-tab {
 }
 
 /* Dark mode del nuevo diseño */
-body.dark {
+:host-context(body.dark) {
   .filter-tabs {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--ion-border-color);

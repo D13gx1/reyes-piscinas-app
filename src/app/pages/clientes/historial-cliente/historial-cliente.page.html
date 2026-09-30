@@ -24,14 +24,14 @@
     <ng-container *ngIf="!isLoading && !error">
       <!-- Resumen de deuda -->
       <app-resumen-deuda
-        [mantenciones]="transformarHistorialParaComponente(historialOrdenado)"
+        [mantenciones]="mantencionesParaComponente"
         [clienteNombre]="cliente?.nombre || ''"
         [clienteTelefono]="cliente?.telefono || ''">
       </app-resumen-deuda>
 
       <div *ngIf="(historialOrdenado?.length || 0) > 0; else emptyState">
         <app-historial-mantenciones
-          [mantenciones]="transformarHistorialParaComponente(historialOrdenado)"
+          [mantenciones]="mantencionesParaComponente"
           [titulo]="'Historial del Cliente'"
           [mostrarFiltros]="true"
           (onMantencionClick)="verDetalleMantencion($event)"

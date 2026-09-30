@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { IonicModule, AlertController, ToastController } from '@ionic/angular';
+import { IonicModule, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../services/cliente.service';
+import { esMantencionSaltada, precioEfectivoMantencion } from '../../utils/mantencion';
 import { addIcons } from 'ionicons';
 import { 
   addOutline, 
@@ -14,8 +16,21 @@ import {
   resizeOutline, 
   callOutline, 
   mailOutline, 
-  peopleOutline 
+  peopleOutline,
+  funnelOutline,
+  arrowUpOutline,
+  arrowDownOutline,
+  searchOutline
 } from 'ionicons/icons';
+
+type CriterioOrden = 'nombre' | 'valor' | 'precio' | 'antiguedad';
+
+const CRITERIOS_ORDEN: { valor: CriterioOrden; texto: string }[] = [
+  { valor: 'nombre', texto: 'Nombre' },
+  { valor: 'valor', texto: 'Valor (total generado)' },
+  { valor: 'precio', texto: 'Precio por mantención' },
+  { valor: 'antiguedad', texto: 'Antigüedad' },
+];
 
 addIcons({
   'add-outline': addOutline,
@@ -28,6 +43,10 @@ addIcons({
   'call-outline': callOutline,
   'mail-outline': mailOutline,
   'people-outline': peopleOutline,
+  'funnel-outline': funnelOutline,
+  'arrow-up-outline': arrowUpOutline,
+  'arrow-down-outline': arrowDownOutline,
+  'search-outline': searchOutline,
 });
 
 @Component({
@@ -38,59 +57,144 @@ addIcons({
   styleUrls: ['./clientes.page.scss'],
 })
 export class ClientesPage implements OnInit {
+  private destroyRef = inject(DestroyRef);
   clientes: Cliente[] = [];
   clientesActivos: Cliente[] = [];
   clientesInactivos: Cliente[] = [];
   isLoading = false;
+
+  busqueda = '';
+  criterioOrden: CriterioOrden = 'nombre';
+  ascendente = true;
 
   constructor(
     private clienteService: ClienteService,
     private router: Router,
     private route: ActivatedRoute,
     private alertController: AlertController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private actionSheetController: ActionSheetController
   ) {}
+
+  private readonly precioFormatter = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+  formatearPrecio(precio: number): string {
+    return this.precioFormatter.format(precio || 0);
+  }
+
+  get textoCriterio(): string {
+    return CRITERIOS_ORDEN.find(c => c.valor === this.criterioOrden)!.texto.split(' ')[0];
+  }
 
   ngOnInit() {
     this.cargarClientes();
   }
 
-  // Agregar ionViewWillEnter para refrescar cuando se vuelve a la página
-  ionViewWillEnter() {
-    this.cargarClientes();
-  }
-
+  // Lista en vivo: se actualiza sola al volver a la página o cuando cambia algo
   cargarClientes() {
-    this.isLoading = true;
-    
-    this.clienteService.getClientes().subscribe({
-      next: (data) => {
-        this.clientes = data;
-        this.organizarClientes();
-        this.isLoading = false;
-        console.log('Clientes cargados:', data.length);
-      },
-      error: (err) => {
-        console.error('Error al cargar clientes', err);
-        this.showToast('Error al cargar clientes ❌', 'danger');
-        this.isLoading = false;
-      }
-    });
+    this.isLoading = this.clientes.length === 0;
+
+    this.clienteService.clientes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          // Copia: esta pantalla modifica `activo` antes de guardar
+          this.clientes = structuredClone(data);
+          this.organizarClientes();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error al cargar clientes', err);
+          this.showToast('Error al cargar clientes ❌', 'danger');
+          this.isLoading = false;
+        }
+      });
   }
 
   organizarClientes() {
-    this.clientesActivos = this.clientes.filter(cliente => cliente.activo);
-    this.clientesInactivos = this.clientes.filter(cliente => !cliente.activo);
+    const termino = this.normalizar(this.busqueda.trim());
+    const visibles = this.clientes
+      .filter(c => !termino || this.normalizar(c.nombre).includes(termino))
+      .sort((a, b) => this.comparar(a, b));
+
+    this.clientesActivos = visibles.filter(cliente => cliente.activo);
+    this.clientesInactivos = visibles.filter(cliente => !cliente.activo);
   }
 
-  async refrescarClientes() {
-    this.isLoading = true;
-    
-    // Simular delay para mostrar loading
-    setTimeout(() => {
-      this.cargarClientes();
-      this.showToast('Lista actualizada ✅', 'success');
-    }, 1000);
+  onBusqueda(valor: string | null | undefined) {
+    this.busqueda = valor || '';
+    this.organizarClientes();
+  }
+
+  async elegirOrden() {
+    const sheet = await this.actionSheetController.create({
+      header: 'Ordenar clientes por',
+      buttons: [
+        ...CRITERIOS_ORDEN.map(c => ({
+          text: c.texto + (c.valor === this.criterioOrden ? '  ✓' : ''),
+          handler: () => {
+            this.criterioOrden = c.valor;
+            this.organizarClientes();
+          }
+        })),
+        { text: 'Cancelar', role: 'cancel' }
+      ]
+    });
+    await sheet.present();
+  }
+
+  alternarDireccion() {
+    this.ascendente = !this.ascendente;
+    this.organizarClientes();
+  }
+
+  // Sin tildes ni mayúsculas, para que "maria" encuentre a "María"
+  private normalizar(texto: string): string {
+    return (texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  private comparar(a: Cliente, b: Cliente): number {
+    let r: number;
+    switch (this.criterioOrden) {
+      case 'valor':
+        r = this.valorTotal(a) - this.valorTotal(b);
+        break;
+      case 'precio':
+        r = (a.precio || 0) - (b.precio || 0);
+        break;
+      case 'antiguedad':
+        // Ascendente = el más antiguo primero
+        r = this.fechaAlta(a).localeCompare(this.fechaAlta(b));
+        break;
+      default:
+        r = 0;
+    }
+    if (r === 0) {
+      r = a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+    }
+    return this.ascendente ? r : -r;
+  }
+
+  /** Lo que ha generado el cliente: suma de lo cobrado en sus mantenciones realizadas. */
+  private valorTotal(cliente: Cliente): number {
+    return (cliente.historial || [])
+      .filter(m => !esMantencionSaltada(m))
+      .reduce((total, m) => total + precioEfectivoMantencion(m, cliente.precio), 0);
+  }
+
+  /**
+   * Fecha desde la que se considera cliente. Los creados antes de existir
+   * `fechaCreacion` usan su primera mantención; sin ninguna, van al final.
+   */
+  private fechaAlta(cliente: Cliente): string {
+    if (cliente.fechaCreacion) return cliente.fechaCreacion.slice(0, 10);
+    const fechas = (cliente.historial || []).map(m => m.fecha).filter(Boolean).sort();
+    return fechas[0] || '9999-12-31';
+  }
+
+  // La lista ya está al día; el botón solo lo confirma
+  refrescarClientes() {
+    this.showToast('Lista actualizada ✅', 'success');
   }
 
   editarCliente(cliente: Cliente) {
@@ -139,6 +243,29 @@ export class ClientesPage implements OnInit {
         cliente.activo = false;
       }
     });
+  }
+
+  // Tocar la etiqueta Activo/Inactivo ofrece el cambio contrario
+  alternarEstado(cliente: Cliente) {
+    if (cliente.activo) {
+      this.desactivarCliente(cliente);
+    } else {
+      this.activarCliente(cliente);
+    }
+  }
+
+  async activarCliente(cliente: Cliente) {
+    const alert = await this.alertController.create({
+      header: 'Activar Cliente',
+      message: `¿Quieres volver a activar a ${cliente.nombre}?`,
+      subHeader: 'El cliente volverá a aparecer en los mantenimientos programados.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel', cssClass: 'secondary' },
+        { text: 'Activar', handler: () => this.procederActivarCliente(cliente) }
+      ]
+    });
+
+    await alert.present();
   }
 
   async desactivarCliente(cliente: Cliente) {

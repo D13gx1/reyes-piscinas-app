@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #08131d 0%, #101d2d 100%);
+  background: var(--ion-background-color, #f4f8ff);
   padding: 1rem;
 }
 
@@ -36,15 +36,15 @@
 /* Use Ionic CSS variables to style ion-button reliably */
 .pay-button,
 .home-button {
-  --background: #0f172a;
-  --color: #ffffff;
+  --background: var(--app-surface, #ffffff);
+  --color: var(--ion-text-color, #0f172a);
   --border-radius: 10px;
   --padding-start: 12px;
   --padding-end: 12px;
   height: 44px;
   text-transform: none;
-  box-shadow: 0 1px 3px rgba(16,24,40,0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(16,24,40,0.12);
+  border: 1px solid var(--ion-border-color, #dfeafc);
 }
 
 .pay-button ion-icon,
@@ -53,17 +53,23 @@
 }
 
 .home-button {
-  --background: #0f172a !important;
+  --background: var(--ion-color-primary) !important;
   --color: #ffffff !important;
+  border: none;
 }
 
 .success-container {
   text-align: center;
   padding: 2rem;
-  background: rgba(16, 29, 45, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  // Mismo degradé que el "Total recaudado" de Estadísticas
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ion-color-primary) 14%, var(--ion-card-background, #ffffff)),
+    color-mix(in srgb, var(--ion-color-secondary) 12%, var(--ion-card-background, #ffffff))
+  );
+  border: 1px solid var(--ion-border-color, #dfeafc);
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--app-shadow-soft);
   max-width: 400px;
   width: 100%;
   display: flex;
@@ -100,14 +106,14 @@
 .success-title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #e5f2ff;
+  color: var(--ion-text-color, #0f172a);
   margin-bottom: 0.5rem;
   animation: fadeInUp 0.8s ease-out 0.5s both;
 }
 
 .success-message {
   font-size: 1rem;
-  color: #dfeaff;
+  color: var(--ion-color-medium, #64748b);
   animation: fadeInUp 0.8s ease-out 0.7s both;
 }
 
@@ -119,5 +125,38 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+/* ---------- Modo oscuro (el diseño original) ---------- */
+:host-context(body.dark),
+:host-context(html.dark) {
+  .success-page {
+    background: linear-gradient(135deg, #08131d 0%, #101d2d 100%);
+  }
+
+  .success-container {
+    background: rgba(16, 29, 45, 0.92);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .success-title {
+    color: #e5f2ff;
+  }
+
+  .success-message {
+    color: #dfeaff;
+  }
+
+  .pay-button {
+    --background: #0f172a;
+    --color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.25);
+  }
+
+  .home-button {
+    --background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 }

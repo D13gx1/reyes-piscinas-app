@@ -231,7 +231,8 @@ ion-text[color="danger"] {
 }
 
 // Dark theme support
-@media (prefers-color-scheme: dark) {
+:host-context(body.dark),
+:host-context(html.dark) {
   .form-section {
     ion-card-header,
     ion-card-content {

@@ -58,8 +58,8 @@ ion-segment {
   padding: 4px;
 
   ion-segment-button {
-    --indicator-color: var(--ion-color-primary);
-    --color-checked: #fff;
+    --indicator-color: var(--app-surface);
+    --color-checked: var(--ion-color-primary);
     --border-radius: 9px;
     font-weight: 600;
     font-size: 0.88rem;
@@ -335,6 +335,17 @@ ion-segment {
       color-mix(in srgb, var(--ion-color-secondary) 18%, var(--ion-card-background))
     );
     border-color: var(--ion-border-color);
+  }
+
+  ion-segment {
+    --background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--ion-border-color);
+
+    ion-segment-button {
+      --indicator-color: rgba(var(--ion-color-primary-rgb), 0.22);
+      --color: #94a3b8;
+      --color-checked: var(--ion-color-primary-tint);
+    }
   }
 
   .selectores-fecha .selector-item {

@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -51,6 +52,7 @@ import {
 } from 'ionicons/icons';
 import { HistorialMantencionesComponent } from '../../components/historial-mantenciones/historial-mantenciones.component';
 import { formatearGramos, formatearUnidades, formatearKgValor } from '../../utils/unidades';
+import { esMantencionPagada } from '../../utils/mantencion';
 
 addIcons({
   'calendar-outline': calendarOutline,
@@ -106,6 +108,7 @@ addIcons({
   ]
 })
 export class EstadisticasPage implements OnInit {
+  private destroyRef = inject(DestroyRef);
   clienteId!: string;
   periodoSeleccionado: string = 'mes';
   mesSeleccionado: number = new Date().getMonth();
@@ -122,6 +125,22 @@ export class EstadisticasPage implements OnInit {
   isMigrationExpanded: boolean = false;
   clientesPagados: any[] = [];
   clientesPendientes: any[] = [];
+
+  /**
+   * Derivado de `mantenciones`, recalculado solo cuando llegan datos nuevos. El
+   * template no lo transforma en línea a propósito: crear un array nuevo en cada
+   * ciclo de detección invalidaba el `@Input` del componente hijo y re-renderizaba
+   * la lista entera aunque no hubiera cambiado nada.
+   */
+  mantencionesParaComponente: any[] = [];
+
+  // Se construye una vez: el template lo llama varias veces por ciclo de
+  // detección y crear un Intl.NumberFormat en cada llamada es caro.
+  private readonly currencyFormatter = new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0
+  });
 
   meses = [
     { valor: 0, nombre: 'Enero' },
@@ -154,12 +173,11 @@ export class EstadisticasPage implements OnInit {
 
   ngOnInit() {
     this.cargarAnios();
-    this.cargarEstadisticas();
-  }
-
-  ionViewWillEnter() {
-    this.cargarAnios();
-    this.cargarEstadisticas();
+    // Se recalcula cada vez que cambian los clientes (pagos, mantenciones nuevas…),
+    // así que volver a esta pestaña no necesita recargar nada
+    this.clienteService.clientes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cargarEstadisticas());
   }
 
   cargarAnios() {
@@ -268,6 +286,7 @@ export class EstadisticasPage implements OnInit {
       next: (mantenciones) => {
         console.log('Mantenciones cargadas:', mantenciones);
         this.mantenciones = mantenciones;
+        this.refrescarMantencionesParaComponente();
         // No aplicar filtro aquí, el componente lo manejará
       },
       error: (err) => {
@@ -315,11 +334,7 @@ export class EstadisticasPage implements OnInit {
   }
 
   formatearPrecio(precio: number): string {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0
-    }).format(precio);
+    return this.currencyFormatter.format(precio);
   }
 
   formatearFecha(fecha: string): string {
@@ -380,10 +395,10 @@ export class EstadisticasPage implements OnInit {
   aplicarFiltro() {
     switch (this.filtroActual) {
       case 'pagados':
-        this.mantencionesFiltradas = this.mantenciones.filter(m => m.pagado);
+        this.mantencionesFiltradas = this.mantenciones.filter(m => esMantencionPagada(m));
         break;
       case 'pendientes':
-        this.mantencionesFiltradas = this.mantenciones.filter(m => !m.pagado);
+        this.mantencionesFiltradas = this.mantenciones.filter(m => !esMantencionPagada(m));
         break;
       default:
         this.mantencionesFiltradas = [...this.mantenciones];
@@ -394,11 +409,8 @@ export class EstadisticasPage implements OnInit {
     return this.meses.find(m => m.valor === mes)?.nombre || '';
   }
 
-  async refrescarEstadisticas() {
-    this.isLoading = true;
-    setTimeout(() => {
-      this.cargarEstadisticas();
-    }, 500);
+  refrescarEstadisticas() {
+    this.cargarEstadisticas();
   }
 
   async confirmarBorrado(mantencion: Mantencion) {
@@ -424,19 +436,9 @@ export class EstadisticasPage implements OnInit {
   }
 
   borrarRegistroHistorial(mantencion: Mantencion) {
-    // Extraer el ID del cliente de la propiedad id de la mantención
-    const clienteId = mantencion.clienteId;
-    const fecha = mantencion.fecha;
-    const hora = mantencion.hora || '00:00';
-
-    this.clienteService.borrarRegistroHistorial(clienteId, fecha, hora).subscribe({
+    this.clienteService.borrarRegistroHistorial(mantencion.clienteId, mantencion).subscribe({
       next: () => {
         this.mostrarToast('Registro eliminado correctamente');
-        // Solución definitiva: Refrescar página completa después de la operación
-        setTimeout(() => {
-          console.log('Forzando recarga completa para sincronización...');
-          window.location.reload();
-        }, 1000);
       },
       error: (error) => {
         console.error('Error al borrar el registro:', error);
@@ -459,22 +461,11 @@ export class EstadisticasPage implements OnInit {
   }
 
   marcarPago(mantencion: Mantencion) {
-    const clienteId = mantencion.clienteId;
-    const fecha = mantencion.fecha;
-    const hora = mantencion.hora || '00:00';
-
-    console.log('Marcando pago para:', clienteId, fecha, hora);
-
-    this.clienteService.marcarPagoHistorial(clienteId, fecha, hora).subscribe({
+    this.clienteService.marcarPagoHistorial(mantencion.clienteId, mantencion).subscribe({
       next: () => {
         console.log('Pago marcado exitosamente');
         this.mostrarToast('Pago registrado correctamente');
         
-        // Solución definitiva: Refrescar página completa después de la operación
-        setTimeout(() => {
-          console.log('Forzando recarga completa para sincronización...');
-          window.location.reload();
-        }, 1000);
       },
       error: (err) => {
         console.error('Error marcando pago:', err);
@@ -497,18 +488,9 @@ export class EstadisticasPage implements OnInit {
   }
 
   deshacerPago(mantencion: Mantencion) {
-    const clienteId = mantencion.clienteId;
-    const fecha = mantencion.fecha;
-    const hora = mantencion.hora || '00:00';
-
-    this.clienteService.deshacerPagoHistorial(clienteId, fecha, hora).subscribe({
+    this.clienteService.deshacerPagoHistorial(mantencion.clienteId, mantencion).subscribe({
       next: () => {
         this.mostrarToast('Pago deshecho correctamente');
-        // Solución definitiva: Refrescar página completa después de la operación
-        setTimeout(() => {
-          console.log('Forzando recarga completa para sincronización...');
-          window.location.reload();
-        }, 1000);
       },
       error: (err) => {
         console.error('Error deshaciendo pago:', err);
@@ -564,6 +546,10 @@ export class EstadisticasPage implements OnInit {
     this.isMigrationExpanded = !this.isMigrationExpanded;
   }
 
+  private refrescarMantencionesParaComponente() {
+    this.mantencionesParaComponente = this.transformarHistorialParaComponente(this.mantenciones);
+  }
+
   // Método para transformar los datos del historial al formato esperado por el componente
   transformarHistorialParaComponente(historial: any[]): any[] {
     return historial.map(item => ({
@@ -580,7 +566,7 @@ export class EstadisticasPage implements OnInit {
       cantidadSubePh: item.cantidadSubePh,
       cantidadPastillas: item.cantidadPastillas,
       hora: item.hora,
-      pagado: item.pagado || false,
+      pagado: esMantencionPagada(item),
       suspendida: item.suspendida || undefined
     }));
   }

@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Firestore, collection, getDocs, query, where } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { Auth, user } from '@angular/fire/auth';
+import { ClienteService } from './cliente.service';
+import { esMantencionPagada, esMantencionSaltada, precioEfectivoMantencion } from '../utils/mantencion';
 
 export interface EstadisticasRecaudacion {
   total: number;
@@ -39,6 +40,8 @@ export interface EstadisticasQuimicas {
 
 export interface Mantencion {
   id: string;
+  /** `id` del registro en el historial (ausente en registros antiguos) */
+  registroId?: string;
   clienteId: string;
   clienteNombre: string;
   fecha: string;
@@ -72,7 +75,7 @@ export class EstadisticasService {
   private auth: Auth = inject(Auth);
   private currentUserId: string | null = null;
 
-  constructor(private firestore: Firestore) {
+  constructor(private clienteService: ClienteService) {
     console.log('🔄 Inicializando EstadisticasService...');
 
     // Suscribirse a cambios en la autenticación
@@ -130,160 +133,49 @@ export class EstadisticasService {
 
   // Obtener todas las mantenciones de una fecha específica
   private getMantencionesPorFecha(fecha: string): Observable<Mantencion[]> {
-    return new Observable<Mantencion[]>(subscriber => {
-      const authSubscription = user(this.auth).subscribe({
-        next: (user) => {
-          if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
-            subscriber.next([]);
-            subscriber.complete();
-            return;
-          }
-
-          console.log('✅ Usuario autenticado con ID:', user.uid);
-          const clientesRef = collection(this.firestore, 'clientes');
-          const q = query(clientesRef, where('userId', '==', user.uid));
-
-          console.log('🔎 Ejecutando consulta Firestore para fecha específica...');
-          from(getDocs(q)).subscribe({
-            next: (snapshot) => {
-              const mantenciones: Mantencion[] = [];
-
-              snapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const historial = data['historial'] || [];
-
-                historial.forEach((mantencion: any) => {
-                  const esSaltada = mantencion.estadoCloro === 'saltada' || (mantencion.servicio && String(mantencion.servicio).toLowerCase().includes('saltada'));
-
-                  if (mantencion.fecha === fecha) {
-                    mantenciones.push({
-                      id: `${doc.id}_${mantencion.fecha}_${mantencion.hora || '00:00'}`,
-                      clienteId: doc.id,
-                      clienteNombre: data['nombre'] || 'Cliente sin nombre',
-                      fecha: mantencion.fecha,
-                      precio: esSaltada ? (mantencion.precioCobrado || 0) : (mantencion.precioCobrado || data['precio'] || 0), // Usar precio cobrado en ese momento, si no existe usar precio actual
-                      cloro: mantencion.cloro || 0,
-                      ph: mantencion.ph || 0,
-                      servicio: mantencion.servicio || 'Mantención',
-                      hora: mantencion.hora,
-                      cantidadCloro: mantencion.cantidadCloro || 0,
-                      cantidadBajaPh: mantencion.cantidadBajaPh || 0,
-                      cantidadSubePh: mantencion.cantidadSubePh || 0,
-                      cantidadPastillas: mantencion.cantidadPastillas || 0,
-                      tipoPh: mantencion.tipoPh
-                      ,
-                      // incluir campos de pago si existen en el historial
-                      pagado: mantencion.pagado,
-                      pago: mantencion.pago,
-                      estadoPago: mantencion.estadoPago,
-                      fechaPago: mantencion.fechaPago,
-                      suspendida: esSaltada || undefined
-                    });
-                  }
-                });
-              });
-
-              console.log(`📊 Se encontraron ${mantenciones.length} mantenciones para la fecha ${fecha}`);
-              subscriber.next(mantenciones);
-              subscriber.complete();
-            },
-            error: (error) => {
-              console.error('❌ Error al cargar mantenciones por fecha:', error);
-              subscriber.error(error);
-            }
-          });
-        },
-        error: (error) => {
-          console.error('❌ Error en la autenticación:', error);
-          subscriber.error(error);
-        },
-        complete: () => {
-          if (authSubscription) {
-            authSubscription.unsubscribe();
-          }
-        }
-      });
-    });
+    return this.getMantencionesPorRango(fecha, fecha);
   }
 
-  // Obtener mantenciones en un rango de fechas
+  // Obtener mantenciones en un rango de fechas (desde el caché compartido de clientes)
   private getMantencionesPorRango(fechaInicio: string, fechaFin: string): Observable<Mantencion[]> {
-    return new Observable<Mantencion[]>(subscriber => {
-      const authSubscription = user(this.auth).subscribe({
-        next: (user) => {
-          if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
-            subscriber.next([]);
-            subscriber.complete();
-            return;
-          }
+    return this.clienteService.clientes$.pipe(
+      take(1),
+      map(clientes => {
+        const mantenciones: Mantencion[] = [];
 
-          console.log('✅ Usuario autenticado con ID:', user.uid);
-          const clientesRef = collection(this.firestore, 'clientes');
-          const q = query(clientesRef, where('userId', '==', user.uid));
+        for (const cliente of clientes) {
+          for (const mantencion of cliente.historial as any[]) {
+            if (mantencion.fecha < fechaInicio || mantencion.fecha > fechaFin) continue;
 
-          console.log('🔎 Ejecutando consulta Firestore para rango de fechas...');
-          from(getDocs(q)).subscribe({
-            next: (snapshot) => {
-              const mantenciones: Mantencion[] = [];
-
-              snapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const historial = data['historial'] || [];
-
-                historial.forEach((mantencion: any) => {
-                  const esSaltada = mantencion.estadoCloro === 'saltada' || (mantencion.servicio && String(mantencion.servicio).toLowerCase().includes('saltada'));
-
-                  if (mantencion.fecha >= fechaInicio && mantencion.fecha <= fechaFin) {
-                    mantenciones.push({
-                      id: `${doc.id}_${mantencion.fecha}_${mantencion.hora || '00:00'}`,
-                      clienteId: doc.id,
-                      clienteNombre: data['nombre'] || 'Cliente sin nombre',
-                      fecha: mantencion.fecha,
-                      precio: esSaltada ? (mantencion.precioCobrado || 0) : (mantencion.precioCobrado || data['precio'] || 0), // Usar precio cobrado en ese momento, si no existe usar precio actual
-                      cloro: mantencion.cloro || 0,
-                      ph: mantencion.ph || 0,
-                      servicio: mantencion.servicio || 'Mantención',
-                      hora: mantencion.hora,
-                      cantidadCloro: mantencion.cantidadCloro || 0,
-                      cantidadBajaPh: mantencion.cantidadBajaPh || 0,
-                      cantidadSubePh: mantencion.cantidadSubePh || 0,
-                      cantidadPastillas: mantencion.cantidadPastillas || 0,
-                      tipoPh: mantencion.tipoPh
-                      ,
-                      // incluir campos de pago si existen en el historial
-                      pagado: mantencion.pagado,
-                      pago: mantencion.pago,
-                      estadoPago: mantencion.estadoPago,
-                      fechaPago: mantencion.fechaPago,
-                      suspendida: esSaltada || undefined
-                    });
-                  }
-                });
-              });
-
-              console.log(`📊 Se encontraron ${mantenciones.length} mantenciones en el rango ${fechaInicio} - ${fechaFin}`);
-              subscriber.next(mantenciones);
-              subscriber.complete();
-            },
-            error: (error) => {
-              console.error('❌ Error al cargar mantenciones por rango:', error);
-              subscriber.error(error);
-            }
-          });
-        },
-        error: (error) => {
-          console.error('❌ Error en la autenticación:', error);
-          subscriber.error(error);
-        },
-        complete: () => {
-          if (authSubscription) {
-            authSubscription.unsubscribe();
+            mantenciones.push({
+              id: `${cliente.id}_${mantencion.fecha}_${mantencion.hora || '00:00'}`,
+              registroId: mantencion.id,
+              clienteId: cliente.id!,
+              clienteNombre: cliente.nombre || 'Cliente sin nombre',
+              fecha: mantencion.fecha,
+              precio: precioEfectivoMantencion(mantencion, cliente.precio || 0),
+              cloro: mantencion.cloro || 0,
+              ph: mantencion.ph || 0,
+              servicio: mantencion.servicio || 'Mantención',
+              hora: mantencion.hora,
+              cantidadCloro: mantencion.cantidadCloro || 0,
+              cantidadBajaPh: mantencion.cantidadBajaPh || 0,
+              cantidadSubePh: mantencion.cantidadSubePh || 0,
+              cantidadPastillas: mantencion.cantidadPastillas || 0,
+              tipoPh: mantencion.tipoPh,
+              // incluir campos de pago si existen en el historial
+              pagado: mantencion.pagado,
+              pago: mantencion.pago,
+              estadoPago: mantencion.estadoPago,
+              fechaPago: mantencion.fechaPago,
+              suspendida: esMantencionSaltada(mantencion) || undefined
+            });
           }
         }
-      });
-    });
+
+        return mantenciones;
+      })
+    );
   }
 
   // Calcular estadísticas a partir de las mantenciones
@@ -361,18 +253,8 @@ export class EstadisticasService {
       map(mantenciones => {
         // Las suspendidas no son deudas ni pagos
         const reales = mantenciones.filter(m => !m.suspendida);
-        const esPagado = (m: any) => {
-          if (m == null) return false;
-          // Soporta varias formas comunes de almacenar pago
-          if (m.pagado === true) return true;
-          if (typeof m.pagado === 'string' && /^(si|sí|true)$/i.test(m.pagado)) return true;
-          if (m.pago === true) return true;
-          if (typeof m.pago === 'string' && /^(si|sí|true)$/i.test(m.pago)) return true;
-          if (m.estadoPago && typeof m.estadoPago === 'string' && /^(pagado|completado)$/i.test(m.estadoPago)) return true;
-          return false;
-        };
 
-        const pagadas = reales.filter(m => esPagado(m));
+        const pagadas = reales.filter(m => esMantencionPagada(m));
         const dineroPagado = pagadas.reduce((sum, m) => sum + (m.precio || 0), 0);
         return { dineroPagado, mantenciones: pagadas };
       })
@@ -385,17 +267,8 @@ export class EstadisticasService {
       map(mantenciones => {
         // Las suspendidas no son deudas ni pagos
         const reales = mantenciones.filter(m => !m.suspendida);
-        const esPagado = (m: any) => {
-          if (m == null) return false;
-          if (m.pagado === true) return true;
-          if (typeof m.pagado === 'string' && /^(si|sí|true)$/i.test(m.pagado)) return true;
-          if (m.pago === true) return true;
-          if (typeof m.pago === 'string' && /^(si|sí|true)$/i.test(m.pago)) return true;
-          if (m.estadoPago && typeof m.estadoPago === 'string' && /^(pagado|completado)$/i.test(m.estadoPago)) return true;
-          return false;
-        };
 
-        const pendientes = reales.filter(m => !esPagado(m));
+        const pendientes = reales.filter(m => !esMantencionPagada(m));
         const dineroPendiente = pendientes.reduce((sum, m) => sum + (m.precio || 0), 0);
         return { dineroPendiente, mantenciones: pendientes };
       })

@@ -23,6 +23,11 @@
     <!-- Contenido expandido -->
     <div class="notificacion-contenido" *ngIf="expandido">
       <div class="contenido-detalles">
+        <div class="detalle-item detalle-total">
+          <ion-icon name="cash-outline" class="detalle-icono"></ion-icon>
+          <span class="detalle-texto">Total deuda pendiente</span>
+          <span class="detalle-monto">{{ formatearPrecio(resumenDeuda.totalPendiente) }}</span>
+        </div>
         <div class="detalle-item">
           <ion-icon name="document-text-outline" class="detalle-icono"></ion-icon>
           <span class="detalle-texto">{{ resumenDeuda.cantidadPendientes }} mantenciones sin pagar</span>

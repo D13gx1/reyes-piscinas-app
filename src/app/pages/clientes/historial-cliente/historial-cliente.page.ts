@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonSpinner, IonIcon, AlertController, ToastController } from '@ionic/angular/standalone';
@@ -9,6 +11,11 @@ import { timeOutline, constructOutline, beakerOutline, flaskOutline, cashOutline
 import { HistorialMantencionesComponent } from '../../../components/historial-mantenciones/historial-mantenciones.component';
 import { ResumenDeudaComponent } from '../../../components/resumen-deuda/resumen-deuda.component';
 import { formatearKgParaTexto, formatearUnidades } from '../../../utils/unidades';
+import {
+  esMantencionPagada,
+  esMantencionSaltada,
+  precioEfectivoMantencion,
+} from '../../../utils/mantencion';
 
 addIcons({
   'time-outline': timeOutline,
@@ -34,11 +41,21 @@ addIcons({
   ]
 })
 export class HistorialClientePage implements OnInit {
+  private destroyRef = inject(DestroyRef);
   clienteId!: string;
   cliente?: Cliente;
   isLoading = true;
   error?: string;
   historialOrdenado: Cliente['historial'] = [];
+
+  /**
+   * Derivado de `historialOrdenado` + `cliente`, recalculado solo cuando cambian
+   * esos datos. El template no lo transforma en línea a propósito: eso creaba un
+   * array nuevo en cada ciclo de detección — y lo pedía dos veces por ciclo, una
+   * por cada binding — lo que además invalidaba el `@Input` del componente hijo
+   * y forzaba a re-renderizar la lista completa.
+   */
+  mantencionesParaComponente: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -129,10 +146,20 @@ export class HistorialClientePage implements OnInit {
       return;
     }
 
-    this.clienteService.getClienteById(this.clienteId).subscribe({
+    // En vivo: al marcar un pago o borrar un registro la vista se actualiza sola
+    this.clienteService.clientes$.pipe(
+      map(clientes => clientes.find(c => c.id === this.clienteId)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (cliente) => {
+        if (!cliente) {
+          this.error = 'Cliente no encontrado';
+          this.isLoading = false;
+          return;
+        }
         this.cliente = cliente;
         this.historialOrdenado = this.ordenarHistorial(cliente.historial || []);
+        this.refrescarMantencionesParaComponente();
         this.isLoading = false;
       },
       error: (err) => {
@@ -143,15 +170,20 @@ export class HistorialClientePage implements OnInit {
     });
   }
 
+  private refrescarMantencionesParaComponente() {
+    this.mantencionesParaComponente = this.transformarHistorialParaComponente(this.historialOrdenado);
+  }
+
   // Método para transformar los datos del historial al formato esperado por el componente
   transformarHistorialParaComponente(historial: any[]): any[] {
     return historial.map(item => {
-      const esSaltada = item.estadoCloro === 'saltada' || (item.servicio && item.servicio.toLowerCase().includes('saltada'));
+      const esSaltada = esMantencionSaltada(item);
       return {
         id: `${item.fecha}_${item.hora || '00:00'}`,
+        registroId: item.id,
         clienteId: this.clienteId || '',
         clienteNombre: this.cliente?.nombre || 'Cliente',
-        precio: esSaltada ? (item.precioCobrado || 0) : (this.cliente?.precio || 0),
+        precio: precioEfectivoMantencion(item, this.cliente?.precio || 0),
         fecha: item.fecha,
         servicio: item.servicio || 'Mantenimiento',
         cloro: item.cloro || 0,
@@ -161,7 +193,7 @@ export class HistorialClientePage implements OnInit {
         cantidadSubePh: item.cantidadSubePh,
         cantidadPastillas: item.cantidadPastillas,
         hora: item.hora,
-        pagado: item.pagado || false,
+        pagado: esMantencionPagada(item),
         suspendida: esSaltada || undefined
       };
     });
@@ -238,14 +270,11 @@ export class HistorialClientePage implements OnInit {
     await alert.present();
   }
 
-  // Métodos de operación con refresco completo
+  // La vista se actualiza sola vía clientes$
   marcarPago(mantencion: any) {
-    this.clienteService.marcarPagoHistorial(this.clienteId, mantencion.fecha, mantencion.hora || '00:00').subscribe({
+    this.clienteService.marcarPagoHistorial(this.clienteId, mantencion).subscribe({
       next: () => {
         this.mostrarToast('Pago registrado correctamente');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
       },
       error: (err) => {
         console.error('Error marcando pago:', err);
@@ -255,12 +284,9 @@ export class HistorialClientePage implements OnInit {
   }
 
   deshacerPago(mantencion: any) {
-    this.clienteService.deshacerPagoHistorial(this.clienteId, mantencion.fecha, mantencion.hora || '00:00').subscribe({
+    this.clienteService.deshacerPagoHistorial(this.clienteId, mantencion).subscribe({
       next: () => {
         this.mostrarToast('Pago deshecho correctamente');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
       },
       error: (err) => {
         console.error('Error deshaciendo pago:', err);
@@ -270,12 +296,9 @@ export class HistorialClientePage implements OnInit {
   }
 
   borrarRegistroHistorial(mantencion: any) {
-    this.clienteService.borrarRegistroHistorial(this.clienteId, mantencion.fecha, mantencion.hora || '00:00').subscribe({
+    this.clienteService.borrarRegistroHistorial(this.clienteId, mantencion).subscribe({
       next: () => {
         this.mostrarToast('Registro eliminado correctamente');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
       },
       error: (error) => {
         console.error('Error al borrar el registro:', error);

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, from } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable, from, of } from 'rxjs';
+import { map, switchMap, take, shareReplay } from 'rxjs/operators';
 import { 
   Firestore, 
   collection, 
@@ -17,10 +17,14 @@ import {
   limit,
   startAfter,
   endBefore,
-  getCountFromServer
+  getCountFromServer,
+  runTransaction,
+  onSnapshot,
+  DocumentData
 } from '@angular/fire/firestore';
 import { Auth, user } from '@angular/fire/auth';
 import { environment } from '../../environments/environment';
+import { RegistroRef, esMismoRegistro } from '../utils/mantencion';
 
 export interface Cliente {
   id?: string; // string para Firestore
@@ -43,6 +47,7 @@ export interface Cliente {
     notas: string; // instrucciones adicionales
   };
   historial: {
+    id?: string; // Solo en registros creados desde que existe el campo
     fecha: string;
     servicio: string;
     cloro: number;
@@ -64,6 +69,7 @@ export interface Cliente {
   skippedDates?: string[]; // Fechas marcadas como "saltadas" (YYYY-MM-DD)
   preciosEspeciales?: { [fecha: string]: number }; // Precios de una sola vez por fecha (YYYY-MM-DD)
   serviciosExtra?: { fecha: string; servicio: string }[]; // Servicios agregados manualmente para una fecha
+  fechaCreacion?: string; // ISO; solo en clientes creados desde que existe el campo
   activo: boolean;
 }
 
@@ -117,115 +123,88 @@ export class ClienteService {
     return this.currentUserId;
   }
 
-  getClientes(): Observable<Cliente[]> {
-    console.log('🔍 Iniciando getClientes()');
-    
-    return new Observable<Cliente[]>(subscriber => {
-      const authSubscription = user(this.auth).subscribe({
-        next: (user) => {
-          if (!user) {
-            console.warn('⚠️ No hay usuario autenticado');
-            subscriber.next([]);
-            subscriber.complete();
-            return;
-          }
+  /**
+   * Clientes del usuario en tiempo real, compartidos por toda la app.
+   *
+   * Hay un solo listener de Firestore: las pantallas leen de este caché en vez
+   * de descargar la colección cada vez que se entra a ellas, y cualquier
+   * escritura (de este u otro dispositivo) llega sola, sin recargar.
+   */
+  readonly clientes$: Observable<Cliente[]> = user(this.auth).pipe(
+    switchMap(u => (u ? this.escucharClientes(u.uid) : of([] as Cliente[]))),
+    shareReplay({ bufferSize: 1, refCount: false })
+  );
 
-          console.log('✅ Usuario autenticado con ID:', user.uid);
-          const clientesRef = collection(this.firestore, this.collectionName);
-          const q = query(clientesRef, where('userId', '==', user.uid));
-          
-          console.log('🔎 Ejecutando consulta Firestore...');
-          from(getDocs(q)).subscribe({
-            next: (snapshot) => {
-              const clientes = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                  id: doc.id,
-                  userId: data['userId'] || '',
-                  nombre: data['nombre'] || '',
-                  direccion: data['direccion'] || '',
-                  telefono: data['telefono'] || '',
-                  email: data['email'] || '',
-                  precio: data['precio'] || 0,
-                  medidas: {
-                    largo: data['medidas']?.['largo'] || 0,
-                    ancho: data['medidas']?.['ancho'] || 0,
-                    profundidad: data['medidas']?.['profundidad'] || 0,
-                  },
-                  programacion: data['programacion'] || {
-                    frecuencia: '',
-                    cantidadPorPeriodo: 1,
-                    diasSemana: [],
-                    horaPreferida: '',
-                    notas: ''
-                  },
-                  historial: data['historial'] || [],
-                  skippedDates: data['skippedDates'] || [],
-                  preciosEspeciales: data['preciosEspeciales'] || {},
-                  serviciosExtra: data['serviciosExtra'] || [],
-                  activo: data['activo'] !== undefined ? data['activo'] : true
-                };
-              });
-              
-              console.log(`📊 Se encontraron ${clientes.length} clientes`);
-              subscriber.next(clientes);
-              subscriber.complete();
-            },
-            error: (error) => {
-              console.error('❌ Error al cargar clientes:', error);
-              subscriber.error(error);
-            }
-          });
-        },
-        error: (error) => {
-          console.error('❌ Error en la autenticación:', error);
+  private escucharClientes(uid: string): Observable<Cliente[]> {
+    const q = query(collection(this.firestore, this.collectionName), where('userId', '==', uid));
+    return new Observable<Cliente[]>(subscriber =>
+      onSnapshot(
+        q,
+        snapshot => subscriber.next(snapshot.docs.map(d => this.mapearCliente(d.id, d.data()))),
+        error => {
+          console.error('❌ Error escuchando clientes:', error);
           subscriber.error(error);
-        },
-        complete: () => {
-          if (authSubscription) {
-            authSubscription.unsubscribe();
-          }
         }
-      });
-    });
+      )
+    );
+  }
+
+  private mapearCliente(id: string, data: DocumentData): Cliente {
+    return {
+      id,
+      userId: data['userId'] || '',
+      nombre: data['nombre'] || '',
+      direccion: data['direccion'] || '',
+      telefono: data['telefono'] || '',
+      email: data['email'] || '',
+      medidas: {
+        largo: data['medidas']?.['largo'] || 0,
+        ancho: data['medidas']?.['ancho'] || 0,
+        profundidad: data['medidas']?.['profundidad'] || 0,
+      },
+      precio: data['precio'] || 0,
+      programacion: {
+        frecuencia: data['programacion']?.['frecuencia'] || '',
+        cantidadPorPeriodo: data['programacion']?.['cantidadPorPeriodo'] || 1,
+        diasSemana: data['programacion']?.['diasSemana'] || [],
+        horaPreferida: data['programacion']?.['horaPreferida'] || '',
+        notas: data['programacion']?.['notas'] || ''
+      },
+      historial: data['historial'] || [],
+      skippedDates: data['skippedDates'] || [],
+      preciosEspeciales: data['preciosEspeciales'] || {},
+      serviciosExtra: data['serviciosExtra'] || [],
+      fechaCreacion: data['fechaCreacion'] || undefined,
+      activo: data['activo'] !== undefined ? data['activo'] : true,
+    };
+  }
+
+  /**
+   * Foto actual de los clientes (sale del caché: instantáneo tras la primera carga).
+   * Se entrega una copia porque las pantallas modifican el objeto antes de guardarlo.
+   */
+  getClientes(): Observable<Cliente[]> {
+    return this.clientes$.pipe(take(1), map(clientes => structuredClone(clientes)));
   }
 
   getClienteById(id: string): Observable<Cliente> {
-    const clienteRef = doc(this.firestore, this.collectionName, id);
-    return from(getDoc(clienteRef)).pipe(
-      map(doc => {
-        if (doc.exists()) {
-          const data = doc.data();
-          // Asegurar que todos los campos estén correctamente inicializados
-          return {
-            id: doc.id,
-            userId: data['userId'] || '',
-            nombre: data['nombre'] || '',
-            direccion: data['direccion'] || '',
-            telefono: data['telefono'] || '',
-            email: data['email'] || '',
-            medidas: {
-              largo: data['medidas']?.['largo'] || 0,
-              ancho: data['medidas']?.['ancho'] || 0,
-              profundidad: data['medidas']?.['profundidad'] || 0,
-            },
-            precio: data['precio'] || 0,
-            programacion: {
-              frecuencia: data['programacion']?.['frecuencia'] || '',
-              cantidadPorPeriodo: data['programacion']?.['cantidadPorPeriodo'] || 1,
-              diasSemana: data['programacion']?.['diasSemana'] || [],
-              horaPreferida: data['programacion']?.['horaPreferida'] || '',
-              notas: data['programacion']?.['notas'] || ''
-            },
-            historial: data['historial'] || [],
-            skippedDates: data['skippedDates'] || [],
-            preciosEspeciales: data['preciosEspeciales'] || {},
-            serviciosExtra: data['serviciosExtra'] || [],
-            activo: data['activo'] !== undefined ? data['activo'] : true,
-          } as Cliente;
-        } else {
-          throw new Error('Cliente no encontrado');
+    return this.clientes$.pipe(
+      take(1),
+      switchMap(clientes => {
+        const enCache = clientes.find(c => c.id === id);
+        if (enCache) {
+          return of(structuredClone(enCache));
         }
+        // Respaldo: un cliente que aún no llegó al listener
+        const clienteRef = doc(this.firestore, this.collectionName, id);
+        return from(getDoc(clienteRef)).pipe(
+          map(snap => {
+            if (!snap.exists()) {
+              throw new Error('Cliente no encontrado');
+            }
+            return this.mapearCliente(snap.id, snap.data());
+          })
+        );
       })
     );
   }
@@ -260,6 +239,7 @@ export class ClienteService {
       skippedDates: cliente['skippedDates'] || [],
       preciosEspeciales: cliente['preciosEspeciales'] || {},
       serviciosExtra: cliente['serviciosExtra'] || [],
+      fechaCreacion: new Date().toISOString(),
       activo: cliente.activo !== undefined ? cliente.activo : true,
     };
     
@@ -292,20 +272,21 @@ export class ClienteService {
         const clienteRef = doc(this.firestore, this.collectionName, cliente.id!);
         console.log(' Referencia a documento creada:', clienteRef);
         
-        // Preservar el historial existente y solo actualizar campos permitidos
+        // Preservar el historial existente y solo actualizar campos permitidos.
+        // `??` y no `||`: un string vacío (p. ej. borrar el email) debe guardarse tal cual.
         const clienteData = {
           userId: cliente.userId || clienteActual.userId,
-          nombre: cliente.nombre || clienteActual.nombre,
-          direccion: cliente.direccion || clienteActual.direccion,
-          telefono: cliente.telefono || clienteActual.telefono,
-          email: cliente.email || clienteActual.email,
-          medidas: cliente.medidas || clienteActual.medidas,
+          nombre: cliente.nombre ?? clienteActual.nombre,
+          direccion: cliente.direccion ?? clienteActual.direccion,
+          telefono: cliente.telefono ?? clienteActual.telefono,
+          email: cliente.email ?? clienteActual.email,
+          medidas: cliente.medidas ?? clienteActual.medidas,
           precio: cliente.precio !== undefined ? cliente.precio : clienteActual.precio,
-          programacion: cliente.programacion || clienteActual.programacion,
+          programacion: cliente.programacion ?? clienteActual.programacion,
           historial: cliente.historial ?? clienteActual.historial,
-          skippedDates: cliente.skippedDates || clienteActual.skippedDates,
-          preciosEspeciales: cliente.preciosEspeciales || (clienteActual as any).preciosEspeciales || {},
-          serviciosExtra: cliente.serviciosExtra || (clienteActual as any).serviciosExtra || [],
+          skippedDates: cliente.skippedDates ?? clienteActual.skippedDates,
+          preciosEspeciales: cliente.preciosEspeciales ?? clienteActual.preciosEspeciales ?? {},
+          serviciosExtra: cliente.serviciosExtra ?? clienteActual.serviciosExtra ?? [],
           activo: cliente.activo !== undefined ? cliente.activo : clienteActual.activo
         };
         
@@ -321,83 +302,68 @@ export class ClienteService {
     );
   }
 
-  // Método para borrar un registro específico del historial de un cliente
-  borrarRegistroHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
-    return this.getClienteById(clienteId).pipe(
-      switchMap(cliente => {
-        if (cliente && cliente.historial) {
-          // Filtrar el historial para eliminar el registro específico
-          cliente.historial = cliente.historial.filter(registro => 
-            !(registro.fecha === fecha && registro.hora === hora)
-          );
-          
-          // Actualizar el cliente con el historial modificado
-          return this.updateCliente(cliente).pipe(
-            map(() => void 0) // devolvemos void para que coincida con la firma
-          );
-        }
-        throw new Error('Cliente no encontrado o sin historial');
-      })
-    );
+  /**
+   * Reescribe el historial de un cliente dentro de una transacción: si otro
+   * dispositivo (o un segundo toque) lo modificó entre la lectura y la escritura,
+   * Firestore reintenta con los datos frescos en vez de pisar el cambio.
+   */
+  private modificarHistorial(
+    clienteId: string,
+    modificar: (historial: Cliente['historial']) => Cliente['historial']
+  ): Observable<void> {
+    const clienteRef = doc(this.firestore, this.collectionName, clienteId);
+    return from(runTransaction(this.firestore, async tx => {
+      const snap = await tx.get(clienteRef);
+      if (!snap.exists()) {
+        throw new Error('Cliente no encontrado');
+      }
+      const historial = (snap.data()['historial'] || []) as Cliente['historial'];
+      tx.update(clienteRef, { historial: this.sanitizarDatosFirestore(modificar(historial)) });
+    }));
+  }
+
+  // Borra un registro específico del historial de un cliente
+  borrarRegistroHistorial(clienteId: string, ref: RegistroRef): Observable<void> {
+    return this.modificarHistorial(clienteId, historial => {
+      const restantes = historial.filter(registro => !esMismoRegistro(registro, ref));
+      if (restantes.length === historial.length) {
+        throw new Error('Registro de historial no encontrado para borrar');
+      }
+      return restantes;
+    });
   }
 
   // Marcar un registro del historial como pagado
-  marcarPagoHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
-    return this.getClienteById(clienteId).pipe(
-      switchMap(cliente => {
-        if (cliente && cliente.historial) {
-          let encontrado = false;
-          cliente.historial = cliente.historial.map(registro => {
-            if (registro.fecha === fecha && (registro.hora || '00:00') === (hora || '00:00')) {
-              encontrado = true;
-              return {
-                ...registro,
-                pagado: true,
-                fechaPago: new Date().toISOString()
-              };
-            }
-            return registro;
-          });
-
-          if (!encontrado) {
-            throw new Error('Registro de historial no encontrado para marcar pago');
-          }
-
-          return this.updateCliente(cliente).pipe(
-            map(() => void 0)
-          );
-        }
-        throw new Error('Cliente no encontrado o sin historial');
-      })
-    );
+  marcarPagoHistorial(clienteId: string, ref: RegistroRef): Observable<void> {
+    return this.modificarHistorial(clienteId, historial => {
+      let encontrado = false;
+      const actualizado = historial.map(registro => {
+        if (!esMismoRegistro(registro, ref)) return registro;
+        encontrado = true;
+        return { ...registro, pagado: true, fechaPago: new Date().toISOString() };
+      });
+      if (!encontrado) {
+        throw new Error('Registro de historial no encontrado para marcar pago');
+      }
+      return actualizado;
+    });
   }
 
   // Deshacer (quitar) el marcado de pago en un registro del historial
-  deshacerPagoHistorial(clienteId: string, fecha: string, hora: string): Observable<void> {
-    return this.getClienteById(clienteId).pipe(
-      switchMap(cliente => {
-        if (cliente && cliente.historial) {
-          let encontrado = false;
-          cliente.historial = cliente.historial.map(registro => {
-            if (registro.fecha === fecha && (registro.hora || '00:00') === (hora || '00:00')) {
-              encontrado = true;
-              const { pagado, fechaPago, pago, estadoPago, ...rest } = registro as any;
-              return { ...rest };
-            }
-            return registro;
-          });
-
-          if (!encontrado) {
-            throw new Error('Registro de historial no encontrado para deshacer pago');
-          }
-
-          return this.updateCliente(cliente).pipe(
-            map(() => void 0)
-          );
-        }
-        throw new Error('Cliente no encontrado o sin historial');
-      })
-    );
+  deshacerPagoHistorial(clienteId: string, ref: RegistroRef): Observable<void> {
+    return this.modificarHistorial(clienteId, historial => {
+      let encontrado = false;
+      const actualizado = historial.map(registro => {
+        if (!esMismoRegistro(registro, ref)) return registro;
+        encontrado = true;
+        const { pagado, fechaPago, pago, estadoPago, ...rest } = registro;
+        return rest;
+      });
+      if (!encontrado) {
+        throw new Error('Registro de historial no encontrado para deshacer pago');
+      }
+      return actualizado;
+    });
   }
 
   deleteCliente(id: string): Observable<void> {
