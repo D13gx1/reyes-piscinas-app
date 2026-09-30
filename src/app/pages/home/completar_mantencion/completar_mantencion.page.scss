@@ -9,8 +9,9 @@ ion-content {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* El padding inferior deja libre la barra de guardar + la navbar flotante */
-  padding: 14px 14px 200px;
+  /* El padding inferior deja libre la barra de guardar (74px) + la navbar
+     flotante (94px) + un margen, para poder ver entero el último campo */
+  padding: 14px 14px calc(220px + env(safe-area-inset-bottom, 0px));
   max-width: 900px;
   margin: 0 auto;
   box-sizing: border-box;
@@ -567,6 +568,63 @@ ion-content {
   }
 }
 
+/* ---------- Campos obligatorios faltantes ---------- */
+.levels-col,
+.fila-corte {
+  border-radius: 12px;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.levels-col.faltante {
+  box-shadow: 0 0 0 2px var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb, 235, 68, 90), 0.06);
+  padding: 6px;
+  margin: -6px;
+
+  .levels-col-title,
+  .levels-col-title ion-icon {
+    color: var(--ion-color-danger);
+  }
+}
+
+.fila-corte.faltante {
+  box-shadow: 0 0 0 2px var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb, 235, 68, 90), 0.08);
+}
+
+.campo-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 0 2px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ion-color-danger);
+  line-height: 1.3;
+
+  ion-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+}
+
+.fila-corte .campo-error {
+  margin: 0 0 8px;
+}
+
+/* Sacudida al llevar al usuario al campo que falta */
+.sacudir {
+  animation: sacudir 0.45s ease;
+}
+
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
 /* ---------- Barra de guardar ---------- */
 /* Barra de acción anclada al borde inferior de la pantalla.
    Va en el slot "fixed" de ion-content (ver template) y es absolute respecto
@@ -678,7 +736,7 @@ ion-content {
 /* ---------- Responsive ---------- */
 @media (max-width: 480px) {
   .form-shell {
-    padding: 12px 12px 98px;
+    padding: 12px 12px calc(220px + env(safe-area-inset-bottom, 0px));
     gap: 12px;
   }
 

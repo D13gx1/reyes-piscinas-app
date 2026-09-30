@@ -79,7 +79,8 @@
       <ion-icon name="notifications-outline" slot="start"></ion-icon>
       <ion-label class="notification-setting">
         <h3>Notificaciones</h3>
-        <p>Recibirás un recordatorio a las 20:00 con las mantenciones del día siguiente y avisos de fin de mes.</p>
+        <p *ngIf="!notificacionesActivadas">Recordatorios de mantenciones y avisos de cobro.</p>
+        <p *ngIf="notificacionesActivadas">{{ resumenNotificaciones }}</p>
       </ion-label>
       <ion-toggle
         slot="end"
@@ -87,6 +88,71 @@
         (ionChange)="toggleNotificaciones($event)">
       </ion-toggle>
     </ion-item>
+
+    <!-- Configuración de notificaciones (solo si están activadas) -->
+    <div class="notif-config" *ngIf="notificacionesActivadas">
+      <div class="notif-opcion">
+        <div class="notif-opcion-head">
+          <div class="notif-opcion-texto">
+            <span class="notif-opcion-titulo">Mantenciones de mañana</span>
+            <span class="notif-opcion-desc">Aviso la noche anterior con los clientes que te tocan</span>
+          </div>
+          <ion-toggle
+            [checked]="configNotif.recordatorioDiario"
+            (ionChange)="cambiarConfig({ recordatorioDiario: $event.detail.checked })"
+            aria-label="Recordatorio de mantenciones">
+          </ion-toggle>
+        </div>
+        <label class="notif-campo" *ngIf="configNotif.recordatorioDiario">
+          <ion-icon name="time-outline"></ion-icon>
+          <span>Hora del aviso</span>
+          <input
+            type="time"
+            [value]="configNotif.horaRecordatorio"
+            (change)="cambiarHora('horaRecordatorio', $any($event.target).value)">
+        </label>
+      </div>
+
+      <div class="notif-opcion">
+        <div class="notif-opcion-head">
+          <div class="notif-opcion-texto">
+            <span class="notif-opcion-titulo">Aviso de cobro</span>
+            <span class="notif-opcion-desc">Recordatorio mensual para cobrar a tus clientes</span>
+          </div>
+          <ion-toggle
+            [checked]="configNotif.avisoCobro"
+            (ionChange)="cambiarConfig({ avisoCobro: $event.detail.checked })"
+            aria-label="Aviso de cobro">
+          </ion-toggle>
+        </div>
+        <ng-container *ngIf="configNotif.avisoCobro">
+          <label class="notif-campo">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Día del mes</span>
+            <select
+              [value]="configNotif.diaCobro"
+              (change)="cambiarConfig({ diaCobro: +$any($event.target).value })">
+              <option *ngFor="let dia of diasDelMes" [value]="dia" [selected]="dia === configNotif.diaCobro">
+                {{ dia }}
+              </option>
+            </select>
+          </label>
+          <label class="notif-campo">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Hora del aviso</span>
+            <input
+              type="time"
+              [value]="configNotif.horaCobro"
+              (change)="cambiarHora('horaCobro', $any($event.target).value)">
+          </label>
+        </ng-container>
+      </div>
+
+      <button type="button" class="notif-prueba" (click)="enviarPrueba()" [disabled]="enviandoPrueba">
+        <ion-icon name="paper-plane-outline"></ion-icon>
+        {{ enviandoPrueba ? 'Enviando...' : 'Enviar notificación de prueba' }}
+      </button>
+    </div>
 
     <ion-item button detail="false">
       <ion-icon name="help-circle-outline" slot="start"></ion-icon>

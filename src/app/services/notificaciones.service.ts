@@ -8,17 +8,34 @@ import { Cliente, ClienteService } from './cliente.service';
 import { AuthService } from './auth.service';
 import { firstValueFrom } from 'rxjs';
 
+/** Preferencias de notificaciones que el usuario ajusta desde Perfil. */
+export interface ConfigNotificaciones {
+  /** Recordatorio la noche anterior con las mantenciones del día siguiente. */
+  recordatorioDiario: boolean;
+  /** Hora del recordatorio diario, "HH:mm". */
+  horaRecordatorio: string;
+  /** Aviso mensual para empezar a cobrar. */
+  avisoCobro: boolean;
+  /** Día del mes del aviso de cobro (1-28, para que exista en todos los meses). */
+  diaCobro: number;
+  /** Hora del aviso de cobro, "HH:mm". */
+  horaCobro: string;
+}
+
+export const CONFIG_NOTIFICACIONES_DEFECTO: ConfigNotificaciones = {
+  recordatorioDiario: true,
+  horaRecordatorio: '20:00',
+  avisoCobro: true,
+  diaCobro: 25,
+  horaCobro: '20:00',
+};
+
 @Injectable({
   providedIn: 'root',
 })
 export class NotificacionesService {
   static readonly CLAVE_PREFERENCIA = 'notificaciones_activadas';
-
-  /** Hora (24h) a la que se recuerdan las mantenciones del día siguiente. */
-  private readonly HORA_RECORDATORIO = 20;
-
-  /** Día del mes en que se avisa para empezar a cobrar los pagos. */
-  private readonly DIA_FIN_DE_MES = 25;
+  static readonly CLAVE_CONFIG = 'notificaciones_config';
 
   /** Cuántas noches hacia adelante se programan los recordatorios diarios. */
   private readonly DIAS_A_PROGRAMAR = 7;
@@ -39,6 +56,46 @@ export class NotificacionesService {
   /** Lee la preferencia guardada en el dispositivo. */
   notificacionesActivadas(): boolean {
     return localStorage.getItem(NotificacionesService.CLAVE_PREFERENCIA) === 'true';
+  }
+
+  /** Lee la configuración guardada en el dispositivo (con valores por defecto). */
+  obtenerConfig(): ConfigNotificaciones {
+    try {
+      const guardada = JSON.parse(localStorage.getItem(NotificacionesService.CLAVE_CONFIG) || '{}');
+      return { ...CONFIG_NOTIFICACIONES_DEFECTO, ...guardada };
+    } catch {
+      return { ...CONFIG_NOTIFICACIONES_DEFECTO };
+    }
+  }
+
+  /** Guarda la configuración y re-programa las notificaciones con los nuevos valores. */
+  async guardarConfig(config: ConfigNotificaciones): Promise<void> {
+    localStorage.setItem(NotificacionesService.CLAVE_CONFIG, JSON.stringify(config));
+    await this.programarSiActivadas();
+  }
+
+  /** Envía una notificación a los pocos segundos para comprobar que llegan. */
+  async enviarPrueba(): Promise<boolean> {
+    if (!this.esNativo()) {
+      throw new Error('Las notificaciones solo están disponibles en la app móvil');
+    }
+    if (!(await this.solicitarPermiso())) {
+      return false;
+    }
+    await this.crearCanal();
+    const usuario = await firstValueFrom(this.authService.getUserName());
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: 9999,
+          title: `¡Hola ${usuario}! 🔔`,
+          body: 'Así se verán tus recordatorios. ¡Las notificaciones funcionan!',
+          schedule: { at: new Date(Date.now() + 3000), allowWhileIdle: true },
+          channelId: 'recordatorios',
+        },
+      ],
+    });
+    return true;
   }
 
   /**
@@ -82,16 +139,10 @@ export class NotificacionesService {
       return;
     }
 
-    await LocalNotifications.createChannel({
-      id: 'recordatorios',
-      name: 'Recordatorios',
-      description: 'Recordatorios de mantenciones y pagos',
-      importance: 5,
-      visibility: 1,
-      lights: true,
-    });
-
+    await this.crearCanal();
     await this.cancelarTodas();
+
+    const config = this.obtenerConfig();
 
     const usuario = await firstValueFrom(this.authService.getUserName());
     let clientes: Cliente[] = [];
@@ -103,8 +154,12 @@ export class NotificacionesService {
 
     const notificaciones: LocalNotificationSchema[] = [];
 
-    notificaciones.push(...this.notificacionesDiarias(usuario, clientes));
-    notificaciones.push(...this.notificacionesFinDeMes(usuario));
+    if (config.recordatorioDiario) {
+      notificaciones.push(...this.notificacionesDiarias(usuario, clientes, config.horaRecordatorio));
+    }
+    if (config.avisoCobro) {
+      notificaciones.push(...this.notificacionesFinDeMes(usuario, config.diaCobro, config.horaCobro));
+    }
 
     if (notificaciones.length === 0) {
       return;
@@ -118,23 +173,36 @@ export class NotificacionesService {
     }
   }
 
-  /** Recordatorios diarios a las 20:00 con las mantenciones del día siguiente. */
+  private async crearCanal(): Promise<void> {
+    await LocalNotifications.createChannel({
+      id: 'recordatorios',
+      name: 'Recordatorios',
+      description: 'Recordatorios de mantenciones y pagos',
+      importance: 5,
+      visibility: 1,
+      lights: true,
+    });
+  }
+
+  /** Recordatorios diarios, a la hora configurada, con las mantenciones del día siguiente. */
   private notificacionesDiarias(
     usuario: string,
-    clientes: Cliente[]
+    clientes: Cliente[],
+    hora: string
   ): LocalNotificationSchema[] {
     const notificaciones: LocalNotificationSchema[] = [];
     const ahora = new Date();
+    const [horas, minutos] = this.separarHora(hora);
 
     for (let offset = 1; offset <= this.DIAS_A_PROGRAMAR; offset++) {
-      // El recordatorio se dispara la noche anterior a las 20:00
+      // El recordatorio se dispara la noche anterior a la hora configurada
       // y avisa sobre las mantenciones del día siguiente.
       const fechaObjetivo = this.fechaLimpia(ahora);
       fechaObjetivo.setDate(fechaObjetivo.getDate() + offset);
 
       const fechaDisparo = new Date(fechaObjetivo);
       fechaDisparo.setDate(fechaDisparo.getDate() - 1);
-      fechaDisparo.setHours(this.HORA_RECORDATORIO, 0, 0, 0);
+      fechaDisparo.setHours(horas, minutos, 0, 0);
 
       if (fechaDisparo.getTime() <= ahora.getTime()) {
         continue;
@@ -162,19 +230,20 @@ export class NotificacionesService {
     return notificaciones;
   }
 
-  /** Aviso de fin de mes (día 25) para empezar a cobrar los pagos. */
-  private notificacionesFinDeMes(usuario: string): LocalNotificationSchema[] {
+  /** Aviso mensual (día y hora configurados) para empezar a cobrar los pagos. */
+  private notificacionesFinDeMes(usuario: string, dia: number, hora: string): LocalNotificationSchema[] {
     const notificaciones: LocalNotificationSchema[] = [];
     const ahora = new Date();
+    const [horas, minutos] = this.separarHora(hora);
 
     for (let i = 0; i < 6; i++) {
       const mesReferencia = new Date(ahora.getFullYear(), ahora.getMonth() + i, 1);
       const fechaDisparo = new Date(
         mesReferencia.getFullYear(),
         mesReferencia.getMonth(),
-        this.DIA_FIN_DE_MES,
-        this.HORA_RECORDATORIO,
-        0,
+        dia,
+        horas,
+        minutos,
         0
       );
 
@@ -185,13 +254,22 @@ export class NotificacionesService {
       notificaciones.push({
         id: 2000 + i,
         title: `¡Hola ${usuario}! 📆`,
-        body: `Ya casi es fin de mes. Recuerda empezar a cobrar los pagos pendientes de tus clientes.`,
+        body: `Es día de cobro. Recuerda cobrar los pagos pendientes de tus clientes.`,
         schedule: { at: fechaDisparo, allowWhileIdle: true },
         channelId: 'recordatorios',
       });
     }
 
     return notificaciones;
+  }
+
+  /** "HH:mm" → [horas, minutos]; si viene mal formada usa las 20:00. */
+  private separarHora(hora: string): [number, number] {
+    const [h, m] = (hora || '').split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) {
+      return [20, 0];
+    }
+    return [h, m];
   }
 
   /** Hora y fecha limpias (sin minutos ni segundos) a partir de una base. */

@@ -196,6 +196,119 @@ ion-list {
   }
 }
 
+/* ---------- Configuración de notificaciones ---------- */
+.notif-config {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 16px 16px;
+  background: #fff;
+  animation: slideDown 0.22s ease;
+}
+
+.notif-opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--ion-color-light, #f4f5f8);
+}
+
+.notif-opcion-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notif-opcion-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.notif-opcion-titulo {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ion-text-color, #333);
+}
+
+.notif-opcion-desc {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.notif-campo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ion-border-color, #e2e8f0);
+  font-size: 0.85rem;
+  color: var(--ion-text-color, #333);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--ion-color-primary);
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+  }
+
+  input,
+  select {
+    height: 36px;
+    min-width: 96px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1.5px solid var(--ion-border-color, #dfeafc);
+    background: var(--ion-card-background, #fff);
+    color: var(--ion-color-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    outline: none;
+
+    &:focus {
+      border-color: var(--ion-color-primary);
+    }
+  }
+}
+
+.notif-prueba {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 17px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
 ion-button {
   font-weight: 600;
   box-shadow: 0 6px 12px rgba(255, 0, 0, 0.2);
@@ -235,6 +348,33 @@ ion-button {
 
   ion-item ion-icon {
     color: var(--ion-color-primary);
+  }
+
+  .notif-config {
+    background: var(--ion-card-background);
+    border-bottom: 1px solid var(--ion-border-color);
+  }
+
+  .notif-opcion {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .notif-opcion-titulo,
+  .notif-campo {
+    color: #e5f2ff;
+  }
+
+  .notif-campo input,
+  .notif-campo select {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--ion-border-color);
+    color: var(--ion-color-primary-tint);
+    color-scheme: dark;
+  }
+
+  .notif-prueba {
+    background: rgba(var(--ion-color-primary-rgb), 0.22);
+    color: var(--ion-color-primary-tint);
   }
 
   .migration-notification {

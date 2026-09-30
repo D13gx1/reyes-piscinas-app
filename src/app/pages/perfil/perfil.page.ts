@@ -17,7 +17,15 @@ import {
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { ClienteService } from '../../services/cliente.service';
-import { NotificacionesService } from '../../services/notificaciones.service';
+import { ConfigNotificaciones, NotificacionesService } from '../../services/notificaciones.service';
+import { addIcons } from 'ionicons';
+import { timeOutline, calendarOutline, paperPlaneOutline } from 'ionicons/icons';
+
+addIcons({
+  'time-outline': timeOutline,
+  'calendar-outline': calendarOutline,
+  'paper-plane-outline': paperPlaneOutline,
+});
 import { MigracionUnidadesService } from '../../services/migracion-unidades.service';
 
 @Component({
@@ -44,6 +52,10 @@ export class PerfilPage implements OnInit, OnDestroy {
   isDarkMode = false;
   isMigrationExpanded = false;
   notificacionesActivadas = false;
+  configNotif!: ConfigNotificaciones;
+  enviandoPrueba = false;
+  /** Hasta el 28 para que el aviso exista también en febrero. */
+  readonly diasDelMes = Array.from({ length: 28 }, (_, i) => i + 1);
   /** true = las cantidades químicas ya están en kilos */
   unidadesEnKilos = true;
   unidadesCargando = false;
@@ -78,6 +90,54 @@ export class PerfilPage implements OnInit, OnDestroy {
     this.applyTheme(this.isDarkMode);
 
     this.notificacionesActivadas = this.notificacionesService.notificacionesActivadas();
+    this.configNotif = this.notificacionesService.obtenerConfig();
+  }
+
+  /** Texto bajo "Notificaciones" que resume lo que está configurado. */
+  get resumenNotificaciones(): string {
+    const partes: string[] = [];
+    if (this.configNotif.recordatorioDiario) {
+      partes.push(`Mantenciones a las ${this.configNotif.horaRecordatorio}`);
+    }
+    if (this.configNotif.avisoCobro) {
+      partes.push(`cobro el día ${this.configNotif.diaCobro}`);
+    }
+    if (partes.length === 0) {
+      return 'Ningún aviso activado';
+    }
+    const texto = partes.join(' · ');
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  async cambiarConfig(cambios: Partial<ConfigNotificaciones>) {
+    this.configNotif = { ...this.configNotif, ...cambios };
+    try {
+      await this.notificacionesService.guardarConfig(this.configNotif);
+    } catch (error) {
+      console.error('❌ Error al re-programar notificaciones:', error);
+    }
+  }
+
+  /** Ignora el valor vacío que deja el selector de hora al borrarlo. */
+  cambiarHora(campo: 'horaRecordatorio' | 'horaCobro', valor: string) {
+    if (!valor) return;
+    this.cambiarConfig({ [campo]: valor });
+  }
+
+  async enviarPrueba() {
+    this.enviandoPrueba = true;
+    try {
+      const enviada = await this.notificacionesService.enviarPrueba();
+      await this.mostrarToast(
+        enviada
+          ? 'Te llegará una notificación en unos segundos 🔔'
+          : 'Para recibir notificaciones debes permitirlas en los ajustes del teléfono 😕'
+      );
+    } catch {
+      await this.mostrarToast('Las notificaciones solo funcionan en la app móvil');
+    } finally {
+      this.enviandoPrueba = false;
+    }
   }
 
   ngOnDestroy() {

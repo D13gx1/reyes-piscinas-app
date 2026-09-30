@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -37,7 +37,8 @@ import {
   timeOutline,
   scaleOutline,
   closeOutline,
-  informationCircleOutline
+  informationCircleOutline,
+  alertCircleOutline
 } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../../utils/unidades';
@@ -58,7 +59,8 @@ addIcons({
   'time-outline': timeOutline,
   'scale-outline': scaleOutline,
   'close-outline': closeOutline,
-  'information-circle-outline': informationCircleOutline
+  'information-circle-outline': informationCircleOutline,
+  'alert-circle-outline': alertCircleOutline
 });
 
 /** Una opción de nivel de cloro o pH, con su color para pintar el botón. */
@@ -187,6 +189,15 @@ export class CompletarMantencionPage implements OnInit {
   cargando = true;
   guardando = false;
 
+  /** Se activa al intentar guardar: desde ahí se marcan en rojo los campos que faltan. */
+  intentoGuardar = false;
+  /** Campo al que se acaba de llevar al usuario, para sacudirlo. */
+  campoResaltado: 'cloro' | 'ph' | 'horaCorte' | null = null;
+
+  @ViewChild('campoCloro', { read: ElementRef }) campoCloro?: ElementRef<HTMLElement>;
+  @ViewChild('campoPh', { read: ElementRef }) campoPh?: ElementRef<HTMLElement>;
+  @ViewChild('campoHoraCorte', { read: ElementRef }) campoHoraCorte?: ElementRef<HTMLElement>;
+
   // Variables para controlar la selección de botones
   cloroSeleccionado: string | null = null;
   phSeleccionado: string | null = null;
@@ -265,6 +276,14 @@ export class CompletarMantencionPage implements OnInit {
   get horaCorteInvalida(): boolean {
     const control = this.mantencionForm.get('horaCorte');
     return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  get faltaCloro(): boolean {
+    return this.intentoGuardar && !this.cloroSeleccionado;
+  }
+
+  get faltaPh(): boolean {
+    return this.intentoGuardar && !this.phSeleccionado;
   }
 
   // Método para seleccionar el nivel de cloro
@@ -350,24 +369,18 @@ export class CompletarMantencionPage implements OnInit {
       return;
     }
 
+    this.intentoGuardar = true;
+
+    if (this.irAlPrimerCampoFaltante() || !this.cloroSeleccionado || !this.phSeleccionado) {
+      return;
+    }
+
     if (!this.mantencionForm.valid) {
       this.mostrarAlerta('Datos incompletos', 'Revisa los campos obligatorios antes de guardar');
       return;
     }
 
-    // Verificar que se hayan seleccionado los niveles de cloro y pH
-    if (!this.cloroSeleccionado || !this.phSeleccionado) {
-      this.mostrarAlerta('Datos incompletos', 'Por favor seleccione los niveles de cloro y pH');
-      return;
-    }
-
     const formValues = this.mantencionForm.value;
-
-    // Validar que si está llenando, tenga hora de corte
-    if (this.piscinaLlenando && !formValues.horaCorte) {
-      this.mostrarAlerta('Datos incompletos', 'Por favor indique la hora para cortar el agua');
-      return;
-    }
 
     const fechaHoy = this.formatearFechaLocal(new Date());
     const precioEspecial = this.cliente.preciosEspeciales?.[fechaHoy];
@@ -422,6 +435,54 @@ export class CompletarMantencionPage implements OnInit {
         this.mostrarAlerta('Error', 'No se pudo guardar el registro de mantención');
       }
     });
+  }
+
+  /**
+   * Busca el primer campo obligatorio sin completar (en el orden en que aparecen
+   * en pantalla), hace scroll hasta él y lo sacude. Devuelve true si faltaba alguno.
+   */
+  private irAlPrimerCampoFaltante(): boolean {
+    const faltantes: { campo: 'cloro' | 'ph' | 'horaCorte'; ref?: ElementRef<HTMLElement>; mensaje: string }[] = [];
+    if (!this.cloroSeleccionado) {
+      faltantes.push({ campo: 'cloro', ref: this.campoCloro, mensaje: 'Falta el nivel de cloro' });
+    }
+    if (!this.phSeleccionado) {
+      faltantes.push({ campo: 'ph', ref: this.campoPh, mensaje: 'Falta el nivel de pH' });
+    }
+    if (this.piscinaLlenando && !this.mantencionForm.get('horaCorte')?.value) {
+      faltantes.push({ campo: 'horaCorte', ref: this.campoHoraCorte, mensaje: 'Falta la hora para cortar el agua' });
+    }
+
+    if (faltantes.length === 0) {
+      return false;
+    }
+
+    const primero = faltantes[0];
+    primero.ref?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Se limpia antes y se vuelve a poner para que la sacudida se repita en cada intento
+    this.campoResaltado = null;
+    setTimeout(() => {
+      this.campoResaltado = primero.campo;
+      setTimeout(() => (this.campoResaltado = null), 500);
+    }, 250);
+
+    const mensaje = faltantes.length > 1
+      ? `${primero.mensaje} y ${faltantes.length - 1} campo${faltantes.length > 2 ? 's' : ''} más`
+      : primero.mensaje;
+    this.mostrarAviso(mensaje);
+    return true;
+  }
+
+  private async mostrarAviso(mensaje: string) {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 2200,
+      position: 'top',
+      color: 'danger',
+      icon: 'alert-circle-outline'
+    });
+    toast.present();
   }
 
   private formatearFechaLocal(fecha: Date): string {

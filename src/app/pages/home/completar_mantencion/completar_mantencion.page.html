@@ -58,7 +58,11 @@
 
       <div class="levels-grid">
         <!-- Cloro -->
-        <div class="levels-col">
+        <div
+          class="levels-col"
+          #campoCloro
+          [class.faltante]="faltaCloro"
+          [class.sacudir]="campoResaltado === 'cloro'">
           <div class="levels-col-head">
             <span class="levels-col-title">
               <ion-icon name="water-outline"></ion-icon>
@@ -85,10 +89,18 @@
               <ion-icon name="checkmark-outline" class="nivel-check"></ion-icon>
             </button>
           </div>
+          <p class="campo-error" *ngIf="faltaCloro">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            Selecciona el nivel de cloro
+          </p>
         </div>
 
         <!-- pH -->
-        <div class="levels-col">
+        <div
+          class="levels-col"
+          #campoPh
+          [class.faltante]="faltaPh"
+          [class.sacudir]="campoResaltado === 'ph'">
           <div class="levels-col-head">
             <span class="levels-col-title">
               <ion-icon name="flask-outline"></ion-icon>
@@ -115,6 +127,10 @@
               <ion-icon name="checkmark-outline" class="nivel-check"></ion-icon>
             </button>
           </div>
+          <p class="campo-error" *ngIf="faltaPh">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            Selecciona el nivel de pH
+          </p>
         </div>
       </div>
     </section>
@@ -217,7 +233,12 @@
           </ion-toggle>
         </ion-item>
 
-        <div class="fila-corte" *ngIf="piscinaLlenando">
+        <div
+          class="fila-corte"
+          *ngIf="piscinaLlenando"
+          #campoHoraCorte
+          [class.faltante]="horaCorteInvalida"
+          [class.sacudir]="campoResaltado === 'horaCorte'">
           <ion-item lines="none" class="fila">
             <ion-icon name="time-outline" slot="start" class="fila-icon"></ion-icon>
             <ion-label>Hora para cortar el agua</ion-label>
@@ -228,6 +249,10 @@
               [class.invalido]="horaCorteInvalida">
             </ion-input>
           </ion-item>
+          <p class="campo-error" *ngIf="horaCorteInvalida">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            Indica a qué hora hay que cortar el agua
+          </p>
         </div>
 
         <ion-item lines="none" class="fila">

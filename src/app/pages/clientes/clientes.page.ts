@@ -5,6 +5,8 @@ import { IonicModule, AlertController, ToastController, ActionSheetController } 
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../services/cliente.service';
 import { esMantencionSaltada, precioEfectivoMantencion } from '../../utils/mantencion';
+import { defineCustomElement as defineIonFab } from '@ionic/core/components/ion-fab.js';
+import { defineCustomElement as defineIonFabButton } from '@ionic/core/components/ion-fab-button.js';
 import { addIcons } from 'ionicons';
 import { 
   addOutline, 
@@ -48,6 +50,13 @@ addIcons({
   'arrow-down-outline': arrowDownOutline,
   'search-outline': searchOutline,
 });
+
+// La app arranca con provideIonicAngular() (standalone), que solo registra los
+// componentes importados desde '@ionic/angular/standalone'. ion-fab no se usa en
+// ningún otro lado, así que sin esto queda como etiqueta sin definir: sin
+// círculo, sin posición fija y sin poder tocarse.
+defineIonFab();
+defineIonFabButton();
 
 @Component({
   selector: 'app-clientes',

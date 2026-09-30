@@ -318,16 +318,6 @@ h1 {
   border-top: 1px solid var(--ion-color-light-shade);
 }
 
-// Botón flotante
-ion-fab {
-  bottom: 90px !important;
-  right: 20px !important;
-
-  ion-fab-button {
-    --box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  }
-}
-
 // Responsive adjustments
 @media (max-width: 768px) {
   .container {
