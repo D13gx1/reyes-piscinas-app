@@ -35,12 +35,26 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 
-/* Import Roboto Slab font */
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
 
 body {
   background: var(--ion-background-color);
   color: var(--ion-text-color);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Montos, contadores y fechas: los dígitos no "bailan" al cambiar */
+.num,
+.precio-badge,
+.tab-count,
+.stat-value,
+.total-valor {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Foco visible al navegar con teclado / lector de pantalla */
+:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
 }
 
 ion-app,
@@ -129,7 +143,7 @@ ion-select {
   --background-activated: var(--ion-item-background);
   --background-focused: var(--ion-item-background);
   --color: var(--ion-text-color);
-  --placeholder-color: rgba(255, 255, 255, 0.7);
+  --placeholder-color: var(--ion-color-medium);
   --border-radius: 12px;
   --highlight-color-focused: var(--ion-color-primary);
 }
@@ -140,249 +154,29 @@ ion-select-option,
   color: var(--ion-text-color);
 }
 
-body.dark ion-select,
-html.dark ion-select,
-body.dark ion-select::part(native),
-html.dark ion-select::part(native),
-body.dark ion-select::part(container),
-html.dark ion-select::part(container) {
-  --background: #0f172a !important;
-  background: #0f172a !important;
-  color: #ffffff !important;
-}
-
-html.dark,
-body.dark {
-  --ion-background-color: var(--ion-background-color);
-  --ion-text-color: var(--ion-text-color);
-}
-
+/* Modo oscuro: los colores salen de los tokens de variables.scss.
+   Aquí solo van los overlays de Ionic, que no heredan las variables del body. */
 body.dark,
 html.dark {
   color-scheme: dark;
 
-  ion-select {
-    --background: #0f172a;
-    --color: #ffffff;
-    --placeholder-color: rgba(255, 255, 255, 0.75);
-    --border-color: rgba(255, 255, 255, 0.12);
-    background: #0f172a !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  ion-select::part(container),
-  ion-select::part(text),
-  ion-select::part(icon) {
-    color: #ffffff !important;
-  }
-
-  ion-select-option,
-  .select-interface-option {
-    --background: #0f172a;
-    background: #0f172a !important;
-    color: #ffffff !important;
-  }
-
-  ion-popover {
-    --background: #0f172a;
-    --color: #ffffff;
+  ion-popover,
+  ion-action-sheet,
+  ion-alert,
+  ion-modal {
+    --background: var(--ion-card-background);
+    --button-background: var(--ion-card-background);
+    --color: var(--ion-text-color);
+    --button-color: var(--ion-text-color);
+    --header-color: var(--ion-text-color);
+    --message-color: var(--ion-text-color);
     --backdrop-opacity: 0.5;
   }
 
-  ion-popover::part(content) {
-    background: #0f172a !important;
-    color: #ffffff !important;
-  }
-
-  ion-action-sheet {
-    --background: #0f172a;
-    --button-background: #0f172a;
-    --button-color: #ffffff;
-    --color: #ffffff;
-  }
-
-  ion-alert {
-    --background: #0f172a;
-    --button-color: #ffffff;
-    --color: #ffffff;
-    --header-color: #ffffff;
-    --message-color: #ffffff;
-  }
-
-  ion-action-sheet .action-sheet-button,
-  ion-action-sheet .action-sheet-title,
-  ion-alert .alert-button,
-  ion-alert .alert-radio-label,
-  ion-alert .alert-checkbox-label {
-    color: #ffffff !important;
-  }
-
-  ion-action-sheet::part(button),
-  ion-action-sheet::part(title),
-  ion-alert::part(button),
-  ion-alert::part(radio-label),
-  ion-alert::part(checkbox-label),
-  ion-alert::part(title),
-  ion-alert::part(message) {
-    color: #ffffff !important;
-  }
-
-  .selectores-fecha .selector-item input[type="date"] {
-    --background: var(--ion-item-background);
-    background: var(--ion-item-background) !important;
-    color: var(--ion-text-color) !important;
-    border-color: var(--ion-border-color) !important;
-    color-scheme: dark;
-  }
-
-  .selectores-fecha .selector-item input[type="date"]::-webkit-calendar-picker-indicator {
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
     opacity: 0.9;
-  }
-
-  ion-content,
-  ion-page,
-  .ion-page {
-    --background: var(--ion-background-color);
-    background: var(--ion-background-color);
-    color: var(--ion-text-color);
-  }
-
-  app-clientes,
-  app-perfil,
-  app-historial-mantenciones,
-  app-historial-mantenciones .historial-container,
-  .mantenciones-container,
-  .profile-content,
-  .stats-section .stats-container,
-  .cliente-card,
-  .header-container,
-  .contenido-container {
-    background: var(--ion-background-color) !important;
-    color: var(--ion-text-color) !important;
-  }
-
-  .profile-content {
-    background: linear-gradient(135deg, #08131d, #101d2d) !important;
-  }
-
-  ion-item,
-  ion-card,
-  ion-list {
-    --background: var(--ion-card-background);
-    --color: var(--ion-text-color);
-    color: var(--ion-text-color);
-  }
-
-  ion-toolbar {
-    --background: var(--ion-toolbar-background);
-    --color: var(--ion-text-color);
-  }
-
-  .stat-item {
-    background: var(--ion-item-background);
-    border: 1px solid var(--ion-border-color);
-  }
-
-  .stat-item .stat-value,
-  .stat-item .stat-label,
-  .section-header h3,
-  ion-card ion-card-title,
-  ion-card ion-card-title ion-icon,
-  .mantencion-header h3,
-  .chemical-levels .level-item strong,
-  .mantencion-detail,
-  .calendario-dia .dia-numero,
-  .dia-semana-header,
-  .cliente-card .header-container ion-card-title,
-  .cliente-card .header-container ion-card-subtitle,
-  .cliente-card .contenido-container .detalle-item,
-  .empty-state h4,
-  .mantencion-item .mantencion-header h3 {
-    color: #ffffff !important;
-  }
-
-  .calendario-completo {
-    background: var(--ion-card-background);
-    border: 1px solid var(--ion-border-color);
-    box-shadow: var(--app-shadow-soft);
-  }
-
-  .calendario-dia {
-    background: #112233;
-    border-color: var(--ion-border-color);
-  }
-
-  .mes-button-custom {
-    background: var(--ion-item-background);
-    color: var(--ion-text-color);
-    border-color: var(--ion-border-color);
-  }
-
-  .cliente-card,
-  .mantencion-item,
-  ion-card {
-    background: var(--ion-card-background);
-    border-color: var(--ion-border-color);
-  }
-
-  .pay-button {
-    background: var(--ion-item-background);
-    color: var(--ion-text-color);
-    border-color: var(--ion-border-color);
-  }
-
-  app-historial-mantenciones {
-    .historial-container,
-    .empty-state-modern {
-      background: var(--ion-background-color);
-      border-color: var(--ion-border-color);
-    }
-
-    .historial-title,
-    .cliente-nombre,
-    .sub-card-title,
-    .estado-label,
-    .mantencion-fecha,
-    .producto-item span,
-    .producto-item strong,
-    .empty-state-modern h3,
-    .empty-state-modern p,
-    .filter-tab {
-      color: #ffffff !important;
-    }
-
-    .filter-tabs {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--ion-border-color);
-    }
-
-    .mantencion-card,
-    .sub-card,
-    .producto-item,
-    .borrar-button,
-    .empty-state-modern,
-    .pago-button.pagado {
-      background: var(--ion-card-background);
-      border-color: var(--ion-border-color);
-      color: #ffffff;
-    }
-
-    .mantencion-card {
-      border-radius: 16px !important;
-      --border-radius: 16px;
-    }
-
-    .precio-badge {
-      background: rgba(34, 197, 94, 0.18);
-      color: #d9ffe7;
-    }
-
-    .pago-button.pendiente {
-      background: linear-gradient(135deg, #1b8b50, #0f763e);
-      color: white;
-    }
   }
 }
 
@@ -410,27 +204,293 @@ html.dark {
   }
 }
 
+/* ==================== */
+/* Componentes comunes   */
+/* ==================== */
+/* Base compartida: las páginas solo agregan variantes de color. */
+
+/* Encabezado de tarjeta: ícono + título + bajada */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.card-header-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+
+  ion-icon {
+    font-size: 20px;
+  }
+}
+
+.card-header-texto {
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--ion-text-color);
+    line-height: 1.25;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: var(--fs-xs);
+    color: var(--texto-suave);
+    line-height: 1.35;
+  }
+}
+
 /* Estado vacío */
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  color: var(--ion-color-medium);
+  color: var(--texto-suave);
 
-  ion-icon {
+  > ion-icon {
+    font-size: 44px;
     color: var(--ion-color-secondary);
-    margin-bottom: 16px;
+    margin-bottom: var(--sp-3);
   }
 
+  h3,
   h4 {
-    margin: 0 0 8px 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--ion-color-dark);
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--ion-text-color);
   }
 
   p {
-    margin: 0 0 20px 0;
-    font-size: 0.9em;
+    margin: 0 0 var(--sp-4);
+    font-size: var(--fs-sm);
+  }
+}
+
+/* Filtro segmentado: una sola fila de opciones con contador */
+.seg {
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  border-radius: var(--r-md);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-1);
+
+  button {
+    flex: 1;
+    min-height: 40px;
+    min-width: 0;
+    padding: 0 var(--sp-2);
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--texto-suave);
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background 0.18s ease, color 0.18s ease;
+
+    .seg-num {
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      line-height: 20px;
+      font-variant-numeric: tabular-nums;
+      background: var(--ion-color-light);
+      color: var(--ion-text-color);
+    }
+
+    .seg-punto {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--seg-color, var(--ion-color-primary));
+      flex-shrink: 0;
+    }
+
+    &.activo {
+      background: rgba(var(--ion-color-primary-rgb), 0.12);
+      color: var(--ion-color-primary);
+
+      .seg-num {
+        background: var(--ion-color-primary);
+        color: var(--ion-color-primary-contrast);
+      }
+    }
+  }
+}
+
+/* Texto que no cabe: degradado de desvanecimiento (ver theme/_texto.scss) */
+@keyframes desvanecer-borde {
+  from,
+  to {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  }
+}
+
+/* Montos de dinero: fondo verde con esquinas redondeadas en toda la app.
+   !important en color y fondo: gana sobre el color de texto de cada componente. */
+.precio-tag {
+  display: inline-block;
+  // Se ajusta al largo del monto y escala con su tamaño de letra; nunca se estira
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+  line-height: 1.3;
+  background: color-mix(in srgb, var(--estado-hecho) 15%, transparent) !important;
+  color: #15803d !important;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+body.dark .precio-tag {
+  color: #4ade80 !important;
+}
+
+/* Monto que aún no se cobra: amarillo */
+.precio-tag.por-cobrar {
+  background: color-mix(in srgb, #f59e0b 20%, transparent) !important;
+  color: #b45309 !important;
+}
+
+body.dark .precio-tag.por-cobrar {
+  color: #fbbf24 !important;
+}
+
+/* Chip informativo pequeño (servicio, hora, estado) */
+.chip-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--chip-color, var(--ion-color-medium)) 14%, transparent);
+  color: var(--chip-color, var(--texto-suave));
+
+  ion-icon {
+    font-size: 13px;
+  }
+}
+
+/* Botón solo-ícono con área táctil de 44px */
+.btn-icono {
+  width: var(--tap);
+  height: var(--tap);
+  flex-shrink: 0;
+  border: 1px solid var(--ion-border-color);
+  border-radius: var(--r-md);
+  background: var(--app-surface);
+  color: var(--ion-text-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.12s ease, background 0.18s ease;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+/* Botón de acción principal dentro de una tarjeta */
+.btn-accion {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  transition: transform 0.12s ease, filter 0.18s ease;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    filter: brightness(0.95);
+  }
+}
+
+/* Enlace/acción secundaria de texto: "Agregar…", "Ver todo" */
+.btn-texto {
+  min-height: var(--tap);
+  padding: 0 var(--sp-3);
+  border: 1px dashed var(--ion-border-color);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+
+  ion-icon {
+    font-size: 18px;
+  }
+}
+
+/* Título de grupo de una lista */
+.lista-titulo {
+  margin: var(--sp-5) var(--sp-1) var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -472,7 +532,7 @@ html.dark {
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(81, 69, 255, 0.18);
+    box-shadow: 0 8px 18px rgba(2, 119, 182, 0.18);
   }
 
   &:active {
@@ -530,5 +590,86 @@ html.dark ion-toast {
     background: color-mix(in srgb, var(--background, #0f172a) 90%, transparent);
     border-color: rgba(255, 255, 255, 0.14);
   }
+}
+
+
+/* ==================== */
+/* Cambio de pestaña     */
+/* ==================== */
+/* ion-tabs oculta las pestañas inactivas con display: none; al volver a
+   mostrarse, la animación se reinicia sola. Solo afecta a las 4 pestañas
+   principales: las páginas hijas ya tienen la transición de navegación de Ionic. */
+app-home > ion-content,
+app-clientes > ion-content,
+app-estadisticas > ion-content,
+app-perfil > ion-content {
+  animation: entradaPestana 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes entradaPestana {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  app-home > ion-content,
+  app-clientes > ion-content,
+  app-estadisticas > ion-content,
+  app-perfil > ion-content {
+    animation: none;
+  }
+}
+
+/* ==================== */
+/* Encabezado de pestaña */
+/* ==================== */
+/* Mismo fondo que la página, sin franja: el encabezado es parte de la pantalla.
+   Al bajar el contenido aparece una línea y una sombra suave (clase `elevado`,
+   la pone app-encabezado). El contenido (título, chip, avatar) es app-encabezado.
+   Mismo alto en Inicio, Clientes, Estadísticas y Perfil. */
+ion-header.encabezado {
+  box-shadow: none;
+  background: var(--ion-background-color, #f4f8ff);
+  border-bottom: 1px solid transparent;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &.elevado {
+    border-bottom-color: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.1);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  ion-toolbar {
+    --background: transparent;
+    --border-width: 0;
+    --min-height: 76px;
+    --padding-top: 12px;
+    --padding-bottom: 10px;
+  }
+}
+
+/* Modo oscuro: le gana a la regla general "body.dark ion-toolbar" */
+body.dark ion-header.encabezado,
+html.dark ion-header.encabezado {
+  background: var(--ion-background-color, #08131d);
+
+  &.elevado {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  }
+
+  ion-toolbar {
+    --background: transparent;
+  }
+}
+
+/* Deslizar para actualizar: flecha y spinner con el color de la app */
+ion-refresher ion-refresher-content {
+  --color: var(--ion-color-primary);
 }
 

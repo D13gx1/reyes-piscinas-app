@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonIcon, IonButton } from '@ionic/angular/standalone';
+import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { cashOutline, logoWhatsapp, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
+import { cashOutline, logoWhatsapp, chevronDownOutline, chevronUpOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { esMantencionPagada } from '../../utils/mantencion';
 
 addIcons({
@@ -11,6 +11,7 @@ addIcons({
   'logo-whatsapp': logoWhatsapp,
   'chevron-down-outline': chevronDownOutline,
   'chevron-up-outline': chevronUpOutline,
+  'checkmark-circle-outline': checkmarkCircleOutline,
 });
 
 export interface DeudaSummary {
@@ -32,8 +33,7 @@ export interface DeudaSummary {
   imports: [
     CommonModule,
     FormsModule,
-    IonIcon,
-    IonButton
+    IonIcon
   ]
 })
 export class ResumenDeudaComponent implements OnChanges {
@@ -84,6 +84,13 @@ export class ResumenDeudaComponent implements OnChanges {
     return this.currencyFormatter.format(precio);
   }
 
+  /** "mar 14 oct" a partir de "2026-10-14" (sin desfase de zona horaria) */
+  formatearFecha(fecha: string): string {
+    const [a, m, d] = String(fecha || '').split('-').map(Number);
+    if (!a || !m || !d) return fecha || '';
+    return new Date(a, m - 1, d).toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
   enviarPorWhatsApp() {
     if (!this.resumenDeuda.clienteTelefono) {
       console.warn('El cliente no tiene teléfono registrado');
@@ -102,7 +109,9 @@ export class ResumenDeudaComponent implements OnChanges {
     if (this.resumenDeuda.mantencionesPendientes.length > 0) {
       lines.push('*📋 Detalle de mantenciones:*');
       this.resumenDeuda.mantencionesPendientes.forEach((mantencion, index) => {
-        const fecha = new Date(mantencion.fecha).toLocaleDateString('es-CL');
+        // "2026-10-14" con new Date() se lee en UTC y en Chile quedaba un día antes
+        const [an, me, di] = String(mantencion.fecha || '').split('-').map(Number);
+        const fecha = an ? new Date(an, me - 1, di).toLocaleDateString('es-CL') : mantencion.fecha;
         lines.push(`${index + 1}. ${fecha} - ${this.formatearPrecio(mantencion.precio)}`);
       });
       lines.push('');

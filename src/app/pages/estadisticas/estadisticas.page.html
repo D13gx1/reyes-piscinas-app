@@ -1,285 +1,244 @@
-<ion-header [translucent]="true">
+<ion-header class="encabezado ion-no-border">
   <ion-toolbar>
-    <ion-title>Estadísticas</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="refrescarEstadisticas()" [disabled]="isLoading">
-        <ion-icon name="refresh-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
+    <app-encabezado titulo="Estadísticas" subtitulo="Tu negocio en números">
+      <!-- Al marcar un pago: todo lo ganado sube con sonido y luego vuelve el chip del mes -->
+      <span chip class="ganancia" *ngIf="contadorGanancia.estado as g" [class.sumando]="g.sumando" [class.saliendo]="g.saliendo"
+            [attr.aria-label]="'Ganado en total: ' + formatearPrecio(g.mostrado)">
+        <ion-icon name="cash-outline"></ion-icon>
+        {{ formatearPrecio(g.mostrado) }}
+        <small class="chip-nota">en total</small>
+        <span class="ganancia-sube" aria-hidden="true">+{{ formatearPrecio(g.monto) }}</span>
+      </span>
+      <span chip *ngIf="!contadorGanancia.estado" [attr.aria-label]="'Ganado este mes: ' + formatearPrecio(gananciaMesActual)">
+        <ion-icon name="cash-outline"></ion-icon>
+        {{ formatearPrecio(gananciaMesActual) }}
+        <small class="chip-nota">este mes</small>
+      </span>
+    </app-encabezado>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Estadísticas</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <!-- Deslizar hacia abajo para actualizar -->
+  <ion-refresher slot="fixed" (ionRefresh)="onRefrescar($event)">
+    <ion-refresher-content refreshingSpinner="crescent"></ion-refresher-content>
+  </ion-refresher>
 
-  <!-- ===== SELECTOR DE PERÍODO ===== -->
-  <ion-card class="card-periodo">
-    <ion-card-content>
-      <ion-segment [(ngModel)]="periodoSeleccionado" (ionChange)="onPeriodoChange()">
-        <ion-segment-button value="dia">
-          <ion-label>Día</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="mes">
-          <ion-label>Mes</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="anio">
-          <ion-label>Año</ion-label>
-        </ion-segment-button>
-      </ion-segment>
-
-      <div class="selectores-fecha">
-        <div *ngIf="periodoSeleccionado === 'dia'" class="selector-item">
-          <ion-icon name="calendar-outline" class="selector-icon"></ion-icon>
-          <ion-label>Fecha</ion-label>
-          <input type="date" [(ngModel)]="fechaSeleccionada" (change)="onFechaChange()">
-        </div>
-
-        <div *ngIf="periodoSeleccionado === 'mes'" class="selectores-mes">
-          <div class="selector-item">
-            <ion-label>Mes</ion-label>
-            <ion-select [(ngModel)]="mesSeleccionado" (ionChange)="onMesChange()">
-              <ion-select-option *ngFor="let mes of meses" [value]="mes.valor">
-                {{ mes.nombre }}
-              </ion-select-option>
-            </ion-select>
-          </div>
-          <div class="selector-item">
-            <ion-label>Año</ion-label>
-            <ion-select [(ngModel)]="anioSeleccionado" (ionChange)="onAnioChange()">
-              <ion-select-option *ngFor="let anio of anios" [value]="anio">
-                {{ anio }}
-              </ion-select-option>
-            </ion-select>
-          </div>
-        </div>
-
-        <div *ngIf="periodoSeleccionado === 'anio'" class="selector-item">
-          <ion-label>Año</ion-label>
-          <ion-select [(ngModel)]="anioSeleccionado" (ionChange)="onAnioChange()">
-            <ion-select-option *ngFor="let anio of anios" [value]="anio">
-              {{ anio }}
-            </ion-select-option>
-          </ion-select>
-        </div>
+  <div class="contenido">
+    <!-- ===== PERÍODO: tipo + ◀ fecha ▶ ===== -->
+    <section class="periodo">
+      <div class="seg" role="tablist" aria-label="Período">
+        <button type="button" role="tab" [class.activo]="periodoSeleccionado === 'dia'"
+                [attr.aria-selected]="periodoSeleccionado === 'dia'"
+                (click)="periodoSeleccionado = 'dia'; onPeriodoChange()">Día</button>
+        <button type="button" role="tab" [class.activo]="periodoSeleccionado === 'mes'"
+                [attr.aria-selected]="periodoSeleccionado === 'mes'"
+                (click)="periodoSeleccionado = 'mes'; onPeriodoChange()">Mes</button>
+        <button type="button" role="tab" [class.activo]="periodoSeleccionado === 'anio'"
+                [attr.aria-selected]="periodoSeleccionado === 'anio'"
+                (click)="periodoSeleccionado = 'anio'; onPeriodoChange()">Año</button>
       </div>
-    </ion-card-content>
-  </ion-card>
 
-  <!-- Loading -->
-  <div *ngIf="isLoading" class="loading-container">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Cargando estadísticas...</p>
-  </div>
-
-  <ng-container *ngIf="!isLoading && estadisticas">
-    <!-- ===== RECAUDACIÓN ===== -->
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="cash-outline"></ion-icon>
-          Recaudación del {{ nombrePeriodos[periodoSeleccionado] }}
-        </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="stats-grid dos">
-          <div class="stat-item">
-            <div class="stat-icon cantidad">
-              <ion-icon name="receipt-outline"></ion-icon>
-            </div>
-            <div class="stat-value">{{ estadisticas.cantidadMantenciones }}</div>
-            <div class="stat-label">Mantenciones realizadas</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-icon promedio">
-              <ion-icon name="analytics-outline"></ion-icon>
-            </div>
-            <div class="stat-value">{{ formatearPrecio(estadisticas.promedioPorMantencion) }}</div>
-            <div class="stat-label">Promedio por mantención</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-icon pendiente">
-              <ion-icon name="hourglass-outline"></ion-icon>
-            </div>
-            <div class="stat-value">{{ formatearPrecio(dineroPendiente) }}</div>
-            <div class="stat-label">Dinero pendiente</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-icon pagado">
-              <ion-icon name="wallet-outline"></ion-icon>
-            </div>
-            <div class="stat-value">{{ formatearPrecio(dineroPagado) }}</div>
-            <div class="stat-label">Dinero pagado</div>
-          </div>
-        </div>
-
-        <!-- Total recaudado: destacado, abajo de los 4 números -->
-        <div class="total-destacado">
-          <div class="stat-icon ingresos">
-            <ion-icon name="checkmark-done-outline"></ion-icon>
-          </div>
-          <div class="total-texto">
-            <div class="total-label">Total recaudado</div>
-            <div class="total-valor">{{ formatearPrecio(estadisticas.total) }}</div>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ===== PROMEDIO DE QUÍMICOS ===== -->
-    <ion-card *ngIf="estadisticasQuimicas">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="scale-outline"></ion-icon>
-          Promedio de químicos
-        </ion-card-title>
-        <ion-card-subtitle *ngIf="estadisticasQuimicas.cantidadMantenciones > 0">
-          Kilos usados por mantención en el {{ nombrePeriodos[periodoSeleccionado] }}
-        </ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="stats-grid dos">
-          <div class="stat-item stat-quimico cloro" [class.sin-datos]="estadisticasQuimicas.promedioCloroKg === 0">
-            <div class="stat-icon cloro">
-              <ion-icon name="flask-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ formatearKgValor(estadisticasQuimicas.promedioCloroKg) }}<small>kg</small>
-            </div>
-            <div class="stat-sub">{{ formatearGramos(estadisticasQuimicas.promedioCloroKg) }}</div>
-            <div class="stat-label">Promedio cloro</div>
-          </div>
-
-          <div class="stat-item stat-quimico ph" [class.sin-datos]="estadisticasQuimicas.promedioPhKg === 0">
-            <div class="stat-icon ph">
-              <ion-icon name="arrow-up-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ formatearKgValor(estadisticasQuimicas.promedioPhKg) }}<small>kg</small>
-            </div>
-            <div class="stat-sub">{{ formatearGramos(estadisticasQuimicas.promedioPhKg) }}</div>
-            <div class="stat-label">Promedio pH</div>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ===== QUÍMICOS USADOS ===== -->
-    <ion-card *ngIf="estadisticasQuimicas">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="flask-outline"></ion-icon>
-          Químicos usados
-        </ion-card-title>
-        <ion-card-subtitle *ngIf="estadisticasQuimicas.cantidadMantenciones > 0">
-          Total del {{ nombrePeriodos[periodoSeleccionado] }} en
-          {{ estadisticasQuimicas.cantidadMantenciones }} mantenciones
-        </ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="stats-grid dos">
-          <div class="stat-item stat-quimico baja" [class.sin-datos]="estadisticasQuimicas.totalBajaPh === 0">
-            <div class="stat-icon baja">
-              <ion-icon name="arrow-down-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ formatearKgValor(estadisticasQuimicas.totalBajaPh) }}<small>kg</small>
-            </div>
-            <div class="stat-sub">{{ formatearGramos(estadisticasQuimicas.totalBajaPh) }}</div>
-            <div class="stat-label">Total baja pH usado</div>
-          </div>
-
-          <div class="stat-item stat-quimico sube" [class.sin-datos]="estadisticasQuimicas.totalSubePh === 0">
-            <div class="stat-icon sube">
-              <ion-icon name="arrow-up-circle-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ formatearKgValor(estadisticasQuimicas.totalSubePh) }}<small>kg</small>
-            </div>
-            <div class="stat-sub">{{ formatearGramos(estadisticasQuimicas.totalSubePh) }}</div>
-            <div class="stat-label">Total sube pH usado</div>
-          </div>
-
-          <div class="stat-item stat-quimico cloro" [class.sin-datos]="estadisticasQuimicas.totalCloro === 0">
-            <div class="stat-icon cloro">
-              <ion-icon name="flask-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ formatearKgValor(estadisticasQuimicas.totalCloro) }}<small>kg</small>
-            </div>
-            <div class="stat-sub">{{ formatearGramos(estadisticasQuimicas.totalCloro) }}</div>
-            <div class="stat-label">Total cloro usado</div>
-          </div>
-
-          <div class="stat-item stat-quimico pastillas" [class.sin-datos]="estadisticasQuimicas.totalPastillas === 0">
-            <div class="stat-icon pastillas">
-              <ion-icon name="disc-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ formatearUnidades(estadisticasQuimicas.totalPastillas) }}<small>und.</small>
-            </div>
-            <div class="stat-sub">pastillas de cloro</div>
-            <div class="stat-label">Total pastillas usadas</div>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ===== NIVELES PROMEDIO ===== -->
-    <ion-card *ngIf="estadisticasQuimicas">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="water-outline"></ion-icon>
-          Niveles promedio
-        </ion-card-title>
-        <ion-card-subtitle>Lecturas de cloro (ppm) y pH registradas en el período</ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="stats-grid dos">
-          <div class="stat-item">
-            <div class="stat-icon cloro">
-              <ion-icon name="water-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ estadisticasQuimicas.promedioCloro.toFixed(1) }}<small>ppm</small>
-            </div>
-            <div class="stat-label">Cloro promedio</div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-icon ph">
-              <ion-icon name="flask-outline"></ion-icon>
-            </div>
-            <div class="stat-value">
-              {{ estadisticasQuimicas.promedioPh.toFixed(1) }}<small>pH</small>
-            </div>
-            <div class="stat-label">pH promedio</div>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ===== HISTORIAL ===== -->
-    <div class="mantenciones-container">
-      <app-historial-mantenciones
-        [mantenciones]="mantencionesParaComponente"
-        [titulo]="'Historial de Mantenciones'"
-        [mostrarFiltros]="true"
-        (onMantencionClick)="verDetalleMantencion($event)"
-        (onPagoToggle)="togglePago($event)"
-        (onBorrarClick)="borrarMantencion($event)">
-      </app-historial-mantenciones>
-
-      <div *ngIf="mantenciones.length === 0" class="empty-state">
-        <ion-icon name="analytics-outline" size="large"></ion-icon>
-        <p>No hay datos disponibles para el período seleccionado</p>
+      <div class="periodo-nav">
+        <button type="button" class="btn-icono plano" (click)="moverPeriodo(-1)" aria-label="Período anterior">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+        <span class="periodo-etiqueta">
+          {{ etiquetaPeriodo }}
+          <!-- En "Día" se puede saltar a cualquier fecha tocando la etiqueta -->
+          <input *ngIf="periodoSeleccionado === 'dia'" type="date" class="periodo-fecha"
+                 aria-label="Elegir fecha" [(ngModel)]="fechaSeleccionada" (change)="onFechaChange()">
+        </span>
+        <button type="button" class="btn-icono plano" (click)="moverPeriodo(1)" [disabled]="esPeriodoActual"
+                aria-label="Período siguiente">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
       </div>
+    </section>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando estadísticas...</p>
     </div>
-  </ng-container>
+
+    <ng-container *ngIf="!isLoading && estadisticas">
+      <!-- ===== HÉROE: total del período ===== -->
+      <section class="heroe">
+        <span class="heroe-etiqueta">Recaudado {{ enPeriodo }}</span>
+        <div class="heroe-fila">
+          <strong class="heroe-total precio-tag">{{ formatearPrecio(estadisticas.total) }}</strong>
+          <span class="heroe-variacion" *ngIf="variacion !== null"
+                [class.sube]="variacion > 0" [class.baja]="variacion <= 0"
+                [attr.aria-label]="(variacion >= 0 ? 'Sube ' : 'Baja ') + variacion + '% frente a ' + nombreAnterior">
+            <ion-icon [name]="variacion >= 0 ? 'trending-up-outline' : 'trending-down-outline'"></ion-icon>
+            {{ variacion > 0 ? '+' : '' }}{{ variacion }}%
+          </span>
+        </div>
+        <span class="heroe-sub" *ngIf="variacion !== null">frente a {{ nombreAnterior }} · {{ formatearPrecio(totalAnterior || 0) }}</span>
+
+        <!-- Cobrado vs. por cobrar -->
+        <div class="cobro-barra" *ngIf="dineroPagado + dineroPendiente > 0"
+             role="img" [attr.aria-label]="'Cobrado ' + formatearPrecio(dineroPagado) + ', por cobrar ' + formatearPrecio(dineroPendiente)">
+          <span class="cobro-relleno" [style.width.%]="porcentajePagado"></span>
+        </div>
+        <div class="cobro-leyenda">
+          <span><i class="pagado"></i>Cobrado <strong class="precio-tag">{{ formatearPrecio(dineroPagado) }}</strong></span>
+          <span><i class="pendiente"></i>Por cobrar <strong class="precio-tag por-cobrar">{{ formatearPrecio(dineroPendiente) }}</strong></span>
+        </div>
+      </section>
+
+      <!-- ===== KPIs secundarios ===== -->
+      <div class="kpis">
+        <div class="kpi">
+          <span class="kpi-valor num">{{ estadisticas.cantidadMantenciones }}</span>
+          <span class="kpi-etiqueta">Mantenciones</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-valor precio-tag">{{ formatearPrecio(estadisticas.promedioPorMantencion) }}</span>
+          <span class="kpi-etiqueta">Promedio por visita</span>
+        </div>
+      </div>
+
+      <!-- ===== GRÁFICO DE DINERO GANADO (por mes / por año) ===== -->
+      <app-grafico-ingresos [anio]="anioSeleccionado"></app-grafico-ingresos>
+
+      <!-- ===== QUÍMICOS (una sola tarjeta con pestañas) ===== -->
+      <section class="tarjeta-stats" *ngIf="estadisticasQuimicas">
+        <div class="card-header">
+          <div class="card-header-icon">
+            <ion-icon name="flask-outline"></ion-icon>
+          </div>
+          <div class="card-header-texto">
+            <h2>Químicos</h2>
+            <p>{{ estadisticasQuimicas.cantidadMantenciones }} {{ estadisticasQuimicas.cantidadMantenciones === 1 ? 'mantención' : 'mantenciones' }} {{ enPeriodo }}</p>
+          </div>
+        </div>
+
+        <div class="seg seg-chico" role="tablist" aria-label="Ver químicos">
+          <button type="button" role="tab" [class.activo]="tabQuimicos === 'totales'"
+                  [attr.aria-selected]="tabQuimicos === 'totales'" (click)="tabQuimicos = 'totales'">Usado</button>
+          <button type="button" role="tab" [class.activo]="tabQuimicos === 'promedio'"
+                  [attr.aria-selected]="tabQuimicos === 'promedio'" (click)="tabQuimicos = 'promedio'">Por visita</button>
+          <button type="button" role="tab" [class.activo]="tabQuimicos === 'niveles'"
+                  [attr.aria-selected]="tabQuimicos === 'niveles'" (click)="tabQuimicos = 'niveles'">Niveles</button>
+        </div>
+
+        <!-- Qué significa cada pestaña -->
+        <p class="tab-explica" *ngIf="tabQuimicos === 'totales'">Total usado {{ enPeriodo }}</p>
+        <p class="tab-explica" *ngIf="tabQuimicos === 'promedio'">Promedio por visita {{ enPeriodo }}</p>
+
+        <ul class="filas-stats" *ngIf="tabQuimicos === 'totales'">
+          <li [class.sin-datos]="estadisticasQuimicas.totalCloro === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.cloroGranulado"><ion-icon name="flask-outline"></ion-icon></span>
+            <span class="fila-nombre">Cloro granulado</span>
+            <span class="fila-valor num">{{ formatearKgValor(estadisticasQuimicas.totalCloro) }} <small>kg</small></span>
+          </li>
+          <li [class.sin-datos]="estadisticasQuimicas.totalPastillas === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.cloroPastilla"><ion-icon name="disc-outline"></ion-icon></span>
+            <span class="fila-nombre">Cloro en pastilla</span>
+            <span class="fila-valor num">{{ formatearUnidades(estadisticasQuimicas.totalPastillas) }} <small>und.</small></span>
+          </li>
+          <li [class.sin-datos]="estadisticasQuimicas.totalSubePh === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.subePh"><ion-icon name="arrow-up-circle-outline"></ion-icon></span>
+            <span class="fila-nombre">Sube pH</span>
+            <span class="fila-valor num">{{ formatearKgValor(estadisticasQuimicas.totalSubePh) }} <small>kg</small></span>
+          </li>
+          <li [class.sin-datos]="estadisticasQuimicas.totalBajaPh === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.bajaPh"><ion-icon name="arrow-down-circle-outline"></ion-icon></span>
+            <span class="fila-nombre">Baja pH</span>
+            <span class="fila-valor num">{{ formatearKgValor(estadisticasQuimicas.totalBajaPh) }} <small>kg</small></span>
+          </li>
+        </ul>
+
+        <ul class="filas-stats" *ngIf="tabQuimicos === 'promedio'">
+          <li [class.sin-datos]="estadisticasQuimicas.promedioCloroKg === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.cloroGranulado"><ion-icon name="flask-outline"></ion-icon></span>
+            <span class="fila-nombre">Cloro granulado</span>
+            <span class="fila-valor num">{{ formatearKgValor(estadisticasQuimicas.promedioCloroKg) }} <small>kg</small>
+              <em>{{ formatearGramos(estadisticasQuimicas.promedioCloroKg) }}</em></span>
+          </li>
+          <li [class.sin-datos]="estadisticasQuimicas.promedioPastillas === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.cloroPastilla"><ion-icon name="disc-outline"></ion-icon></span>
+            <span class="fila-nombre">Cloro en pastilla</span>
+            <span class="fila-valor num">{{ formatearUnidades(estadisticasQuimicas.promedioPastillas) }} <small>und.</small></span>
+          </li>
+          <li [class.sin-datos]="estadisticasQuimicas.promedioSubePhKg === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.subePh"><ion-icon name="arrow-up-circle-outline"></ion-icon></span>
+            <span class="fila-nombre">Sube pH</span>
+            <span class="fila-valor num">{{ formatearKgValor(estadisticasQuimicas.promedioSubePhKg) }} <small>kg</small>
+              <em>{{ formatearGramos(estadisticasQuimicas.promedioSubePhKg) }}</em></span>
+          </li>
+          <li [class.sin-datos]="estadisticasQuimicas.promedioBajaPhKg === 0">
+            <span class="fila-icono" [style.--producto-color]="colorProducto.bajaPh"><ion-icon name="arrow-down-circle-outline"></ion-icon></span>
+            <span class="fila-nombre">Baja pH</span>
+            <span class="fila-valor num">{{ formatearKgValor(estadisticasQuimicas.promedioBajaPhKg) }} <small>kg</small>
+              <em>{{ formatearGramos(estadisticasQuimicas.promedioBajaPhKg) }}</em></span>
+          </li>
+        </ul>
+
+        <!-- Niveles: promedio con su estado y cómo se repartieron las visitas -->
+        <div class="niveles-stats" *ngIf="tabQuimicos === 'niveles'">
+          <ng-container *ngTemplateOutlet="nivel; context: {
+            nombre: 'Cloro', valor: estadisticasQuimicas.promedioCloro, unidad: 'ppm', tipo: 'cloro', reparto: nivelesCloro }">
+          </ng-container>
+          <ng-container *ngTemplateOutlet="nivel; context: {
+            nombre: 'pH', valor: estadisticasQuimicas.promedioPh, unidad: '', tipo: 'ph', reparto: nivelesPh }">
+          </ng-container>
+        </div>
+
+        <ng-template #nivel let-nombre="nombre" let-valor="valor" let-unidad="unidad" let-tipo="tipo" let-reparto="reparto">
+          <div class="nivel-bloque">
+            <div class="nivel-head">
+              <span class="nivel-nombre">{{ nombre }} promedio</span>
+              <span class="nivel-valor num">{{ valor ? valor.toFixed(1) : '—' }} <small *ngIf="unidad && valor">{{ unidad }}</small></span>
+              <span class="nivel-estado" *ngIf="estadoPromedio(tipo, valor) as e">
+                <span class="punto-muestra" [style.--muestra]="e.muestra"></span>{{ e.etiqueta }}
+              </span>
+            </div>
+
+            <ng-container *ngIf="reparto.length; else sinLecturas">
+              <!-- La leyenda de abajo dice lo mismo en texto -->
+              <div class="reparto-barra" aria-hidden="true">
+                <span *ngFor="let r of reparto" [style.width.%]="r.porcentaje" [style.background]="r.muestra"></span>
+              </div>
+              <ul class="reparto-leyenda">
+                <li *ngFor="let r of reparto">
+                  <span class="punto-muestra" [style.--muestra]="r.muestra"></span>
+                  <span class="reparto-etiqueta">{{ r.etiqueta }}</span>
+                  <strong class="num">{{ r.cantidad }}</strong>
+                </li>
+              </ul>
+            </ng-container>
+            <ng-template #sinLecturas><p class="sin-lecturas">Sin lecturas en este período</p></ng-template>
+          </div>
+        </ng-template>
+      </section>
+
+      <!-- ===== HISTORIAL (plegado) ===== -->
+      <button type="button" class="ver-historial" (click)="mostrarHistorial = !mostrarHistorial"
+              [attr.aria-expanded]="mostrarHistorial">
+        <ion-icon name="receipt-outline"></ion-icon>
+        <span>{{ mostrarHistorial ? 'Ocultar' : 'Ver' }} mantenciones {{ delPeriodo }}</span>
+        <span class="seg-num">{{ mantenciones.length }}</span>
+        <ion-icon name="chevron-down-outline" class="chevron" [class.abierto]="mostrarHistorial"></ion-icon>
+      </button>
+
+      <div class="mantenciones-container" *ngIf="mostrarHistorial">
+        <app-historial-mantenciones
+          [mantenciones]="mantencionesParaComponente"
+          [titulo]="'Historial de Mantenciones'"
+          [mostrarFiltros]="true"
+          (onMantencionClick)="verDetalleMantencion($event)"
+          (onPagoToggle)="togglePago($event)"
+          (onBorrarClick)="borrarMantencion($event)">
+        </app-historial-mantenciones>
+
+        <div *ngIf="mantenciones.length === 0" class="empty-state">
+          <ion-icon name="analytics-outline"></ion-icon>
+          <p>No hay mantenciones en el período seleccionado</p>
+        </div>
+      </div>
+    </ng-container>
+  </div>
 </ion-content>

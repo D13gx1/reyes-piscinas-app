@@ -1,13 +1,19 @@
-<ion-header [translucent]="true" class="modern-header">
-  <ion-toolbar class="custom-toolbar">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/tabs/clientes"></ion-back-button>
-    </ion-buttons>
-    <ion-title class="custom-title">Historial - {{ cliente?.nombre || 'Cliente' }}</ion-title>
+<ion-header class="encabezado ion-no-border">
+  <ion-toolbar>
+    <app-encabezado [titulo]="cliente?.nombre || 'Cliente'" subtitulo="Historial del cliente" volver="/tabs/clientes">
+      <!-- Al marcar un pago: todo lo ganado sube con sonido y luego se va -->
+      <span chip class="ganancia" *ngIf="contadorGanancia.estado as g" [class.sumando]="g.sumando" [class.saliendo]="g.saliendo"
+            [attr.aria-label]="'Ganado en total: ' + formatearMonto(g.mostrado)">
+        <ion-icon name="cash-outline"></ion-icon>
+        {{ formatearMonto(g.mostrado) }}
+        <small class="chip-nota">en total</small>
+        <span class="ganancia-sube" aria-hidden="true">+{{ formatearMonto(g.monto) }}</span>
+      </span>
+    </app-encabezado>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content>
   <div class="container">
     <!-- Loading -->
     <div *ngIf="isLoading" class="loading-container">
@@ -16,23 +22,54 @@
     </div>
 
     <!-- Error -->
-    <div *ngIf="!isLoading && error" class="error">
-      {{ error }}
+    <div *ngIf="!isLoading && error" class="empty-state">
+      <ion-icon name="time-outline"></ion-icon>
+      <p>{{ error }}</p>
     </div>
 
-    <!-- Historial usando el nuevo componente -->
-    <ng-container *ngIf="!isLoading && !error">
-      <!-- Resumen de deuda -->
+    <ng-container *ngIf="!isLoading && !error && cliente">
+      <!-- ============ FICHA DEL CLIENTE ============ -->
+      <section class="ficha">
+        <div class="ficha-head">
+          <span class="precio-tag ficha-precio">{{ formatearMonto(cliente.precio) }}</span>
+          <button type="button" class="btn-icono plano" (click)="editarCliente()" aria-label="Editar cliente">
+            <ion-icon name="pencil-outline"></ion-icon>
+          </button>
+        </div>
+
+        <a class="ficha-direccion" *ngIf="cliente.direccion" [href]="urlMapa(cliente.direccion)" target="_blank" rel="noopener"
+           [attr.aria-label]="'Abrir en mapas: ' + cliente.direccion">
+          <ion-icon name="location-outline"></ion-icon><span>{{ cliente.direccion }}</span>
+        </a>
+
+        <div class="ficha-stats">
+          <div class="stat">
+            <strong class="num">{{ stats.visitas }}</strong>
+            <span>{{ stats.visitas === 1 ? 'mantención' : 'mantenciones' }}</span>
+          </div>
+          <div class="stat">
+            <strong class="precio-tag">{{ formatearMonto(stats.generado) }}</strong>
+            <span>generado</span>
+          </div>
+          <div class="stat">
+            <strong class="num">{{ stats.ultima }}</strong>
+            <span>última visita</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEUDA ============ -->
       <app-resumen-deuda
         [mantenciones]="mantencionesParaComponente"
-        [clienteNombre]="cliente?.nombre || ''"
-        [clienteTelefono]="cliente?.telefono || ''">
+        [clienteNombre]="cliente.nombre || ''"
+        [clienteTelefono]="cliente.telefono || ''">
       </app-resumen-deuda>
 
-      <div *ngIf="(historialOrdenado?.length || 0) > 0; else emptyState">
+      <!-- ============ HISTORIAL ============ -->
+      <div class="historial-wrap" *ngIf="(historialOrdenado?.length || 0) > 0; else emptyState">
         <app-historial-mantenciones
           [mantenciones]="mantencionesParaComponente"
-          [titulo]="'Historial del Cliente'"
+          [titulo]="'Historial del cliente'"
           [mostrarFiltros]="true"
           (onMantencionClick)="verDetalleMantencion($event)"
           (onPagoToggle)="togglePago($event)"
@@ -41,7 +78,7 @@
       </div>
       <ng-template #emptyState>
         <div class="empty-state">
-          <ion-icon name="time-outline" size="large"></ion-icon>
+          <ion-icon name="time-outline"></ion-icon>
           <h4>Sin mantenciones registradas</h4>
           <p>Cuando registres mantenciones para este cliente, aparecerán aquí.</p>
         </div>

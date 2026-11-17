@@ -6,6 +6,21 @@
     <h1 class="success-title">¡Mantención Realizada con Éxito!</h1>
     <p class="success-message">La mantención ha sido completada correctamente.</p>
 
+    <!-- Pago: se marca aquí mismo, sin ir al historial -->
+    <button type="button" class="pago" *ngIf="mantencion?.id && cliente?.id"
+            [class.pagado]="pagado" [disabled]="guardandoPago" (click)="alternarPago()"
+            [attr.aria-pressed]="pagado">
+      <span class="pago-icono">
+        <ion-icon [name]="pagado ? 'checkmark-circle' : 'cash-outline'"></ion-icon>
+      </span>
+      <span class="pago-texto">
+        <span class="pago-titulo">{{ pagado ? 'Pagado' : 'Marcar como pagado' }}</span>
+        <span class="pago-monto"><span class="precio-tag" [class.por-cobrar]="!pagado">{{ formatearMonto(montoCobrado) }}</span>{{ pagado ? ' · toca para deshacer' : '' }}</span>
+      </span>
+      <ion-icon name="ellipse-outline" class="pago-check" *ngIf="!pagado"></ion-icon>
+      <ion-icon name="checkmark-circle" class="pago-check" *ngIf="pagado"></ion-icon>
+    </button>
+
     <div class="bottom-action">
       <ion-button class="pay-button whatsapp" fill="clear" size="small" (click)="enviarWhatsApp()">
         <ion-icon name="logo-whatsapp"></ion-icon>

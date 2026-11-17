@@ -25,6 +25,7 @@ import {
 import { Auth, user } from '@angular/fire/auth';
 import { environment } from '../../environments/environment';
 import { RegistroRef, esMismoRegistro } from '../utils/mantencion';
+import { CamposServicio } from '../utils/servicios';
 
 export interface Cliente {
   id?: string; // string para Firestore
@@ -46,7 +47,8 @@ export interface Cliente {
     horaPreferida: string; // formato HH:mm
     notas: string; // instrucciones adicionales
   };
-  historial: {
+  // Los campos extra (algicida, cuarzo, bomba) dependen del servicio: ver utils/servicios
+  historial: ({
     id?: string; // Solo en registros creados desde que existe el campo
     fecha: string;
     servicio: string;
@@ -60,12 +62,13 @@ export interface Cliente {
     estadoPh?: string; // Nuevo campo para estado del pH
     hora?: string; // Nuevo campo para la hora del mantenimiento
     precioCobrado?: number; // Precio que se cobró en ese momento
+    movidaA?: string; // Día al que se cambió la mantención (YYYY-MM-DD), en los registros de "Cambio de día"
     // Campos de pago
     pagado?: boolean | string;
     pago?: boolean | string;
     estadoPago?: string;
     fechaPago?: string;
-  }[];
+  } & CamposServicio)[];
   skippedDates?: string[]; // Fechas marcadas como "saltadas" (YYYY-MM-DD)
   preciosEspeciales?: { [fecha: string]: number }; // Precios de una sola vez por fecha (YYYY-MM-DD)
   serviciosExtra?: { fecha: string; servicio: string }[]; // Servicios agregados manualmente para una fecha

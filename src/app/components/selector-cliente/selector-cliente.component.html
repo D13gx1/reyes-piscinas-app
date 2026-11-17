@@ -1,0 +1,87 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <!-- Sin ion-title: el global lo centra en una línea y un título largo se cortaba -->
+    <div class="cabecera">
+      <div class="cabecera-texto">
+        <h2 class="titulo">{{ titulo }}</h2>
+        <span class="subtitulo" *ngIf="subtitulo">{{ subtitulo }}</span>
+      </div>
+      <button type="button" class="cerrar" (click)="cerrar.emit()" aria-label="Cerrar">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="selector-content">
+  <!-- Servicio -->
+  <section class="bloque" *ngIf="pedirServicio">
+    <span class="bloque-titulo">Servicio</span>
+    <div class="servicios-grid">
+      <button
+        *ngFor="let opcion of servicios"
+        type="button"
+        class="servicio-btn"
+        [class.activo]="servicio === opcion.valor"
+        [attr.aria-pressed]="servicio === opcion.valor"
+        (click)="servicio = opcion.valor">
+        <ion-icon [name]="opcion.icono"></ion-icon>
+        <span>{{ opcion.corto }}</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Cliente -->
+  <section class="bloque">
+    <span class="bloque-titulo">Cliente</span>
+
+    <div class="buscador" *ngIf="clientes.length > 5">
+      <ion-icon name="search-outline"></ion-icon>
+      <input
+        type="search"
+        placeholder="Buscar por nombre o dirección"
+        autocomplete="off"
+        [value]="busqueda"
+        (input)="onBusqueda($any($event.target).value)">
+    </div>
+
+    <div class="lista" role="listbox" aria-label="Clientes">
+      <button
+        *ngFor="let cliente of visibles; trackBy: trackPorId"
+        type="button"
+        role="option"
+        class="cliente"
+        [class.seleccionado]="cliente.id === clienteId"
+        [attr.aria-selected]="cliente.id === clienteId"
+        (click)="elegir(cliente)">
+        <span class="avatar">{{ iniciales(cliente.nombre) }}</span>
+        <span class="cliente-texto">
+          <span class="cliente-nombre">{{ cliente.nombre }}</span>
+          <span class="cliente-dir" *ngIf="cliente.direccion">
+            <ion-icon name="location-outline"></ion-icon>
+            {{ cliente.direccion }}
+          </span>
+        </span>
+        <span class="etiqueta" *ngIf="cliente.etiqueta">{{ cliente.etiqueta }}</span>
+        <ion-icon name="checkmark-circle" class="check"></ion-icon>
+      </button>
+
+      <p class="vacio" *ngIf="visibles.length === 0">
+        Ningún cliente coincide con "{{ busqueda }}"
+      </p>
+    </div>
+  </section>
+</ion-content>
+
+<ion-footer class="ion-no-border selector-footer">
+  <button
+    type="button"
+    class="confirmar"
+    [class.peligro]="peligro"
+    [disabled]="!clienteId"
+    (click)="confirmarSeleccion()">
+    <ion-icon [name]="iconoConfirmar"></ion-icon>
+    <span *ngIf="clienteSeleccionado as c; else elegirTexto">{{ textoConfirmar }} · {{ c.nombre }}</span>
+    <ng-template #elegirTexto><span>Elige un cliente</span></ng-template>
+  </button>
+</ion-footer>

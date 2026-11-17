@@ -1,37 +1,98 @@
-import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
-import { NgModel } from '@angular/forms';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { IonicModule, ToastController, AlertController, IonContent } from '@ionic/angular';
-import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import {
+  IonHeader,
+  IonToolbar,
+  IonContent,
+  IonButton,
+  IonIcon,
+  IonInput,
+  IonTextarea,
+  IonToggle,
+  IonSpinner,
+  ToastController,
+  AlertController,
+} from '@ionic/angular/standalone';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation, Position } from '@capacitor/geolocation';
+import { EncabezadoComponent } from '../../../components/encabezado/encabezado.component';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { addIcons } from 'ionicons';
-import { trashOutline, locationOutline } from 'ionicons/icons';
+import {
+  trashOutline,
+  locationOutline,
+  personOutline,
+  callOutline,
+  mailOutline,
+  waterOutline,
+  cashOutline,
+  calendarOutline,
+  navigate,
+  navigateOutline,
+  alertCircleOutline,
+  cubeOutline,
+  addOutline,
+  removeOutline,
+  saveOutline,
+  checkmarkCircleOutline,
+  pauseCircleOutline,
+} from 'ionicons/icons';
 import { Auth, onAuthStateChanged } from '@angular/fire/auth';
 
 // Registrar los iconos
 addIcons({
   'trash-outline': trashOutline,
   'location-outline': locationOutline,
+  'person-outline': personOutline,
+  'call-outline': callOutline,
+  'mail-outline': mailOutline,
+  'water-outline': waterOutline,
+  'cash-outline': cashOutline,
+  'calendar-outline': calendarOutline,
+  'navigate': navigate,
+  'navigate-outline': navigateOutline,
+  'alert-circle-outline': alertCircleOutline,
+  'cube-outline': cubeOutline,
+  'add-outline': addOutline,
+  'remove-outline': removeOutline,
+  'save-outline': saveOutline,
+  'checkmark-circle-outline': checkmarkCircleOutline,
+  'pause-circle-outline': pauseCircleOutline,
 });
 
 // Interfaz para los días de la semana
 interface DiaSemana {
   valor: string;
   nombre: string;
+  corto: string;
   seleccionado: boolean;
 }
 
 @Component({
   selector: 'app-crear-clientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, RouterModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonHeader,
+    IonToolbar,
+    IonContent,
+    IonButton,
+    IonIcon,
+    IonInput,
+    IonTextarea,
+    IonToggle,
+    IonSpinner,
+    EncabezadoComponent,
+  ],
   templateUrl: './crear-clientes.page.html',
   styleUrls: ['./crear-clientes.page.scss'],
 })
 export class CrearClientesPage implements OnInit {
-  @ViewChild('cantidadPorPeriodo') cantidadPorPeriodoRef?: NgModel;
   @ViewChild(IonContent) ionContent?: IonContent;
+  @ViewChild('clienteForm') formulario?: NgForm;
   
   private auth = inject(Auth);
   
@@ -63,21 +124,29 @@ export class CrearClientesPage implements OnInit {
   };
 
   diasSemana: DiaSemana[] = [
-    { valor: 'lunes', nombre: 'Lunes', seleccionado: false },
-    { valor: 'martes', nombre: 'Martes', seleccionado: false },
-    { valor: 'miercoles', nombre: 'Miércoles', seleccionado: false },
-    { valor: 'jueves', nombre: 'Jueves', seleccionado: false },
-    { valor: 'viernes', nombre: 'Viernes', seleccionado: false },
-    { valor: 'sabado', nombre: 'Sábado', seleccionado: false },
-    { valor: 'domingo', nombre: 'Domingo', seleccionado: false }
+    { valor: 'lunes', nombre: 'Lunes', corto: 'Lun', seleccionado: false },
+    { valor: 'martes', nombre: 'Martes', corto: 'Mar', seleccionado: false },
+    { valor: 'miercoles', nombre: 'Miércoles', corto: 'Mié', seleccionado: false },
+    { valor: 'jueves', nombre: 'Jueves', corto: 'Jue', seleccionado: false },
+    { valor: 'viernes', nombre: 'Viernes', corto: 'Vie', seleccionado: false },
+    { valor: 'sabado', nombre: 'Sábado', corto: 'Sáb', seleccionado: false },
+    { valor: 'domingo', nombre: 'Domingo', corto: 'Dom', seleccionado: false }
   ];
+
+  readonly frecuencias = [
+    { valor: 'semanal', texto: 'Semanal' },
+    { valor: 'quincenal', texto: 'Cada 15 días' },
+    { valor: 'mensual', texto: 'Mensual' },
+  ];
+
+  /** Se activa al pulsar Guardar: desde ahí se marcan frecuencia y días si faltan. */
+  intentoGuardar = false;
 
   isEditing = false;
   clienteId: string | null = null;
   pageTitle = 'Crear Cliente';
   isLoading = false;
   isLoadingUbicacion = false;
-  isDevelopment = false;
 
   constructor(
     private clienteService: ClienteService,
@@ -88,8 +157,6 @@ export class CrearClientesPage implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.isDevelopment = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-
     // ⭐ MONITOREAR CAMBIOS EN EL ESTADO DE AUTENTICACIÓN
     this.authStateSubscription = onAuthStateChanged(this.auth, (user) => {
       if (user) {
@@ -268,6 +335,9 @@ export class CrearClientesPage implements OnInit {
       isEditing: this.isEditing
     });
 
+    this.intentoGuardar = true;
+    this.formulario?.control.markAllAsTouched();
+
     // Validaciones
     if (!this.nuevoCliente.nombre || this.nuevoCliente.nombre.trim() === '') {
       this.rechazarCampo('nombre', 'El nombre es obligatorio ❌');
@@ -398,7 +468,7 @@ export class CrearClientesPage implements OnInit {
     const el = this.obtenerElementoCampo(campo);
     if (!el) return;
 
-    const item = el.closest('ion-item') as HTMLElement | null;
+    const item = el.closest('.campo') as HTMLElement | null;
     if (item) {
       item.classList.add('campo-invalido-local');
       setTimeout(() => item.classList.remove('campo-invalido-local'), 2500);
@@ -429,9 +499,9 @@ export class CrearClientesPage implements OnInit {
       ancho: 'ion-input[name="ancho"]',
       profundidad: 'ion-input[name="profundidad"]',
       monto: 'ion-input[name="monto"]',
-      frecuencia: 'ion-select[name="frecuencia"]',
-      cantidadPorPeriodo: 'ion-input[name="cantidadPorPeriodo"]',
-      dias: 'ion-checkbox'
+      frecuencia: '.frecuencia-opciones',
+      cantidadPorPeriodo: '.stepper',
+      dias: '.dias-chips'
     };
 
     const selector = selectores[campo];
@@ -501,19 +571,31 @@ export class CrearClientesPage implements OnInit {
     event.target.value = this.nuevoCliente.telefono;
   }
 
-  onFrecuenciaChange(event: any) {
-    const frecuencia = event.target.value;
+  seleccionarFrecuencia(frecuencia: string) {
+    if (this.nuevoCliente.programacion.frecuencia === frecuencia) return;
     this.nuevoCliente.programacion.frecuencia = frecuencia;
     this.nuevoCliente.programacion.cantidadPorPeriodo = 1;
     this.resetearDiasSeleccionados();
   }
 
-  onDiaChange(dia: DiaSemana, event: any) {
-    const seleccionado = event.target.checked;
+  /** Suma o resta servicios por período, dentro del rango permitido. */
+  cambiarCantidad(delta: number) {
+    const actual = this.nuevoCliente.programacion.cantidadPorPeriodo || 1;
+    const nueva = Math.min(Math.max(actual + delta, 1), this.getMaxServicios());
+    this.nuevoCliente.programacion.cantidadPorPeriodo = nueva;
+
+    // Si bajó la cantidad, se quitan los últimos días marcados que sobran
+    const marcados = this.diasSemana.filter((d) => d.seleccionado);
+    marcados.slice(nueva).forEach((d) => (d.seleccionado = false));
+  }
+
+  toggleDia(dia: DiaSemana) {
+    const seleccionado = !dia.seleccionado;
     dia.seleccionado = seleccionado;
-    
+
     const diasSeleccionados = this.getDiasSeleccionados();
-    
+
+    // Si se pasó del máximo, se desmarca el primer día que ya estaba marcado
     if (seleccionado && diasSeleccionados.length > this.nuevoCliente.programacion.cantidadPorPeriodo) {
       for (let i = 0; i < this.diasSemana.length; i++) {
         if (this.diasSemana[i].seleccionado && this.diasSemana[i].valor !== dia.valor) {
@@ -562,8 +644,25 @@ export class CrearClientesPage implements OnInit {
     }
   }
 
-  onInputChange(field: string, value: any) {
-    console.log(`Campo ${field} cambió a:`, value);
+  /** Hora preferida como "HH:mm" (clientes antiguos pueden tenerla en formato ISO). */
+  get horaPreferida(): string {
+    const hora = this.nuevoCliente.programacion.horaPreferida || '';
+    const coincide = hora.match(/(\d{2}):(\d{2})/);
+    return coincide ? `${coincide[1]}:${coincide[2]}` : '';
+  }
+
+  set horaPreferida(valor: string) {
+    this.nuevoCliente.programacion.horaPreferida = valor || '';
+  }
+
+  get volumenM3(): number {
+    const { largo, ancho, profundidad } = this.nuevoCliente.medidas;
+    const v = Number(largo) * Number(ancho) * Number(profundidad);
+    return isFinite(v) && v > 0 ? v : 0;
+  }
+
+  get volumenLitros(): number {
+    return this.volumenM3 * 1000;
   }
 
   validarFormulario(): boolean {
@@ -573,17 +672,6 @@ export class CrearClientesPage implements OnInit {
            this.emailValido() &&
            this.medidasValidas() &&
            this.precioValido();
-  }
-
-  private triggerFormValidation() {
-    setTimeout(() => {
-      if (this.nuevoCliente.direccion.trim() !== '') {
-        const direccionControl = document.querySelector('ion-input[name="direccion"]') as any;
-        if (direccionControl) {
-          direccionControl.value = this.nuevoCliente.direccion;
-        }
-      }
-    }, 100);
   }
 
   async eliminarCliente() {
@@ -637,76 +725,93 @@ export class CrearClientesPage implements OnInit {
     });
   }
 
+  /**
+   * Pide permiso de ubicación y, en Android, el diálogo del sistema para
+   * encender el GPS si está apagado. Luego convierte las coordenadas en una
+   * dirección y la escribe en el campo.
+   */
   async obtenerUbicacionActual() {
-    if (!navigator.geolocation) {
-      this.showToast('Geolocalización no soportada en este navegador ❌', 'danger');
-      return;
-    }
-
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-      this.showToast('Se requiere HTTPS para acceder a la ubicación GPS ❌', 'danger');
-      return;
-    }
-
     this.isLoadingUbicacion = true;
 
     try {
-      let latitude: number, longitude: number, accuracy: number;
+      if (Capacitor.isNativePlatform() && !(await this.asegurarPermisoUbicacion())) {
+        return;
+      }
 
-      if (this.isDevelopment) {
-        latitude = -33.4489;
-        longitude = -70.6693;
-        accuracy = 10;
+      const posicion: Position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 30000,
+      });
 
-        console.log('🧪 Modo desarrollo: Usando coordenadas simuladas');
-        this.showToast('Modo desarrollo: Ubicación simulada', 'primary');
-      } else {
-        this.showToast('Obteniendo ubicación GPS...', 'primary');
-
-        const position = await this.getCurrentPosition();
-        ({ latitude, longitude, accuracy } = position.coords);
-
-        if (accuracy > 100) {
-          this.showToast('Ubicación obtenida (precisión baja)', 'warning');
-        }
+      const { latitude, longitude, accuracy } = posicion.coords;
+      if (accuracy > 100) {
+        this.showToast('Ubicación aproximada: revisa que la dirección sea correcta', 'warning');
       }
 
       await this.geocodificarCoordenadas(latitude, longitude);
-
     } catch (error: any) {
       console.error('❌ Error obteniendo ubicación:', error);
-
-      let mensaje = 'Error al obtener ubicación ❌';
-
-      if (this.isDevelopment) {
-        await this.geocodificarCoordenadas(-33.4489, -70.6693);
-        return;
-      } else {
-        if (error.code === 1) {
-          mensaje = 'Permiso de ubicación denegado';
-        } else if (error.code === 2) {
-          mensaje = 'Posición no disponible';
-        } else if (error.code === 3) {
-          mensaje = 'Tiempo agotado';
-        }
-      }
-
-      this.showToast(mensaje, 'danger');
+      await this.manejarErrorUbicacion(error);
     } finally {
       this.isLoadingUbicacion = false;
     }
   }
 
-  private getCurrentPosition(): Promise<GeolocationPosition> {
-    return new Promise((resolve, reject) => {
-      const options: PositionOptions = {
-        enableHighAccuracy: false,
-        timeout: 15000,
-        maximumAge: 600000
-      };
+  /** Revisa el permiso y lo solicita si hace falta. Devuelve true si está concedido. */
+  private async asegurarPermisoUbicacion(): Promise<boolean> {
+    let estado: string;
+    try {
+      estado = (await Geolocation.checkPermissions()).location;
+    } catch (error: any) {
+      // Con el GPS apagado checkPermissions falla: getCurrentPosition se encarga
+      // de pedir encenderlo, así que se sigue adelante.
+      if (this.codigoError(error) === 'OS-PLUG-GLOC-0007') {
+        return true;
+      }
+      throw error;
+    }
 
-      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    if (estado === 'granted') {
+      return true;
+    }
+
+    estado = (await Geolocation.requestPermissions({ permissions: ['location'] })).location;
+    if (estado === 'granted') {
+      return true;
+    }
+
+    await this.alertaPermisoDenegado();
+    return false;
+  }
+
+  private async manejarErrorUbicacion(error: any) {
+    const codigo = this.codigoError(error);
+    const mensaje = String(error?.message || '').toLowerCase();
+
+    if (codigo === 'OS-PLUG-GLOC-0003' || error?.code === 1 || mensaje.includes('denied')) {
+      await this.alertaPermisoDenegado();
+    } else if (codigo === 'OS-PLUG-GLOC-0007' || codigo === 'OS-PLUG-GLOC-0009') {
+      this.showToast('Enciende la ubicación del teléfono para usar esta opción 📍', 'warning');
+    } else if (codigo === 'OS-PLUG-GLOC-0010' || error?.code === 3 || mensaje.includes('timeout')) {
+      this.showToast('No se pudo obtener la ubicación a tiempo. Intenta de nuevo al aire libre', 'warning');
+    } else {
+      this.showToast('No se pudo obtener tu ubicación ❌', 'danger');
+    }
+  }
+
+  private async alertaPermisoDenegado() {
+    const alert = await this.alertController.create({
+      header: 'Permiso de ubicación',
+      message:
+        'Para rellenar la dirección con tu ubicación, permite el acceso en Ajustes → Aplicaciones → Reyes Piscinas → Permisos → Ubicación.',
+      buttons: ['Entendido'],
     });
+    await alert.present();
+  }
+
+  private codigoError(error: any): string {
+    return String(error?.code ?? '');
   }
 
   private async geocodificarCoordenadas(lat: number, lon: number) {
@@ -722,17 +827,8 @@ export class CrearClientesPage implements OnInit {
       const data = await response.json();
 
       if (data && data.display_name) {
-        let direccion = data.display_name;
-
-        if (direccion.includes(', Chile')) {
-          direccion = direccion.replace(', Chile', '');
-        }
-
-        direccion = direccion.split(',')[0] + ', ' + (data.address?.city || data.address?.town || data.address?.village || '');
-
-        this.nuevoCliente.direccion = direccion.trim();
-        this.triggerFormValidation();
-        this.showToast('Dirección obtenida exitosamente ✅', 'success');
+        this.nuevoCliente.direccion = this.formatearDireccion(data);
+        this.showToast('Dirección obtenida ✅ Revisa el número de casa', 'success');
       } else {
         throw new Error('No se pudo obtener la dirección');
       }
@@ -741,5 +837,24 @@ export class CrearClientesPage implements OnInit {
       console.error('❌ Error en geocodificación:', error);
       this.showToast('Error al obtener dirección', 'danger');
     }
+  }
+
+  /** "Calle 123, Comuna" a partir de la respuesta de Nominatim. */
+  private formatearDireccion(data: any): string {
+    const a = data.address || {};
+    const calle = [a.road || a.pedestrian || a.footway, a.house_number].filter(Boolean).join(' ');
+    const comuna = a.suburb || a.city_district || a.city || a.town || a.village || '';
+
+    if (calle) {
+      return [calle, comuna].filter(Boolean).join(', ');
+    }
+
+    // Sin calle reconocida: primeras partes del nombre completo, sin el país
+    return String(data.display_name)
+      .split(',')
+      .map((p: string) => p.trim())
+      .filter((p: string) => p && p !== 'Chile')
+      .slice(0, 2)
+      .join(', ');
   }
 }

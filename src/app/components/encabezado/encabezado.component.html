@@ -1,0 +1,33 @@
+<div class="encabezado-fila" [class.con-volver]="volver">
+  <!-- Pantallas internas: botón para volver en vez del avatar -->
+  <ion-back-button *ngIf="volver" class="volver" [defaultHref]="volver" text=""
+                   icon="chevron-back-outline"></ion-back-button>
+
+  <div class="encabezado-texto">
+    <span class="encabezado-sub" *ngIf="subtitulo">{{ subtitulo }}</span>
+    <h1>{{ titulo }}</h1>
+  </div>
+
+  <div class="encabezado-acciones">
+    <ng-content select="[chip]"></ng-content>
+
+    <!-- Resúmenes de cada mes; el punto avisa que hay uno nuevo -->
+    <button *ngIf="!volver" type="button" class="campana"
+            [class.abierta]="resumenMes.panelAbierto()" (click)="resumenMes.alternarPanel()"
+            [attr.aria-label]="resumenMes.sinLeer() ? 'Resumen del mes nuevo' : 'Resúmenes del mes'"
+            [attr.aria-expanded]="resumenMes.panelAbierto()">
+      <ion-icon name="notifications-outline"></ion-icon>
+      <span class="campana-punto" *ngIf="resumenMes.sinLeer()" aria-hidden="true"></span>
+    </button>
+
+    <button
+      *ngIf="!volver"
+      type="button"
+      class="avatar"
+      [class.estatico]="enPerfil"
+      [attr.aria-label]="enPerfil ? 'Mi cuenta' : 'Ir a mi perfil'"
+      (click)="irAPerfil()">
+      {{ iniciales(nombre$ | async) }}
+    </button>
+  </div>
+</div>

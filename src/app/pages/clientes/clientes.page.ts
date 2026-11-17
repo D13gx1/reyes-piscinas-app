@@ -1,12 +1,20 @@
-import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, DestroyRef, ElementRef, ChangeDetectorRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { IonicModule, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
+import { IonicModule, IonItemSliding, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { ClienteService, Cliente } from '../../services/cliente.service';
 import { esMantencionSaltada, precioEfectivoMantencion } from '../../utils/mantencion';
 import { defineCustomElement as defineIonFab } from '@ionic/core/components/ion-fab.js';
 import { defineCustomElement as defineIonFabButton } from '@ionic/core/components/ion-fab-button.js';
+import { defineCustomElement as defineIonBadge } from '@ionic/core/components/ion-badge.js';
+import { defineCustomElement as defineIonRefresher } from '@ionic/core/components/ion-refresher.js';
+import { defineCustomElement as defineIonRefresherContent } from '@ionic/core/components/ion-refresher-content.js';
+import { defineCustomElement as defineIonItemSliding } from '@ionic/core/components/ion-item-sliding.js';
+import { defineCustomElement as defineIonItemOptions } from '@ionic/core/components/ion-item-options.js';
+import { defineCustomElement as defineIonItemOption } from '@ionic/core/components/ion-item-option.js';
+import { defineCustomElement as defineIonItem } from '@ionic/core/components/ion-item.js';
+import { EncabezadoComponent } from '../../components/encabezado/encabezado.component';
 import { addIcons } from 'ionicons';
 import { 
   addOutline, 
@@ -22,7 +30,13 @@ import {
   funnelOutline,
   arrowUpOutline,
   arrowDownOutline,
-  searchOutline
+  searchOutline,
+  chevronDownOutline,
+  checkmarkOutline,
+  ellipsisHorizontal,
+  cashOutline,
+  closeCircle,
+  timeOutline
 } from 'ionicons/icons';
 
 type CriterioOrden = 'nombre' | 'valor' | 'precio' | 'antiguedad';
@@ -49,24 +63,45 @@ addIcons({
   'arrow-up-outline': arrowUpOutline,
   'arrow-down-outline': arrowDownOutline,
   'search-outline': searchOutline,
+  'chevron-down-outline': chevronDownOutline,
+  'checkmark-outline': checkmarkOutline,
+  'ellipsis-horizontal': ellipsisHorizontal,
+  'cash-outline': cashOutline,
+  'close-circle': closeCircle,
+  'time-outline': timeOutline,
 });
+
+export interface GrupoClientes {
+  /** Letra inicial cuando se ordena por nombre; vacío si no se agrupa */
+  letra: string;
+  clientes: Cliente[];
+}
 
 // La app arranca con provideIonicAngular() (standalone), que solo registra los
 // componentes importados desde '@ionic/angular/standalone'. ion-fab no se usa en
 // ningún otro lado, así que sin esto queda como etiqueta sin definir: sin
-// círculo, sin posición fija y sin poder tocarse.
+// círculo, sin posición fija y sin poder tocarse. Lo mismo con ion-badge.
 defineIonFab();
 defineIonFabButton();
+defineIonBadge();
+defineIonRefresher();
+defineIonRefresherContent();
+defineIonItemSliding();
+defineIonItemOptions();
+defineIonItemOption();
+defineIonItem();
 
 @Component({
   selector: 'app-clientes',
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterModule],
+  imports: [CommonModule, IonicModule, RouterModule, EncabezadoComponent],
   templateUrl: './clientes.page.html',
   styleUrls: ['./clientes.page.scss'],
 })
 export class ClientesPage implements OnInit {
   private destroyRef = inject(DestroyRef);
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private cdr = inject(ChangeDetectorRef);
   clientes: Cliente[] = [];
   clientesActivos: Cliente[] = [];
   clientesInactivos: Cliente[] = [];
@@ -123,38 +158,140 @@ export class ClientesPage implements OnInit {
   organizarClientes() {
     const termino = this.normalizar(this.busqueda.trim());
     const visibles = this.clientes
-      .filter(c => !termino || this.normalizar(c.nombre).includes(termino))
+      .filter(c => !termino ||
+        this.normalizar(c.nombre).includes(termino) ||
+        this.normalizar(c.direccion).includes(termino))
       .sort((a, b) => this.comparar(a, b));
 
-    this.clientesActivos = visibles.filter(cliente => cliente.activo);
-    this.clientesInactivos = visibles.filter(cliente => !cliente.activo);
+    this.clientesActivos = this.filtroEstado === 'inactivos' ? [] : visibles.filter(cliente => cliente.activo);
+    this.clientesInactivos = this.filtroEstado === 'activos' ? [] : visibles.filter(cliente => !cliente.activo);
+    this.gruposActivos = this.agrupar(this.clientesActivos);
+  }
+
+  /** Activos agrupados por letra (solo al ordenar por nombre, como una agenda) */
+  gruposActivos: GrupoClientes[] = [];
+
+  private agrupar(clientes: Cliente[]): GrupoClientes[] {
+    if (this.criterioOrden !== 'nombre' || this.busqueda.trim()) return [{ letra: '', clientes }];
+    const grupos: GrupoClientes[] = [];
+    for (const cliente of clientes) {
+      const letra = this.normalizar(cliente.nombre).charAt(0).toUpperCase() || '#';
+      const ultimo = grupos[grupos.length - 1];
+      if (ultimo?.letra === letra) ultimo.clientes.push(cliente);
+      else grupos.push({ letra, clientes: [cliente] });
+    }
+    return grupos;
+  }
+
+  iniciales(nombre: string): string {
+    const partes = (nombre || '').trim().split(/\s+/).filter(Boolean);
+    return ((partes[0]?.[0] || '') + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase() || '?';
+  }
+
+  limpiarBusqueda() {
+    this.onBusqueda('');
+  }
+
+  /** "⋯" de cada fila: lo mismo que al deslizar, para quien no conoce el gesto */
+  async abrirOpciones(cliente: Cliente) {
+    const botones: any[] = [
+      { text: 'Ver historial', icon: 'time-outline', handler: () => this.verHistorial(cliente) },
+      { text: 'Editar cliente', icon: 'pencil-outline', handler: () => this.editarCliente(cliente) },
+      { text: 'Cambiar precio', icon: 'cash-outline', handler: () => { this.editarPrecio(cliente); } },
+    ];
+    if (cliente.telefono) {
+      botones.push({ text: 'Llamar', icon: 'call-outline', handler: () => { window.location.href = 'tel:' + cliente.telefono; } });
+    }
+    botones.push(cliente.activo
+      ? { text: 'Desactivar', icon: 'pause-circle-outline', role: 'destructive', handler: () => { this.desactivarCliente(cliente); } }
+      : { text: 'Activar', icon: 'checkmark-circle-outline', handler: () => { this.activarCliente(cliente); } });
+    botones.push({ text: 'Cancelar', role: 'cancel' });
+
+    const hoja = await this.actionSheetController.create({ header: cliente.nombre, buttons: botones });
+    await hoja.present();
+  }
+
+  /** Acciones del deslizable: lo cierran antes de actuar */
+  accionDeslizando(deslizable: IonItemSliding, accion: () => void) {
+    deslizable.close();
+    accion();
+  }
+
+  /** Qué clientes se listan, elegido desde el resumen */
+  filtroEstado: 'todos' | 'activos' | 'inactivos' = 'todos';
+
+  get totalInactivos(): number {
+    return this.clientes.length - this.totalActivos;
+  }
+
+  cambiarFiltroEstado(filtro: 'todos' | 'activos' | 'inactivos') {
+    if (filtro === this.filtroEstado) return;
+    this.filtroEstado = filtro;
+    this.animarCambio(() => this.organizarClientes());
   }
 
   onBusqueda(valor: string | null | undefined) {
     this.busqueda = valor || '';
-    this.organizarClientes();
+    this.animarCambio(() => this.organizarClientes());
   }
 
-  async elegirOrden() {
-    const sheet = await this.actionSheetController.create({
-      header: 'Ordenar clientes por',
-      buttons: [
-        ...CRITERIOS_ORDEN.map(c => ({
-          text: c.texto + (c.valor === this.criterioOrden ? '  ✓' : ''),
-          handler: () => {
-            this.criterioOrden = c.valor;
-            this.organizarClientes();
-          }
-        })),
-        { text: 'Cancelar', role: 'cancel' }
-      ]
-    });
-    await sheet.present();
+  readonly criterios = CRITERIOS_ORDEN;
+  /** Menú de "Ordenar por" desplegado bajo su botón */
+  menuOrdenAbierto = false;
+
+  seleccionarCriterio(criterio: CriterioOrden) {
+    this.menuOrdenAbierto = false;
+    if (criterio === this.criterioOrden) return;
+    this.criterioOrden = criterio;
+    this.animarCambio(() => this.organizarClientes());
   }
 
   alternarDireccion() {
     this.ascendente = !this.ascendente;
-    this.organizarClientes();
+    this.animarCambio(() => this.organizarClientes());
+  }
+
+  trackPorId(_: number, cliente: Cliente) {
+    return cliente.id;
+  }
+
+  /**
+   * Animación al reordenar (técnica FLIP): se mide dónde estaba cada tarjeta,
+   * se aplica el cambio y cada una se desliza desde su lugar anterior al nuevo.
+   * Las tarjetas que aparecen (p. ej. al borrar la búsqueda) entran con un fundido.
+   */
+  private animarCambio(cambio: () => void) {
+    const reducirMovimiento = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const tarjetas = () =>
+      Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('.cliente-fila[data-id]'));
+
+    const antes = new Map<string, DOMRect>();
+    if (!reducirMovimiento) {
+      tarjetas().forEach(el => antes.set(el.dataset['id']!, el.getBoundingClientRect()));
+    }
+
+    cambio();
+    if (reducirMovimiento) return;
+    this.cdr.detectChanges();
+
+    tarjetas().forEach((el, i) => {
+      const previo = antes.get(el.dataset['id']!);
+      if (!previo) {
+        el.animate(
+          [{ opacity: 0, transform: 'translateY(8px) scale(0.98)' }, { opacity: 1, transform: 'none' }],
+          { duration: 220, delay: Math.min(i, 8) * 20, easing: 'ease-out', fill: 'backwards' }
+        );
+        return;
+      }
+      const ahora = el.getBoundingClientRect();
+      const dx = previo.left - ahora.left;
+      const dy = previo.top - ahora.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.animate(
+        [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+        { duration: 320, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
+      );
+    });
   }
 
   // Sin tildes ni mayúsculas, para que "maria" encuentre a "María"
@@ -185,7 +322,7 @@ export class ClientesPage implements OnInit {
   }
 
   /** Lo que ha generado el cliente: suma de lo cobrado en sus mantenciones realizadas. */
-  private valorTotal(cliente: Cliente): number {
+  valorTotal(cliente: Cliente): number {
     return (cliente.historial || [])
       .filter(m => !esMantencionSaltada(m))
       .reduce((total, m) => total + precioEfectivoMantencion(m, cliente.precio), 0);
@@ -201,7 +338,26 @@ export class ClientesPage implements OnInit {
     return fechas[0] || '9999-12-31';
   }
 
+  /** "14 oct 2025" para la fila cuando se ordena por antigüedad */
+  fechaAltaTexto(cliente: Cliente): string {
+    const [a, m, d] = this.fechaAlta(cliente).split('-').map(Number);
+    if (!a || a === 9999) return 'Sin registro';
+    return new Date(a, m - 1, d)
+      .toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+      .replace('.', '');
+  }
+
   // La lista ya está al día; el botón solo lo confirma
+  get totalActivos(): number {
+    return this.clientes.filter(c => c.activo).length;
+  }
+
+  /** Deslizar hacia abajo: la lista ya llega en vivo, así que se reordena y se cierra el indicador */
+  onRefrescar(evento: any) {
+    this.organizarClientes();
+    setTimeout(() => evento.target.complete(), 600);
+  }
+
   refrescarClientes() {
     this.showToast('Lista actualizada ✅', 'success');
   }
@@ -250,6 +406,60 @@ export class ClientesPage implements OnInit {
         this.showToast('Error al activar cliente ❌', 'danger');
         // Revertir cambio en caso de error
         cliente.activo = false;
+      }
+    });
+  }
+
+  // Tocar el precio permite cambiarlo para siempre (los precios de un solo día
+  // se ponen desde el inicio)
+  async editarPrecio(cliente: Cliente) {
+    const alert = await this.alertController.create({
+      header: 'Cambiar precio',
+      subHeader: cliente.nombre,
+      message: 'Se aplicará en todas las mantenciones desde ahora. Las ya registradas mantienen lo que se cobró.',
+      inputs: [
+        {
+          name: 'nuevoPrecio',
+          type: 'number',
+          min: '1',
+          placeholder: 'Nuevo precio (CLP)',
+          value: cliente.precio || ''
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Guardar',
+          handler: (data) => {
+            const nuevoPrecio = Math.round(parseFloat(data?.nuevoPrecio));
+            if (!nuevoPrecio || nuevoPrecio <= 0) {
+              this.showToast('Ingresa un precio válido ❌', 'danger');
+              return false;
+            }
+            this.guardarPrecio(cliente, nuevoPrecio);
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  private guardarPrecio(cliente: Cliente, nuevoPrecio: number) {
+    const precioAnterior = cliente.precio;
+    if (nuevoPrecio === precioAnterior) return;
+
+    cliente.precio = nuevoPrecio;
+    this.clienteService.updateCliente(cliente).subscribe({
+      next: () => {
+        this.organizarClientes();
+        this.showToast(`Nuevo precio de ${cliente.nombre}: $${this.formatearPrecio(nuevoPrecio)} ✅`, 'success');
+      },
+      error: (err) => {
+        console.error('Error al actualizar precio:', err);
+        cliente.precio = precioAnterior;
+        this.showToast('Error al actualizar precio ❌', 'danger');
       }
     });
   }

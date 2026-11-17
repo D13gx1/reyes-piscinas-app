@@ -1,20 +1,16 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastController, AlertController } from '@ionic/angular/standalone';
 import {
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonContent,
-  IonButtons,
-  IonBackButton,
   IonItem,
   IonLabel,
   IonInput,
-  IonSelect,
-  IonSelectOption,
   IonTextarea,
   IonButton,
   IonIcon,
@@ -38,11 +34,31 @@ import {
   scaleOutline,
   closeOutline,
   informationCircleOutline,
-  alertCircleOutline
+  alertCircleOutline,
+  leafOutline,
+  layersOutline,
+  constructOutline,
+  cashOutline,
+  addOutline,
+  removeOutline,
+  checkmarkCircleOutline,
+  checkmarkCircle
 } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../../utils/unidades';
 import { nuevoIdRegistro } from '../../../utils/mantencion';
+import {
+  SERVICIOS,
+  SERVICIO_MANTENCION,
+  SERVICIO_RECUPERACION,
+  SERVICIO_CUARZO,
+  SERVICIO_BOMBA,
+  TIPOS_CUARZO,
+  REPARACIONES_BOMBA,
+  OpcionServicio,
+  CamposServicio,
+  servicioRequiereNiveles
+} from '../../../utils/servicios';
 
 addIcons({
   'save-outline': saveOutline,
@@ -60,7 +76,15 @@ addIcons({
   'scale-outline': scaleOutline,
   'close-outline': closeOutline,
   'information-circle-outline': informationCircleOutline,
-  'alert-circle-outline': alertCircleOutline
+  'alert-circle-outline': alertCircleOutline,
+  'leaf-outline': leafOutline,
+  'layers-outline': layersOutline,
+  'construct-outline': constructOutline,
+  'cash-outline': cashOutline,
+  'add-outline': addOutline,
+  'remove-outline': removeOutline,
+  'checkmark-circle-outline': checkmarkCircleOutline,
+  'checkmark-circle': checkmarkCircle
 });
 
 /** Una opción de nivel de cloro o pH, con su color para pintar el botón. */
@@ -70,6 +94,8 @@ interface OpcionNivel {
   rango: string;
   valor: number;
   color: string;
+  /** Color que toma el agua en el tester (para compararlo a simple vista) */
+  muestra: string;
 }
 
 /** Un producto químico que se puede aplicar, con su control del formulario. */
@@ -92,37 +118,33 @@ interface ProductoQuimico {
  * El orden va de mayor a menor: arriba "Alto" y abajo del todo "Bajo".
  */
 const OPCIONES_CLORO: OpcionNivel[] = [
-  { estado: 'alto', etiqueta: 'Alto', rango: '> 3.0', valor: 3.5, color: '#dc2626' },
-  { estado: 'ideal alto', etiqueta: 'Ideal Alto', rango: '2.1 - 3.0', valor: 2.5, color: '#16a34a' },
-  { estado: 'ideal', etiqueta: 'Ideal', rango: '1.5 - 2.0', valor: 1.7, color: '#15803d' },
-  { estado: 'ideal bajo', etiqueta: 'Ideal Bajo', rango: '1.0 - 1.4', valor: 1.2, color: '#4ade80' },
-  { estado: 'bajo', etiqueta: 'Bajo', rango: '< 1.0', valor: 0.5, color: '#d97706' }
+  { estado: 'alto', etiqueta: 'Alto', rango: '> 3.0', valor: 3.5, color: '#dc2626', muestra: '#e39a17' },
+  { estado: 'ideal alto', etiqueta: 'Ideal Alto', rango: '2.1 - 3.0', valor: 2.5, color: '#16a34a', muestra: '#f0bd34' },
+  { estado: 'ideal', etiqueta: 'Ideal', rango: '1.5 - 2.0', valor: 1.7, color: '#15803d', muestra: '#f6d65e' },
+  { estado: 'ideal bajo', etiqueta: 'Ideal Bajo', rango: '1.0 - 1.4', valor: 1.2, color: '#4ade80', muestra: '#f9e797' },
+  { estado: 'bajo', etiqueta: 'Bajo', rango: '< 1.0', valor: 0.5, color: '#d97706', muestra: '#fcf6d2' }
 ];
 
 const OPCIONES_PH: OpcionNivel[] = [
-  { estado: 'alto', etiqueta: 'Alto', rango: '> 7.8', valor: 8.0, color: '#dc2626' },
-  { estado: 'ideal alto', etiqueta: 'Ideal Alto', rango: '7.7 - 7.8', valor: 7.75, color: '#16a34a' },
-  { estado: 'ideal', etiqueta: 'Ideal', rango: '7.4 - 7.6', valor: 7.5, color: '#15803d' },
-  { estado: 'ideal bajo', etiqueta: 'Ideal Bajo', rango: '7.2 - 7.3', valor: 7.25, color: '#4ade80' },
-  { estado: 'bajo', etiqueta: 'Bajo', rango: '< 7.2', valor: 7.0, color: '#d97706' }
+  { estado: 'alto', etiqueta: 'Alto', rango: '> 7.8', valor: 8.0, color: '#dc2626', muestra: '#b01f62' },
+  { estado: 'ideal alto', etiqueta: 'Ideal Alto', rango: '7.7 - 7.8', valor: 7.75, color: '#16a34a', muestra: '#d3365c' },
+  { estado: 'ideal', etiqueta: 'Ideal', rango: '7.4 - 7.6', valor: 7.5, color: '#15803d', muestra: '#e5564f' },
+  { estado: 'ideal bajo', etiqueta: 'Ideal Bajo', rango: '7.2 - 7.3', valor: 7.25, color: '#4ade80', muestra: '#ef844a' },
+  { estado: 'bajo', etiqueta: 'Bajo', rango: '< 7.2', valor: 7.0, color: '#d97706', muestra: '#f4b443' }
 ];
 
+/**
+ * Se muestran en una grilla de 2 x 2, en este orden:
+ * cloro granulado | sube pH
+ * pastillas       | baja pH
+ */
 const PRODUCTOS: ProductoQuimico[] = [
   {
     control: 'cantidadCloro',
     nombre: 'Cloro granulado',
     unidad: 'kg',
     icono: 'flask-outline',
-    color: '#0ea5e9',
-    paso: '0.01',
-    atajos: [0.25, 0.5, 1, 2]
-  },
-  {
-    control: 'cantidadBajaPh',
-    nombre: 'Baja pH',
-    unidad: 'kg',
-    icono: 'arrow-down-circle-outline',
-    color: '#f97316',
+    color: 'var(--ion-color-primary)',
     paso: '0.01',
     atajos: [0.25, 0.5, 1, 2]
   },
@@ -131,30 +153,42 @@ const PRODUCTOS: ProductoQuimico[] = [
     nombre: 'Sube pH',
     unidad: 'kg',
     icono: 'arrow-up-circle-outline',
-    color: '#8b5cf6',
+    color: 'var(--ion-color-primary)',
     paso: '0.01',
     atajos: [0.25, 0.5, 1, 2]
   },
   {
     control: 'cantidadPastillas',
-    nombre: 'Pastillas de cloro',
+    nombre: 'Cloro en pastilla',
     unidad: 'uni.',
     icono: 'disc-outline',
-    color: '#10b981',
+    color: 'var(--ion-color-primary)',
     paso: '1',
     atajos: [1, 2, 3, 5]
+  },
+  {
+    control: 'cantidadBajaPh',
+    nombre: 'Baja pH',
+    unidad: 'kg',
+    icono: 'arrow-down-circle-outline',
+    color: 'var(--ion-color-primary)',
+    paso: '0.01',
+    atajos: [0.25, 0.5, 1, 2]
   }
 ];
 
-const SERVICIOS = [
-  'Mantención de piscina',
-  'Recuperación de agua',
-  'Cambio de cuarzo',
-  'Limpieza completa',
-  'Ajuste químico',
-  'Aspirado',
-  'Mantenimiento general'
-];
+/** Solo en recuperación de agua. Se registra en litros. */
+const PRODUCTO_ALGICIDA: ProductoQuimico = {
+  control: 'cantidadAlgicida',
+  nombre: 'Algicida',
+  unidad: 'L',
+  icono: 'leaf-outline',
+  color: 'var(--ion-color-primary)',
+  paso: '0.1',
+  atajos: [0.25, 0.5, 1, 2]
+};
+
+import { EncabezadoComponent } from '../../../components/encabezado/encabezado.component';
 
 @Component({
   selector: 'app-completar-mantencion',
@@ -162,19 +196,15 @@ const SERVICIOS = [
   styleUrls: ['./completar_mantencion.page.scss'],
   standalone: true,
   imports: [
+    EncabezadoComponent,
     CommonModule,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,
-    IonTitle,
     IonContent,
-    IonButtons,
-    IonBackButton,
     IonItem,
     IonLabel,
     IonInput,
-    IonSelect,
-    IonSelectOption,
     IonTextarea,
     IonButton,
     IonIcon,
@@ -182,7 +212,7 @@ const SERVICIOS = [
     IonSpinner
   ]
 })
-export class CompletarMantencionPage implements OnInit {
+export class CompletarMantencionPage implements OnInit, OnDestroy {
   cliente: Cliente | null = null;
   clienteId: string | null = null;
   mantencionForm: FormGroup;
@@ -192,11 +222,14 @@ export class CompletarMantencionPage implements OnInit {
   /** Se activa al intentar guardar: desde ahí se marcan en rojo los campos que faltan. */
   intentoGuardar = false;
   /** Campo al que se acaba de llevar al usuario, para sacudirlo. */
-  campoResaltado: 'cloro' | 'ph' | 'horaCorte' | null = null;
+  campoResaltado: string | null = null;
 
   @ViewChild('campoCloro', { read: ElementRef }) campoCloro?: ElementRef<HTMLElement>;
   @ViewChild('campoPh', { read: ElementRef }) campoPh?: ElementRef<HTMLElement>;
   @ViewChild('campoHoraCorte', { read: ElementRef }) campoHoraCorte?: ElementRef<HTMLElement>;
+  @ViewChild('campoCuarzoTipo', { read: ElementRef }) campoCuarzoTipo?: ElementRef<HTMLElement>;
+  @ViewChild('campoCuarzoKilos', { read: ElementRef }) campoCuarzoKilos?: ElementRef<HTMLElement>;
+  @ViewChild('campoBombaReparaciones', { read: ElementRef }) campoBombaReparaciones?: ElementRef<HTMLElement>;
 
   // Variables para controlar la selección de botones
   cloroSeleccionado: string | null = null;
@@ -204,8 +237,14 @@ export class CompletarMantencionPage implements OnInit {
 
   readonly opcionesCloro = OPCIONES_CLORO;
   readonly opcionesPh = OPCIONES_PH;
-  readonly productos = PRODUCTOS;
-  readonly servicios = SERVICIOS;
+  readonly tiposCuarzo = TIPOS_CUARZO;
+  readonly reparacionesBomba = REPARACIONES_BOMBA;
+  readonly SERVICIO_RECUPERACION = SERVICIO_RECUPERACION;
+  readonly SERVICIO_CUARZO = SERVICIO_CUARZO;
+  readonly SERVICIO_BOMBA = SERVICIO_BOMBA;
+  readonly atajosKilosCuarzo = [25, 50, 75, 100];
+
+  private servicioSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -222,11 +261,154 @@ export class CompletarMantencionPage implements OnInit {
       cantidadBajaPh: [0, [Validators.min(0)]],
       cantidadSubePh: [0, [Validators.min(0)]],
       cantidadPastillas: [0, [Validators.min(0)]],
-      servicio: ['Mantención de piscina', Validators.required],
+      cantidadAlgicida: [0, [Validators.min(0)]],
+      servicio: [SERVICIO_MANTENCION, Validators.required],
       notas: [''],
       piscinarLlenando: [false],
-      horaCorte: ['']
+      horaCorte: [''],
+      // Cambio de cuarzo / reparación de bomba: ¿se cobra también la mantención?
+      incluirMantencion: [true],
+      cuarzo: this.formBuilder.group({
+        tipo: [''],
+        tipoOtro: [''],
+        kilos: [0, [Validators.min(0)]],
+        // Vacío = el cliente ya pagó el cuarzo aparte: solo se cobra la mano de obra
+        precioCuarzo: [null, [Validators.min(0)]],
+        manoObra: [0, [Validators.min(0)]]
+      }),
+      bomba: this.formBuilder.group({
+        marcaModelo: [''],
+        reparaciones: [[] as string[]],
+        repuestos: [''],
+        costoRepuestos: [0, [Validators.min(0)]],
+        manoObra: [0, [Validators.min(0)]],
+        quedoFuncionando: [true]
+      })
     });
+
+    // Los niveles del agua solo son obligatorios en mantención y recuperación
+    this.servicioSub = this.mantencionForm.get('servicio')?.valueChanges.subscribe(() => {
+      this.actualizarValidadoresNiveles();
+    });
+  }
+
+  ngOnDestroy() {
+    this.servicioSub?.unsubscribe();
+  }
+
+  get servicio(): string {
+    return this.mantencionForm.get('servicio')?.value || SERVICIO_MANTENCION;
+  }
+
+  /** Servicios para elegir; incluye el preseleccionado si es uno antiguo fuera de la lista. */
+  get serviciosDisponibles(): OpcionServicio[] {
+    const actual = this.servicio;
+    if (SERVICIOS.some((s) => s.valor === actual)) return SERVICIOS;
+    return [...SERVICIOS, { valor: actual, corto: actual, icono: 'build-outline', color: 'var(--ion-color-primary)' }];
+  }
+
+  get nivelesObligatorios(): boolean {
+    return servicioRequiereNiveles(this.servicio) || this.incluyeMantencion;
+  }
+
+  /**
+   * Niveles del agua y productos solo tienen sentido si hubo mantención: en
+   * cuarzo / bomba sin mantención se ocultan y no se guardan.
+   */
+  get muestraQuimicos(): boolean {
+    return this.nivelesObligatorios;
+  }
+
+  /** Cuarzo y bomba son trabajos aparte: se puede sumar o no la mantención normal. */
+  get esServicioConCobroExtra(): boolean {
+    return this.servicio === SERVICIO_CUARZO || this.servicio === SERVICIO_BOMBA;
+  }
+
+  get incluyeMantencion(): boolean {
+    return this.esServicioConCobroExtra && this.mantencionForm.get('incluirMantencion')?.value === true;
+  }
+
+  get productos(): ProductoQuimico[] {
+    return this.servicio === SERVICIO_RECUPERACION ? [...PRODUCTOS, PRODUCTO_ALGICIDA] : PRODUCTOS;
+  }
+
+  /** Día al que corresponde la mantención (AAAA-MM-DD); por defecto hoy. */
+  fechaMantencion = this.formatearFechaLocal(new Date());
+
+  /** Precio de la mantención normal: el especial del día o el del cliente. */
+  get precioBase(): number {
+    if (!this.cliente) return 0;
+    return this.cliente.preciosEspeciales?.[this.fechaMantencion] ?? this.cliente.precio ?? 0;
+  }
+
+  /** Materiales + mano de obra del servicio especial. */
+  get montoServicioExtra(): number {
+    const n = (ruta: string) => this.toNumberOrZero(this.mantencionForm.get(ruta)?.value);
+    if (this.servicio === SERVICIO_CUARZO) return n('cuarzo.precioCuarzo') + n('cuarzo.manoObra');
+    if (this.servicio === SERVICIO_BOMBA) return n('bomba.costoRepuestos') + n('bomba.manoObra');
+    return 0;
+  }
+
+  /** Lo que se cobrará por esta visita. */
+  get totalCobrar(): number {
+    if (!this.esServicioConCobroExtra) return this.precioBase;
+    return this.montoServicioExtra + (this.incluyeMantencion ? this.precioBase : 0);
+  }
+
+  get faltaTipoCuarzo(): boolean {
+    return this.intentoGuardar && this.servicio === SERVICIO_CUARZO && !this.tipoCuarzoFinal;
+  }
+
+  get faltaKilosCuarzo(): boolean {
+    return this.intentoGuardar && this.servicio === SERVICIO_CUARZO &&
+      !(this.toNumberOrZero(this.mantencionForm.get('cuarzo.kilos')?.value) > 0);
+  }
+
+  get faltaReparacion(): boolean {
+    return this.intentoGuardar && this.servicio === SERVICIO_BOMBA && this.reparacionesSeleccionadas.length === 0;
+  }
+
+  get tipoCuarzoSeleccionado(): string {
+    return this.mantencionForm.get('cuarzo.tipo')?.value || '';
+  }
+
+  /** Tipo de cuarzo a guardar: el de la lista o el escrito en "Otro". */
+  get tipoCuarzoFinal(): string {
+    const tipo = this.tipoCuarzoSeleccionado;
+    if (tipo === 'Otro') return (this.mantencionForm.get('cuarzo.tipoOtro')?.value || '').trim();
+    return tipo;
+  }
+
+  get reparacionesSeleccionadas(): string[] {
+    return this.mantencionForm.get('bomba.reparaciones')?.value || [];
+  }
+
+  seleccionarServicio(valor: string) {
+    this.mantencionForm.get('servicio')?.setValue(valor);
+  }
+
+  seleccionarTipoCuarzo(tipo: string) {
+    this.mantencionForm.get('cuarzo.tipo')?.setValue(tipo);
+  }
+
+  toggleReparacion(reparacion: string) {
+    const actuales = this.reparacionesSeleccionadas;
+    const nuevas = actuales.includes(reparacion)
+      ? actuales.filter((r) => r !== reparacion)
+      : [...actuales, reparacion];
+    this.mantencionForm.get('bomba.reparaciones')?.setValue(nuevas);
+  }
+
+  actualizarValidadoresNiveles() {
+    for (const [control, max] of [['cloro', 10], ['ph', 14]] as const) {
+      const c = this.mantencionForm.get(control);
+      c?.setValidators(
+        this.nivelesObligatorios
+          ? [Validators.required, Validators.min(0), Validators.max(max)]
+          : [Validators.min(0), Validators.max(max)]
+      );
+      c?.updateValueAndValidity({ emitEvent: false });
+    }
   }
 
   /** Iniciales para el avatar del cliente. */
@@ -279,11 +461,11 @@ export class CompletarMantencionPage implements OnInit {
   }
 
   get faltaCloro(): boolean {
-    return this.intentoGuardar && !this.cloroSeleccionado;
+    return this.intentoGuardar && this.nivelesObligatorios && !this.cloroSeleccionado;
   }
 
   get faltaPh(): boolean {
-    return this.intentoGuardar && !this.phSeleccionado;
+    return this.intentoGuardar && this.nivelesObligatorios && !this.phSeleccionado;
   }
 
   // Método para seleccionar el nivel de cloro
@@ -311,6 +493,36 @@ export class CompletarMantencionPage implements OnInit {
     return Number(this.mantencionForm.get(control)?.value) === valor;
   }
 
+  /** Cuánto suma cada toque de − / +: un cuarto de kilo o litro, o una pastilla */
+  pasoBoton(producto: ProductoQuimico): number {
+    return producto.unidad === 'uni.' ? 1 : 0.25;
+  }
+
+  /** Suma o resta al campo sin bajar de 0 (redondeado para evitar 0.30000000004) */
+  sumar(control: string, delta: number) {
+    const actual = this.toNumberOrZero(this.mantencionForm.get(control)?.value);
+    const nuevo = Math.max(0, Math.round((actual + delta) * 100) / 100);
+    this.mantencionForm.get(control)?.setValue(nuevo);
+    this.mantencionForm.get(control)?.markAsDirty();
+  }
+
+  cantidad(control: string): number {
+    return this.toNumberOrZero(this.mantencionForm.get(control)?.value);
+  }
+
+
+  /** Campos obligatorios del servicio elegido: cuántos hay y cuántos están listos */
+  get requeridos(): { total: number; listos: number } {
+    const campos: boolean[] = [];
+    if (this.nivelesObligatorios) campos.push(!!this.cloroSeleccionado, !!this.phSeleccionado);
+    if (this.servicio === SERVICIO_CUARZO) {
+      campos.push(!!this.tipoCuarzoFinal, this.toNumberOrZero(this.mantencionForm.get('cuarzo.kilos')?.value) > 0);
+    }
+    if (this.servicio === SERVICIO_BOMBA) campos.push(this.reparacionesSeleccionadas.length > 0);
+    if (this.piscinaLlenando) campos.push(!!this.mantencionForm.get('horaCorte')?.value);
+    return { total: campos.length, listos: campos.filter(Boolean).length };
+  }
+
   /** Pone en 0 el campo del producto. */
   limpiarCantidad(control: string) {
     this.mantencionForm.get(control)?.setValue(0);
@@ -333,6 +545,11 @@ export class CompletarMantencionPage implements OnInit {
 
   ngOnInit() {
     this.clienteId = this.route.snapshot.paramMap.get('id');
+    // El día elegido en el inicio (puede ser uno anterior que quedó sin marcar)
+    const fecha = this.route.snapshot.queryParamMap.get('fecha');
+    if (fecha && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      this.fechaMantencion = fecha;
+    }
 
     if (this.clienteId) {
       this.cargarCliente(this.clienteId);
@@ -347,10 +564,11 @@ export class CompletarMantencionPage implements OnInit {
       next: (cliente) => {
         this.cliente = cliente;
         // Si hay un servicio extra para hoy, preseleccionarlo
-        const fechaHoy = this.formatearFechaLocal(new Date());
-        const extra = cliente.serviciosExtra?.find((s: any) => s.fecha === fechaHoy);
-        if (extra) {
-          this.mantencionForm.get('servicio')?.setValue(extra.servicio);
+        const extra = cliente.serviciosExtra?.find((s: any) => s.fecha === this.fechaMantencion);
+        // El servicio elegido al agregar la mantención desde el inicio manda sobre el del día
+        const servicioElegido = this.route.snapshot.queryParamMap.get('servicio') || extra?.servicio;
+        if (servicioElegido) {
+          this.mantencionForm.get('servicio')?.setValue(servicioElegido);
         }
         this.cargando = false;
       },
@@ -371,7 +589,8 @@ export class CompletarMantencionPage implements OnInit {
 
     this.intentoGuardar = true;
 
-    if (this.irAlPrimerCampoFaltante() || !this.cloroSeleccionado || !this.phSeleccionado) {
+    this.actualizarValidadoresNiveles();
+    if (this.irAlPrimerCampoFaltante()) {
       return;
     }
 
@@ -381,31 +600,34 @@ export class CompletarMantencionPage implements OnInit {
     }
 
     const formValues = this.mantencionForm.value;
+    // Sin mantención (cuarzo / bomba) no se guardan niveles ni químicos aunque se hayan tocado antes
+    const q = this.muestraQuimicos;
 
-    const fechaHoy = this.formatearFechaLocal(new Date());
-    const precioEspecial = this.cliente.preciosEspeciales?.[fechaHoy];
-    const precioCobrado = precioEspecial ?? this.cliente.precio;
+    const precioCobrado = this.totalCobrar;
 
     const nuevoRegistro = {
       id: nuevoIdRegistro(),
-      fecha: fechaHoy,
+      fecha: this.fechaMantencion,
       hora: new Date().toTimeString().split(' ')[0].substring(0, 5),
       servicio: formValues.servicio,
-      cloro: formValues.cloro,
-      ph: formValues.ph,
+      cloro: q ? formValues.cloro ?? 0 : 0,
+      ph: q ? formValues.ph ?? 0 : 0,
       // Las cantidades se guardan en kilos (cantidadPastillas va en unidades)
-      cantidadCloro: this.toNumberOrZero(formValues.cantidadCloro),
-      cantidadBajaPh: this.toNumberOrZero(formValues.cantidadBajaPh),
-      cantidadSubePh: this.toNumberOrZero(formValues.cantidadSubePh),
-      cantidadPastillas: this.toNumberOrZero(formValues.cantidadPastillas),
-      estadoCloro: this.cloroSeleccionado,
-      estadoPh: this.phSeleccionado,
+      cantidadCloro: q ? this.toNumberOrZero(formValues.cantidadCloro) : 0,
+      cantidadBajaPh: q ? this.toNumberOrZero(formValues.cantidadBajaPh) : 0,
+      cantidadSubePh: q ? this.toNumberOrZero(formValues.cantidadSubePh) : 0,
+      cantidadPastillas: q ? this.toNumberOrZero(formValues.cantidadPastillas) : 0,
+      ...this.camposDelServicio(),
+      // Sin medición (cuarzo / bomba sin mantención) los estados no se incluyen:
+      // Firestore rechaza guardar campos con valor undefined
+      ...(q && this.cloroSeleccionado ? { estadoCloro: this.cloroSeleccionado } : {}),
+      ...(q && this.phSeleccionado ? { estadoPh: this.phSeleccionado } : {}),
       notas: formValues.notas,
       piscinarLlenando: this.piscinaLlenando,
       horaCorte: formValues.horaCorte || null,
       // Marca de unidad: evita que una futura migración divida estos kilos otra vez
       [CAMPO_UNIDAD_MASA]: UNIDAD_MASA,
-      precioCobrado: precioCobrado // Guardar el precio que se cobra (especial del día o el del cliente)
+      precioCobrado: precioCobrado // Lo que se cobra: precio del día y, si aplica, materiales + mano de obra
     };
 
     // Asegurarse de que el cliente tenga un array de historial
@@ -437,17 +659,59 @@ export class CompletarMantencionPage implements OnInit {
     });
   }
 
+  /** Datos extra que se guardan en el registro según el servicio elegido. */
+  private camposDelServicio(): CamposServicio {
+    const v = this.mantencionForm.value;
+    switch (this.servicio) {
+      case SERVICIO_RECUPERACION:
+        return { cantidadAlgicida: this.toNumberOrZero(v.cantidadAlgicida) };
+      case SERVICIO_CUARZO:
+        return {
+          incluyeMantencion: this.incluyeMantencion,
+          cuarzo: {
+            tipo: this.tipoCuarzoFinal,
+            kilos: this.toNumberOrZero(v.cuarzo?.kilos),
+            precioCuarzo: this.toNumberOrZero(v.cuarzo?.precioCuarzo),
+            manoObra: this.toNumberOrZero(v.cuarzo?.manoObra)
+          }
+        };
+      case SERVICIO_BOMBA:
+        return {
+          incluyeMantencion: this.incluyeMantencion,
+          bomba: {
+            marcaModelo: (v.bomba?.marcaModelo || '').trim(),
+            reparaciones: this.reparacionesSeleccionadas,
+            repuestos: (v.bomba?.repuestos || '').trim(),
+            costoRepuestos: this.toNumberOrZero(v.bomba?.costoRepuestos),
+            manoObra: this.toNumberOrZero(v.bomba?.manoObra),
+            quedoFuncionando: v.bomba?.quedoFuncionando !== false
+          }
+        };
+      default:
+        return {};
+    }
+  }
+
   /**
    * Busca el primer campo obligatorio sin completar (en el orden en que aparecen
    * en pantalla), hace scroll hasta él y lo sacude. Devuelve true si faltaba alguno.
    */
   private irAlPrimerCampoFaltante(): boolean {
-    const faltantes: { campo: 'cloro' | 'ph' | 'horaCorte'; ref?: ElementRef<HTMLElement>; mensaje: string }[] = [];
-    if (!this.cloroSeleccionado) {
+    const faltantes: { campo: string; ref?: ElementRef<HTMLElement>; mensaje: string }[] = [];
+    if (this.nivelesObligatorios && !this.cloroSeleccionado) {
       faltantes.push({ campo: 'cloro', ref: this.campoCloro, mensaje: 'Falta el nivel de cloro' });
     }
-    if (!this.phSeleccionado) {
+    if (this.nivelesObligatorios && !this.phSeleccionado) {
       faltantes.push({ campo: 'ph', ref: this.campoPh, mensaje: 'Falta el nivel de pH' });
+    }
+    if (this.faltaTipoCuarzo) {
+      faltantes.push({ campo: 'cuarzoTipo', ref: this.campoCuarzoTipo, mensaje: 'Falta el tipo de cuarzo' });
+    }
+    if (this.faltaKilosCuarzo) {
+      faltantes.push({ campo: 'cuarzoKilos', ref: this.campoCuarzoKilos, mensaje: 'Faltan los kilos de cuarzo' });
+    }
+    if (this.faltaReparacion) {
+      faltantes.push({ campo: 'bombaReparaciones', ref: this.campoBombaReparaciones, mensaje: 'Indica qué se reparó en la bomba' });
     }
     if (this.piscinaLlenando && !this.mantencionForm.get('horaCorte')?.value) {
       faltantes.push({ campo: 'horaCorte', ref: this.campoHoraCorte, mensaje: 'Falta la hora para cortar el agua' });
@@ -483,6 +747,12 @@ export class CompletarMantencionPage implements OnInit {
       icon: 'alert-circle-outline'
     });
     toast.present();
+  }
+
+  private readonly formatoMonto = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+  formatearMonto(valor: number): string {
+    return '$' + this.formatoMonto.format(valor || 0);
   }
 
   private formatearFechaLocal(fecha: Date): string {

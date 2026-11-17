@@ -1,25 +1,30 @@
-import { inject, Injectable } from "@angular/core";
-import { 
-  Auth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithRedirect, 
-  getRedirectResult, 
-  User, 
-  user 
+import { inject, Injectable, isDevMode } from "@angular/core";
+import {
+  Auth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signInWithCredential,
+  getRedirectResult,
+  User,
+  user
 } from "@angular/fire/auth";
 import { Router } from "@angular/router";
 import { Platform } from "@ionic/angular";
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { BehaviorSubject, Observable, map } from "rxjs";
+import { Firestore } from "@angular/fire/firestore";
+import { esCorreoDelEquipo, limpiarAccesoEquipo, MENSAJE_SIN_ACCESO } from "../config/equipo";
 
+/** Logs solo en desarrollo: en producción no se imprimen datos del usuario */
+const log = (...args: unknown[]) => { if (isDevMode()) console.log(...args); };
 
 @Injectable({
   providedIn: 'root'
 })
-
 export class AuthService {
   private readonly auth = inject(Auth);
+  private readonly firestore = inject(Firestore);
   private readonly router = inject(Router);
   private readonly platform = inject(Platform);
 
@@ -37,113 +42,88 @@ export class AuthService {
     try {
       this._loading.next(true);
 
-      console.log('🔍 Platform checks:', {
-        isCapacitor: this.platform.is('capacitor'),
-        isAndroid: this.platform.is('android'),
-        isIOS: this.platform.is('ios'),
-        platforms: this.platform.platforms()
-      });
-
-      // En dispositivos nativos (Android/iOS) usar autenticación nativa
       if (this.platform.is('capacitor')) {
-        console.log('📱 Usando autenticación nativa con Capacitor Firebase');
+        // Android/iOS: autenticación nativa
         await this.nativeGoogleLogin();
       } else {
-        // En web usar popup o redirect
-        console.log('🌐 Usando autenticación web');
         const provider = new GoogleAuthProvider();
-        
+
         if (this.isMobileDevice()) {
+          // Navegador móvil: redirección; el resultado se procesa en handleRedirectResult()
           await signInWithRedirect(this.auth, provider);
         } else {
-          await signInWithPopup(this.auth, provider);
-          this.router.navigateByUrl('/tabs/home');
+          const credencial = await signInWithPopup(this.auth, provider);
+          await this.verificarAccesoYEntrar(credencial.user);
         }
       }
     } catch (error: any) {
-      console.error('❌ Error en autenticación Google:', error);
-      
-      // Mostrar mensaje de error más específico
-      if (error.message?.includes('cancelado')) {
-        console.log('Usuario canceló el inicio de sesión');
-      }
-      
+      console.error('Error en autenticación Google:', error?.code ?? error?.message);
       return error as Error;
     } finally {
       this._loading.next(false);
     }
   }
 
-// Autenticación nativa para iOS/Android
-// Autenticación nativa para iOS/Android
-private async nativeGoogleLogin(): Promise<void> {
-  try {
-    console.log('🚀 Iniciando autenticación nativa');
-
-    // 1️⃣ Iniciar sesión con el plugin nativo
-    const result = await FirebaseAuthentication.signInWithGoogle();
-
-    if (!result?.credential?.idToken) {
-      throw new Error('No se obtuvo el idToken del usuario');
-    }
-
-    console.log('✅ Token obtenido:', result.credential.idToken.substring(0, 10) + '...');
-
-    // 2️⃣ Crear credencial de Firebase con el token de Google
-    const { GoogleAuthProvider, signInWithCredential } = await import('@angular/fire/auth');
-    const credential = GoogleAuthProvider.credential(result.credential.idToken);
-
-    // 3️⃣ Iniciar sesión en Firebase JS SDK con esa credencial
-    const userCredential = await signInWithCredential(this.auth, credential);
-    const user = userCredential.user;
-
-    console.log('👤 Usuario autenticado:', {
-      name: user.displayName,
-      email: user.email,
-      uid: user.uid,
-      photo: user.photoURL
-    });
-
-    // 4️⃣ Actualizar el BehaviorSubject (esto refresca getUserName())
-    this._currentUser.next(user);
-
-    // 5️⃣ Navegar al home
-    await this.router.navigateByUrl('/tabs/home', { replaceUrl: true });
-
-  } catch (error: any) {
-    console.error('❌ Error en autenticación nativa:', error);
-
-    if (error.code === '12501' || error.message?.includes('12501')) {
-      throw new Error('Inicio de sesión cancelado por el usuario');
-    }
-
-    if (error.code === '10' || error.message?.includes('Developer Error')) {
-      console.error('⚠️ ERROR 10: Verifica el SHA-1/256 en Firebase Console');
-      throw new Error('Error de configuración. Contacta al desarrollador.');
-    }
-
-    throw error;
-  }
-}
-
-
-  // Método para manejar el resultado de la redirección (solo web)
-  async handleRedirectResult(): Promise<void> {
+  // Autenticación nativa para iOS/Android
+  private async nativeGoogleLogin(): Promise<void> {
     try {
-      // Solo para web
-      if (this.platform.is('capacitor')) {
-        return;
+      // 1. Iniciar sesión con el plugin nativo
+      const result = await FirebaseAuthentication.signInWithGoogle();
+
+      if (!result?.credential?.idToken) {
+        throw new Error('No se obtuvo el idToken del usuario');
       }
 
-      console.log('🌐 Verificando resultado de redirect web');
-      const result = await getRedirectResult(this.auth);
-      
-      if (result) {
-        console.log('✅ Autenticación exitosa desde redirect');
-        await this.router.navigateByUrl('/tabs/home');
+      // 2. Iniciar sesión en el SDK web con esa credencial (es la que usa Firestore)
+      const credential = GoogleAuthProvider.credential(result.credential.idToken);
+      const userCredential = await signInWithCredential(this.auth, credential);
+
+      // 3. Comprobar que el correo sea del equipo y entrar
+      await this.verificarAccesoYEntrar(userCredential.user);
+
+    } catch (error: any) {
+      if (error.code === '12501' || error.message?.includes('12501')) {
+        throw new Error('Inicio de sesión cancelado por el usuario');
       }
-    } catch (error) {
-      console.error('❌ Error en redirect result:', error);
+
+      if (error.code === '10' || error.message?.includes('Developer Error')) {
+        console.error('ERROR 10: Verifica el SHA-1/256 en Firebase Console');
+        throw new Error('Error de configuración. Contacta al desarrollador.');
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Si el correo está en la colección `equipo` de Firestore, entra a la app.
+   * Si no, cierra la sesión y lanza un error con el mensaje para el usuario.
+   */
+  private async verificarAccesoYEntrar(usuario: User): Promise<void> {
+    if (!usuario.emailVerified || !(await esCorreoDelEquipo(this.firestore, usuario.email))) {
+      await this.cerrarSesionSinNavegar();
+      throw new Error(MENSAJE_SIN_ACCESO);
+    }
+
+    log('Usuario autenticado');
+    this._currentUser.next(usuario);
+    await this.router.navigateByUrl('/tabs/home', { replaceUrl: true });
+  }
+
+  /** Procesa el resultado del login por redirección (solo web en móvil). Devuelve el error si lo hubo. */
+  async handleRedirectResult(): Promise<void | Error> {
+    if (this.platform.is('capacitor')) {
+      return;
+    }
+
+    try {
+      const result = await getRedirectResult(this.auth);
+      if (result) {
+        await this.verificarAccesoYEntrar(result.user);
+      }
+    } catch (error: any) {
+      console.error('Error en redirect result:', error?.code ?? error?.message);
+      return error as Error;
     }
   }
 
@@ -154,20 +134,22 @@ private async nativeGoogleLogin(): Promise<void> {
     return mobileKeywords.some(keyword => userAgent.includes(keyword));
   }
 
+  private async cerrarSesionSinNavegar(): Promise<void> {
+    if (this.platform.is('capacitor')) {
+      await FirebaseAuthentication.signOut().catch(() => undefined);
+    }
+    await this.auth.signOut();
+    limpiarAccesoEquipo();
+    this._currentUser.next(null);
+  }
+
   async logout(): Promise<void> {
     try {
       this._loading.next(true);
-      
-      // Cerrar sesión
-      if (this.platform.is('capacitor')) {   
-        await FirebaseAuthentication.signOut();
-      }
-      
-      await this.auth.signOut();
-      this._currentUser.next(null);
+      await this.cerrarSesionSinNavegar();
       await this.router.navigateByUrl('/login');
     } catch (error) {
-      console.error('❌ Error al cerrar sesión:', error);
+      console.error('Error al cerrar sesión:', error);
     } finally {
       this._loading.next(false);
     }

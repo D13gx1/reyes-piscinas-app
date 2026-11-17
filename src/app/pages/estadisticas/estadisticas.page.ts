@@ -5,22 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { 
   IonContent, 
   IonHeader, 
-  IonTitle, 
   IonToolbar, 
-  IonCard, 
-  IonCardHeader, 
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonButton,
-  IonButtons,
   IonIcon,
   IonSpinner,
-  IonSelect,
-  IonSelectOption,
+  IonRefresher,
+  IonRefresherContent,
   AlertController,
   ToastController
 } from '@ionic/angular/standalone';
@@ -48,11 +37,33 @@ import {
   receiptOutline,
   hourglassOutline,
   checkmarkDoneOutline,
-  calculatorOutline
+  calculatorOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
+  chevronDownOutline
 } from 'ionicons/icons';
 import { HistorialMantencionesComponent } from '../../components/historial-mantenciones/historial-mantenciones.component';
+import { GraficoIngresosComponent } from '../../components/grafico-ingresos/grafico-ingresos.component';
+import { OpcionDesplegable } from '../../components/desplegable/desplegable.component';
+import { EncabezadoComponent } from '../../components/encabezado/encabezado.component';
 import { formatearGramos, formatearUnidades, formatearKgValor } from '../../utils/unidades';
-import { esMantencionPagada } from '../../utils/mantencion';
+import { esMantencionPagada, totalCobrado } from '../../utils/mantencion';
+import { take } from 'rxjs/operators';
+import { ContadorGanancia } from '../../utils/celebracion';
+import { COLOR_PRODUCTO } from '../../utils/servicios';
+import { MUESTRA_CLORO, MUESTRA_PH, estadoCloroDe, estadoPhDe, etiquetaNivel } from '../../utils/niveles';
+
+/** Cuántas visitas del período quedaron en un estado del agua */
+interface ResumenNivel {
+  estado: string;
+  etiqueta: string;
+  cantidad: number;
+  porcentaje: number;
+  muestra: string;
+}
+
+/** De bajo a alto: así se lee la barra de izquierda a derecha */
+const ORDEN_NIVELES = ['bajo', 'ideal bajo', 'ideal', 'ideal alto', 'alto'];
 
 addIcons({
   'calendar-outline': calendarOutline,
@@ -75,6 +86,9 @@ addIcons({
   'receipt-outline': receiptOutline,
   'hourglass-outline': hourglassOutline,
   'checkmark-done-outline': checkmarkDoneOutline,
+  'chevron-back-outline': chevronBackOutline,
+  'chevron-forward-outline': chevronForwardOutline,
+  'chevron-down-outline': chevronDownOutline,
   'calculator-outline': calculatorOutline
 });
 
@@ -86,25 +100,16 @@ addIcons({
   imports: [
     IonContent,
     IonHeader, 
-    IonTitle, 
     IonToolbar, 
     CommonModule, 
     FormsModule,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonCardContent,
-    IonSegment,
-    IonSegmentButton,
-    IonLabel,
-    IonButton,
-    IonButtons,
     IonIcon,
     IonSpinner,
-    IonSelect,
-    IonSelectOption,
+    IonRefresher,
+    IonRefresherContent,
     HistorialMantencionesComponent,
+    GraficoIngresosComponent,
+    EncabezadoComponent,
   ]
 })
 export class EstadisticasPage implements OnInit {
@@ -117,6 +122,9 @@ export class EstadisticasPage implements OnInit {
   isLoading: boolean = false;
   estadisticas: EstadisticasRecaudacion | null = null;
   estadisticasQuimicas: EstadisticasQuimicas | null = null;
+  /** Cuántas visitas del período quedaron ideales, bajas, altas... */
+  nivelesCloro: ResumenNivel[] = [];
+  nivelesPh: ResumenNivel[] = [];
   mantenciones: Mantencion[] = [];
   mantencionesFiltradas: Mantencion[] = [];
   filtroActual: string = 'todos';
@@ -171,7 +179,20 @@ export class EstadisticasPage implements OnInit {
     private toastController: ToastController
   ) { }
 
+  /** Lo ganado en el mes en curso (mismo cálculo que el gráfico), para el encabezado */
+  gananciaMesActual = 0;
+  /** Chip del encabezado que cuenta todo lo ganado al marcar un pago */
+  readonly contadorGanancia = new ContadorGanancia();
+
   ngOnInit() {
+    const hoy = new Date();
+    this.estadisticasService
+      .getIngresosPorAnio()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(anios => {
+        this.gananciaMesActual = anios.find(a => a.anio === hoy.getFullYear())?.meses[hoy.getMonth()].total ?? 0;
+      });
+
     this.cargarAnios();
     // Se recalcula cada vez que cambian los clientes (pagos, mantenciones nuevas…),
     // así que volver a esta pestaña no necesita recargar nada
@@ -184,10 +205,110 @@ export class EstadisticasPage implements OnInit {
     // Cargar años disponibles de forma simple
     const anioActual = new Date().getFullYear();
     this.anios = [anioActual, anioActual - 1, anioActual - 2, anioActual - 3];
+    this.opcionesAnio = this.anios.map(anio => ({ valor: anio, texto: String(anio) }));
+    this.opcionesMes = this.meses.map(m => ({ valor: m.valor, texto: m.nombre }));
+  }
+
+  // Se arman una vez (no en cada ciclo de detección) para los desplegables
+  opcionesMes: OpcionDesplegable<number>[] = [];
+  opcionesAnio: OpcionDesplegable<number>[] = [];
+
+  /** Deslizar hacia abajo: recalcula y cierra el indicador cuando termina */
+  onRefrescar(evento: any) {
+    this.cargarEstadisticas();
+    setTimeout(() => evento.target.complete(), 500);
+  }
+
+  // ===== Comparación con el período anterior =====
+
+  /** Total recaudado del período anterior (mismo largo); null mientras carga */
+  totalAnterior: number | null = null;
+  /** Historial de mantenciones plegado: la página no se vuelve un scroll infinito */
+  mostrarHistorial = false;
+  /** Pestaña de la tarjeta de químicos */
+  tabQuimicos: 'totales' | 'promedio' | 'niveles' = 'totales';
+
+  private cargarAnterior() {
+    this.totalAnterior = null;
+    let consulta;
+    if (this.periodoSeleccionado === 'dia') {
+      const [a, m, d] = this.fechaSeleccionada.split('-').map(Number);
+      consulta = this.estadisticasService.getEstadisticasDia(this.formatDateForInput(new Date(a, m - 1, d - 1)));
+    } else if (this.periodoSeleccionado === 'mes') {
+      const previo = new Date(this.anioSeleccionado, this.mesSeleccionado - 1, 1);
+      consulta = this.estadisticasService.getEstadisticasMes(previo.getFullYear(), previo.getMonth());
+    } else {
+      consulta = this.estadisticasService.getEstadisticasAnio(this.anioSeleccionado - 1);
+    }
+    consulta.subscribe({
+      next: (stats) => (this.totalAnterior = stats.total || 0),
+      error: () => (this.totalAnterior = null)
+    });
+  }
+
+  /** % de cambio frente al período anterior; null si no hay con qué comparar */
+  get variacion(): number | null {
+    if (this.totalAnterior === null || !this.estadisticas || this.totalAnterior === 0) return null;
+    return Math.round(((this.estadisticas.total - this.totalAnterior) / this.totalAnterior) * 100);
+  }
+
+  /** Parte cobrada de lo generado en el período (0-100) para la barra */
+  get porcentajePagado(): number {
+    const total = this.dineroPagado + this.dineroPendiente;
+    return total > 0 ? (this.dineroPagado / total) * 100 : 0;
+  }
+
+  get enPeriodo(): string {
+    return { dia: 'en el día', mes: 'en el mes', anio: 'en el año' }[this.periodoSeleccionado] || '';
+  }
+
+  get delPeriodo(): string {
+    return { dia: 'del día', mes: 'del mes', anio: 'del año' }[this.periodoSeleccionado] || '';
+  }
+
+  get nombreAnterior(): string {
+    return { dia: 'ayer', mes: 'el mes anterior', anio: 'el año anterior' }[this.periodoSeleccionado] || '';
+  }
+
+  /** "19 de octubre de 2026", "Octubre 2026" o "2026" */
+  get etiquetaPeriodo(): string {
+    if (this.periodoSeleccionado === 'dia') {
+      const [a, m, d] = this.fechaSeleccionada.split('-').map(Number);
+      return new Date(a, m - 1, d).toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    if (this.periodoSeleccionado === 'mes') return `${this.getNombreMes(this.mesSeleccionado)} ${this.anioSeleccionado}`;
+    return String(this.anioSeleccionado);
+  }
+
+  /** ¿El período elegido es el actual? (no se avanza al futuro) */
+  get esPeriodoActual(): boolean {
+    const hoy = new Date();
+    if (this.periodoSeleccionado === 'dia') return this.fechaSeleccionada >= this.formatDateForInput(hoy);
+    if (this.periodoSeleccionado === 'mes') {
+      return this.anioSeleccionado > hoy.getFullYear() ||
+        (this.anioSeleccionado === hoy.getFullYear() && this.mesSeleccionado >= hoy.getMonth());
+    }
+    return this.anioSeleccionado >= hoy.getFullYear();
+  }
+
+  /** Flechas ◀ ▶ del período */
+  moverPeriodo(direccion: number) {
+    if (this.periodoSeleccionado === 'dia') {
+      const [a, m, d] = this.fechaSeleccionada.split('-').map(Number);
+      this.fechaSeleccionada = this.formatDateForInput(new Date(a, m - 1, d + direccion));
+    } else if (this.periodoSeleccionado === 'mes') {
+      const nueva = new Date(this.anioSeleccionado, this.mesSeleccionado + direccion, 1);
+      this.mesSeleccionado = nueva.getMonth();
+      this.anioSeleccionado = nueva.getFullYear();
+    } else {
+      this.anioSeleccionado += direccion;
+    }
+    this.cargarEstadisticas();
   }
 
   cargarEstadisticas() {
     this.isLoading = true;
+    this.cargarAnterior();
     
     switch (this.periodoSeleccionado) {
       case 'dia':
@@ -461,11 +582,12 @@ export class EstadisticasPage implements OnInit {
   }
 
   marcarPago(mantencion: Mantencion) {
+    const monto = mantencion.precio || 0;
     this.clienteService.marcarPagoHistorial(mantencion.clienteId, mantencion).subscribe({
       next: () => {
-        console.log('Pago marcado exitosamente');
-        this.mostrarToast('Pago registrado correctamente');
-        
+        // La animación del dinero subiendo es la confirmación
+        this.clienteService.getClientes().pipe(take(1))
+          .subscribe(clientes => this.contadorGanancia.mostrar(totalCobrado(clientes), monto));
       },
       error: (err) => {
         console.error('Error marcando pago:', err);
@@ -538,6 +660,8 @@ export class EstadisticasPage implements OnInit {
   // Los valores llegan en kilos desde Firestore; el subtexto muestra el equivalente en gramos.
 
   formatearKgValor = formatearKgValor;
+  /** Mismo color por producto que en el historial y al completar */
+  readonly colorProducto = COLOR_PRODUCTO;
   formatearGramos = formatearGramos;
   formatearUnidades = formatearUnidades;
 
@@ -548,6 +672,33 @@ export class EstadisticasPage implements OnInit {
 
   private refrescarMantencionesParaComponente() {
     this.mantencionesParaComponente = this.transformarHistorialParaComponente(this.mantenciones);
+    const hechas = this.mantenciones.filter(m => !m.suspendida);
+    this.nivelesCloro = this.resumirNiveles(hechas.map(m => estadoCloroDe(m.cloro, m.estadoCloro)), MUESTRA_CLORO);
+    this.nivelesPh = this.resumirNiveles(hechas.map(m => estadoPhDe(m.ph, m.estadoPh)), MUESTRA_PH);
+  }
+
+  /** Cuántas visitas cayeron en cada estado (solo los que aparecen), de bajo a alto */
+  private resumirNiveles(estados: (string | null)[], muestras: Record<string, string>): ResumenNivel[] {
+    const medidos = estados.filter((e): e is string => !!e);
+    return ORDEN_NIVELES
+      .map(estado => {
+        const cantidad = medidos.filter(e => e === estado).length;
+        return {
+          estado,
+          etiqueta: etiquetaNivel(estado),
+          cantidad,
+          porcentaje: medidos.length ? (cantidad / medidos.length) * 100 : 0,
+          muestra: muestras[estado],
+        };
+      })
+      .filter(n => n.cantidad > 0);
+  }
+
+  /** Estado del promedio del período, para ponerle su punto de color */
+  estadoPromedio(tipo: 'cloro' | 'ph', valor: number): { etiqueta: string; muestra: string } | null {
+    const estado = tipo === 'cloro' ? estadoCloroDe(valor) : estadoPhDe(valor);
+    if (!estado) return null;
+    return { etiqueta: etiquetaNivel(estado), muestra: (tipo === 'cloro' ? MUESTRA_CLORO : MUESTRA_PH)[estado] };
   }
 
   // Método para transformar los datos del historial al formato esperado por el componente
@@ -565,9 +716,15 @@ export class EstadisticasPage implements OnInit {
       cantidadBajaPh: item.cantidadBajaPh,
       cantidadSubePh: item.cantidadSubePh,
       cantidadPastillas: item.cantidadPastillas,
+      cantidadAlgicida: item.cantidadAlgicida,
+      cuarzo: item.cuarzo,
+      bomba: item.bomba,
+      estadoCloro: item.estadoCloro,
+      estadoPh: item.estadoPh,
       hora: item.hora,
       pagado: esMantencionPagada(item),
-      suspendida: item.suspendida || undefined
+      suspendida: item.suspendida || undefined,
+      movidaA: item.movidaA
     }));
   }
 

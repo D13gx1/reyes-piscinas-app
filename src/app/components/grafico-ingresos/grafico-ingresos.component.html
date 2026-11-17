@@ -1,0 +1,90 @@
+<section class="grafico-card">
+  <div class="grafico-head">
+    <div class="titulo">
+      <ion-icon name="bar-chart-outline"></ion-icon>
+      <h2>Dinero ganado</h2>
+    </div>
+    <div class="segmentos" role="tablist" aria-label="Agrupar por">
+      <button type="button" role="tab" [attr.aria-selected]="vista === 'mes'"
+              [class.activo]="vista === 'mes'" (click)="cambiarVista('mes')">Por mes</button>
+      <button type="button" role="tab" [attr.aria-selected]="vista === 'anio'"
+              [class.activo]="vista === 'anio'" (click)="cambiarVista('anio')">Por año</button>
+    </div>
+  </div>
+
+  <div *ngIf="cargando" class="estado">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+    <!-- Selector de año (solo vista mensual) -->
+    <div class="anio-nav" *ngIf="vista === 'mes'">
+      <button type="button" (click)="moverAnio(-1)" [disabled]="!puedeRetroceder" aria-label="Año anterior">
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </button>
+      <div class="anio-nav-texto">
+        <span class="anio-nav-anio">{{ anioVista }}</span>
+        <span class="anio-nav-total">Total <span class="precio-tag">{{ formatear(totalAnioVista) }}</span></span>
+      </div>
+      <button type="button" (click)="moverAnio(1)" [disabled]="!puedeAvanzar" aria-label="Año siguiente">
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Detalle de la barra seleccionada -->
+    <div class="detalle" *ngIf="barraSeleccionada as barra" aria-live="polite">
+      <span class="detalle-nombre">{{ barra.nombre }}</span>
+      <span class="detalle-valor precio-tag">{{ formatear(barra.total) }}</span>
+      <span class="detalle-sub">
+        {{ barra.cantidad }} {{ barra.cantidad === 1 ? 'mantención' : 'mantenciones' }}
+        <ng-container *ngIf="variacion as v">
+          ·
+          <span class="delta" [class.sube]="v.porcentaje > 0" [class.baja]="v.porcentaje < 0">
+            <ion-icon *ngIf="v.porcentaje !== 0" [name]="v.porcentaje > 0 ? 'arrow-up' : 'arrow-down'"></ion-icon>
+            {{ v.porcentaje > 0 ? '+' : '' }}{{ v.porcentaje }}%
+          </span>
+          vs {{ v.contra }}
+        </ng-container>
+      </span>
+      <button type="button" class="ver-meses" *ngIf="vista === 'anio'" (click)="abrirAnio(indiceSeleccionado)">
+        Ver meses de {{ barra.etiqueta }}
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="grafico" [class.vacio]="sinDatos">
+      <div class="eje-y" aria-hidden="true">
+        <span *ngFor="let t of ticks" [style.bottom.%]="t.pos">{{ t.valor }}</span>
+      </div>
+
+      <div class="area">
+        <div class="linea-guia" *ngFor="let t of ticks" [style.bottom.%]="t.pos" aria-hidden="true"></div>
+
+        <div class="barras">
+          <button
+            type="button"
+            class="columna"
+            *ngFor="let barra of barras; let i = index; trackBy: trackPorEtiqueta"
+            [class.seleccionada]="i === indiceSeleccionado"
+            [attr.aria-label]="descripcion(barra)"
+            [attr.aria-pressed]="i === indiceSeleccionado"
+            (click)="seleccionar(i)"
+            (mouseenter)="seleccionar(i)">
+            <span class="barra" [style.height.%]="barra.alto" [class.cero]="barra.total === 0"></span>
+          </button>
+        </div>
+
+        <p class="sin-datos" *ngIf="sinDatos">
+          Sin mantenciones registradas {{ vista === 'mes' ? 'en ' + anioVista : 'todavía' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="eje-x" aria-hidden="true">
+      <span *ngFor="let barra of barras; let i = index" [class.seleccionada]="i === indiceSeleccionado">
+        {{ barra.etiqueta }}
+      </span>
+    </div>
+  </ng-container>
+</section>

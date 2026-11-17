@@ -1,380 +1,407 @@
-<ion-header [translucent]="true">
+<ion-header class="encabezado ion-no-border">
   <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button></ion-back-button>
-    </ion-buttons>
-    <ion-title>{{ pageTitle }}</ion-title>
+    <app-encabezado [titulo]="isEditing ? 'Editar cliente' : 'Nuevo cliente'"
+                    [subtitulo]="isEditing ? (nuevoCliente.nombre || 'Clientes') : 'Clientes'"
+                    volver="/tabs/clientes">
+    </app-encabezado>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">{{ pageTitle }}</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
 
-  <div class="container">
-    <!-- Spinner de carga -->
-    <div *ngIf="isLoading" class="loading-container">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Cargando...</p>
-    </div>
+  <!-- Carga -->
+  <div *ngIf="isLoading && isEditing && !nuevoCliente.nombre" class="loading-state">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Cargando cliente...</p>
+  </div>
 
-    <form #clienteForm="ngForm" (ngSubmit)="crearCliente(clienteForm)" *ngIf="!isLoading">
-      <!-- DATOS BÁSICOS DEL CLIENTE -->
-      <ion-card class="form-section">
-        <ion-card-header>
-          <ion-card-title>Información Personal
-            <ion-icon name="person-outline"></ion-icon>
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
+  <form
+    #clienteForm="ngForm"
+    class="form-shell"
+    (ngSubmit)="crearCliente(clienteForm)"
+    *ngIf="!(isLoading && isEditing && !nuevoCliente.nombre)">
 
-        <!-- Nombre -->
-        <ion-item>
-          <ion-label position="floating">Nombre *</ion-label>
+    <!-- ============ DATOS DEL CLIENTE ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon">
+          <ion-icon name="person-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Datos del cliente</h2>
+          <p>Nombre, dirección y forma de contacto</p>
+        </div>
+      </div>
+
+      <!-- Nombre -->
+      <div class="campo" [class.invalido]="nombre.invalid && nombre.touched">
+        <label class="campo-label" for="campo-nombre">Nombre <span class="req">*</span></label>
+        <div class="campo-caja">
+          <ion-icon name="person-outline" class="campo-icono"></ion-icon>
           <ion-input
+            id="campo-nombre"
             [(ngModel)]="nuevoCliente.nombre"
             name="nombre"
             required
             #nombre="ngModel"
-            (ionInput)="onInputChange('nombre', $event.target.value)"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)">
-          <p>El nombre es obligatorio</p>
-        </ion-text>
+            autocapitalize="words"
+            placeholder="Ej: Juan Pérez">
+          </ion-input>
+        </div>
+        <p class="campo-error" *ngIf="nombre.invalid && nombre.touched">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          El nombre es obligatorio
+        </p>
+      </div>
 
-        <!-- Dirección -->
-        <ion-item>
-          <ion-label position="floating">Dirección *</ion-label>
-          <ion-input
-            [(ngModel)]="nuevoCliente.direccion"
-            name="direccion"
-            required
-            #direccion="ngModel"
-            (ionInput)="onInputChange('direccion', $event.target.value)"
-            [placeholder]="isDevelopment ? 'Ingresa dirección o usa GPS (modo desarrollo)' : 'Ingresa la dirección o usa GPS'"
-          ></ion-input>
-          <ion-button
-            fill="clear"
-            slot="end"
+      <!-- Dirección + ubicación actual -->
+      <div class="campo" [class.invalido]="direccion.invalid && direccion.touched">
+        <label class="campo-label" for="campo-direccion">Dirección <span class="req">*</span></label>
+        <div class="campo-fila">
+          <div class="campo-caja">
+            <ion-icon name="location-outline" class="campo-icono"></ion-icon>
+            <ion-input
+              id="campo-direccion"
+              [(ngModel)]="nuevoCliente.direccion"
+              name="direccion"
+              required
+              #direccion="ngModel"
+              placeholder="Escríbela o usa tu ubicación">
+            </ion-input>
+          </div>
+          <button
+            type="button"
+            class="ubicacion-btn"
             (click)="obtenerUbicacionActual()"
             [disabled]="isLoadingUbicacion"
-          >
-            <ion-icon
-              *ngIf="!isLoadingUbicacion"
-              name="location-outline"
-              color="secondary"
-            ></ion-icon>
-            <ion-spinner
-              *ngIf="isLoadingUbicacion"
-              name="crescent"
-              color="primary"
-            ></ion-spinner>
-          </ion-button>
-        </ion-item>
-        <ion-text color="danger" *ngIf="direccion.invalid && (direccion.dirty || direccion.touched)">
-          <p>La dirección es obligatoria</p>
-        </ion-text>
+            aria-label="Usar mi ubicación actual">
+            <ion-spinner *ngIf="isLoadingUbicacion" name="crescent"></ion-spinner>
+            <ion-icon *ngIf="!isLoadingUbicacion" name="navigate"></ion-icon>
+          </button>
+        </div>
+        <p class="campo-ayuda" *ngIf="isLoadingUbicacion">
+          <ion-icon name="navigate-outline"></ion-icon>
+          Buscando tu ubicación...
+        </p>
+        <p class="campo-error" *ngIf="!isLoadingUbicacion && direccion.invalid && direccion.touched">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          La dirección es obligatoria
+        </p>
+      </div>
 
-        <!-- Teléfono -->
-        <ion-item>
-          <ion-label position="floating">Teléfono *</ion-label>
+      <!-- Teléfono -->
+      <div class="campo" [class.invalido]="telefono.touched && !telefonoValido()">
+        <label class="campo-label" for="campo-telefono">Teléfono <span class="req">*</span></label>
+        <div class="campo-caja">
+          <ion-icon name="call-outline" class="campo-icono"></ion-icon>
           <ion-input
+            id="campo-telefono"
             [(ngModel)]="nuevoCliente.telefono"
             name="telefono"
             required
             #telefono="ngModel"
+            type="tel"
+            inputmode="tel"
             (ionInput)="formatearTelefono($event)"
             maxlength="15"
-            placeholder="+56 9 1234 5678"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="telefono.touched && !telefonoValido()">
-          <p>El teléfono debe ser como +56 9 1234 5678</p>
-        </ion-text>
+            placeholder="+56 9 1234 5678">
+          </ion-input>
+        </div>
+        <p class="campo-error" *ngIf="telefono.touched && !telefonoValido()">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Debe ser como +56 9 1234 5678
+        </p>
+      </div>
 
-        <!-- Email (opcional) -->
-        <ion-item>
-          <ion-label position="floating">Email</ion-label>
+      <!-- Email (opcional) -->
+      <div class="campo" [class.invalido]="email.touched && !emailValido()">
+        <label class="campo-label" for="campo-email">Email <span class="opcional">(opcional)</span></label>
+        <div class="campo-caja">
+          <ion-icon name="mail-outline" class="campo-icono"></ion-icon>
           <ion-input
+            id="campo-email"
             [(ngModel)]="nuevoCliente.email"
             name="email"
             type="email"
+            inputmode="email"
             #email="ngModel"
-            (ionInput)="onInputChange('email', $event.target.value)"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="email.touched && !emailValido() && nuevoCliente.email">
-          <p>El email no es válido</p>
-        </ion-text>
-        </ion-card-content>
-      </ion-card>
+            placeholder="cliente@correo.cl">
+          </ion-input>
+        </div>
+        <p class="campo-error" *ngIf="email.touched && !emailValido()">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          El email no es válido
+        </p>
+      </div>
+    </section>
 
-      <!-- MEDIDAS DE LA PISCINA -->
-      <ion-card class="form-section">
-        <ion-card-header>
-          <ion-card-title>Medidas de la Piscina
-            <ion-icon name="resize-outline"></ion-icon>
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
+    <!-- ============ PISCINA ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon piscina">
+          <ion-icon name="water-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Piscina</h2>
+          <p>Medidas en metros</p>
+        </div>
+        <span class="card-header-chip" *ngIf="volumenLitros > 0">
+          {{ volumenLitros | number:'1.0-0' }} L
+        </span>
+      </div>
 
-        <!-- Largo -->
-        <ion-item>
-          <ion-label position="floating">Largo (m) *</ion-label>
+      <div class="medidas-grid">
+        <div class="campo" [class.invalido]="largo.touched && !(nuevoCliente.medidas.largo > 0)">
+          <label class="campo-label" for="campo-largo">Largo <span class="req">*</span></label>
+          <div class="campo-caja compacta">
+            <ion-input
+              id="campo-largo"
+              [(ngModel)]="nuevoCliente.medidas.largo"
+              name="largo"
+              required
+              type="number"
+              inputmode="decimal"
+              step="0.1"
+              min="0.1"
+              #largo="ngModel"
+              placeholder="0">
+            </ion-input>
+            <span class="campo-sufijo">m</span>
+          </div>
+        </div>
+
+        <div class="campo" [class.invalido]="ancho.touched && !(nuevoCliente.medidas.ancho > 0)">
+          <label class="campo-label" for="campo-ancho">Ancho <span class="req">*</span></label>
+          <div class="campo-caja compacta">
+            <ion-input
+              id="campo-ancho"
+              [(ngModel)]="nuevoCliente.medidas.ancho"
+              name="ancho"
+              required
+              type="number"
+              inputmode="decimal"
+              step="0.1"
+              min="0.1"
+              #ancho="ngModel"
+              placeholder="0">
+            </ion-input>
+            <span class="campo-sufijo">m</span>
+          </div>
+        </div>
+
+        <div class="campo" [class.invalido]="profundidad.touched && !(nuevoCliente.medidas.profundidad > 0)">
+          <label class="campo-label" for="campo-profundidad">Prof. <span class="req">*</span></label>
+          <div class="campo-caja compacta">
+            <ion-input
+              id="campo-profundidad"
+              [(ngModel)]="nuevoCliente.medidas.profundidad"
+              name="profundidad"
+              required
+              type="number"
+              inputmode="decimal"
+              step="0.1"
+              min="0.1"
+              #profundidad="ngModel"
+              placeholder="0">
+            </ion-input>
+            <span class="campo-sufijo">m</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="campo-error"
+         *ngIf="(largo.touched || ancho.touched || profundidad.touched) && !medidasValidas()">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        Las tres medidas deben ser mayores a 0
+      </p>
+      <p class="volumen" *ngIf="volumenLitros > 0">
+        <ion-icon name="cube-outline"></ion-icon>
+        Volumen aproximado: <strong>{{ volumenM3 | number:'1.0-1' }} m³</strong>
+      </p>
+    </section>
+
+    <!-- ============ PRECIO ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon precio">
+          <ion-icon name="cash-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Precio</h2>
+          <p>Lo que cobras por cada mantención</p>
+        </div>
+      </div>
+
+      <div class="campo" [class.invalido]="monto.touched && !precioValido()">
+        <label class="campo-label" for="campo-monto">Monto por mantención <span class="req">*</span></label>
+        <div class="campo-caja">
+          <span class="campo-prefijo">$</span>
           <ion-input
-            [(ngModel)]="nuevoCliente.medidas.largo"
-            name="largo"
-            required
-            type="number"
-            step="0.1"
-            min="0.1"
-            #largo="ngModel"
-            (ionInput)="onInputChange('largo', $event.target.value)"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="largo.touched && nuevoCliente.medidas.largo <= 0">
-          <p>El largo debe ser mayor a 0</p>
-        </ion-text>
-
-        <!-- Ancho -->
-        <ion-item>
-          <ion-label position="floating">Ancho (m) *</ion-label>
-          <ion-input
-            [(ngModel)]="nuevoCliente.medidas.ancho"
-            name="ancho"
-            required
-            type="number"
-            step="0.1"
-            min="0.1"
-            #ancho="ngModel"
-            (ionInput)="onInputChange('ancho', $event.target.value)"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="ancho.touched && nuevoCliente.medidas.ancho <= 0">
-          <p>El ancho debe ser mayor a 0</p>
-        </ion-text>
-
-        <!-- Profundidad -->
-        <ion-item>
-          <ion-label position="floating">Profundidad (m) *</ion-label>
-          <ion-input
-            [(ngModel)]="nuevoCliente.medidas.profundidad"
-            name="profundidad"
-            required
-            type="number"
-            step="0.1"
-            min="0.1"
-            #profundidad="ngModel"
-            (ionInput)="onInputChange('profundidad', $event.target.value)"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="profundidad.touched && nuevoCliente.medidas.profundidad <= 0">
-          <p>La profundidad debe ser mayor a 0</p>
-        </ion-text>
-        </ion-card-content>
-      </ion-card>
-
-      <!-- PRECIOS DEL SERVICIO -->
-      <ion-card class="form-section">
-        <ion-card-header>
-          
-          <ion-card-title>Precios del Servicio
-            <ion-icon name="cash-outline"></ion-icon>
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-
-        <!-- Monto -->
-        <ion-item>
-          <ion-label position="floating">Monto (CLP) *</ion-label>
-          <ion-input
+            id="campo-monto"
             [(ngModel)]="nuevoCliente.precio"
             name="monto"
             required
             type="number"
+            inputmode="numeric"
             min="1"
             step="1000"
             #monto="ngModel"
-            (ionInput)="onInputChange('monto', $event.target.value)"
-            placeholder="Ej: 15000"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="monto.touched && nuevoCliente.precio <= 0">
-          <p>El monto debe ser mayor a 0</p>
-        </ion-text>
-        </ion-card-content>
-      </ion-card>
-
-      <!-- PROGRAMACIÓN DE SERVICIOS -->
-      <ion-card class="form-section">
-        <ion-card-header>
-          <ion-card-title>Programación de Servicios
-            <ion-icon name="calendar-outline"></ion-icon>
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-
-        <!-- Frecuencia del servicio -->
-        <ion-item>
-          <ion-label>Frecuencia del Servicio *</ion-label>
-          <ion-select
-            [(ngModel)]="nuevoCliente.programacion.frecuencia"
-            name="frecuencia"
-            required
-            #frecuencia="ngModel"
-            (ionChange)="onFrecuenciaChange($event)"
-            placeholder="Selecciona la frecuencia"
-          >
-            <ion-select-option value="semanal">Semanal</ion-select-option>
-            <ion-select-option value="quincenal">Cada 15 días</ion-select-option>
-            <ion-select-option value="mensual">Mensual</ion-select-option>
-          </ion-select>
-        </ion-item>
-        <ion-text color="danger" *ngIf="frecuencia.invalid && (frecuencia.dirty || frecuencia.touched)">
-          <p>La frecuencia es obligatoria</p>
-        </ion-text>
-
-        <!-- Número de servicios por período -->
-        <ion-item *ngIf="nuevoCliente.programacion.frecuencia">
-          <ion-label position="floating">
-            Servicios por {{ getFrecuenciaText() }} *
-          </ion-label>
-          <ion-input
-            [(ngModel)]="nuevoCliente.programacion.cantidadPorPeriodo"
-            name="cantidadPorPeriodo"
-            required
-            type="number"
-            min="1"
-            max="{{ getMaxServicios() }}"
-            #cantidadPorPeriodo="ngModel"
-            (ionInput)="onInputChange('cantidadPorPeriodo', $event.target.value)"
-          ></ion-input>
-        </ion-item>
-        <ion-text color="danger" *ngIf="cantidadPorPeriodoRef?.touched && (nuevoCliente.programacion.cantidadPorPeriodo <= 0 || nuevoCliente.programacion.cantidadPorPeriodo > getMaxServicios())">
-          <p>Debe ser entre 1 y {{ getMaxServicios() }} servicios</p>
-        </ion-text>
-
-        <!-- Días de la semana -->
-        <ion-item *ngIf="nuevoCliente.programacion.frecuencia && nuevoCliente.programacion.cantidadPorPeriodo > 0">
-          <ion-label>Días de Servicio *</ion-label>
-        </ion-item>
-        
-        <div *ngIf="nuevoCliente.programacion.frecuencia && nuevoCliente.programacion.cantidadPorPeriodo > 0" class="dias-container">
-          <ion-item *ngFor="let dia of diasSemana" lines="none">
-            <ion-checkbox
-              [(ngModel)]="dia.seleccionado"
-              name="dia_{{dia.valor}}"
-              (ionChange)="onDiaChange(dia, $event)"
-            ></ion-checkbox>
-            <ion-label class="ion-margin-start">{{ dia.nombre }}</ion-label>
-          </ion-item>
+            placeholder="15000">
+          </ion-input>
+          <span class="campo-sufijo">CLP</span>
         </div>
-        
-        <ion-text color="danger" *ngIf="nuevoCliente.programacion.frecuencia && !diasSeleccionadosValidos()">
-          <p>Debes seleccionar exactamente {{ nuevoCliente.programacion.cantidadPorPeriodo }} día(s)</p>
-        </ion-text>
+        <p class="campo-error" *ngIf="monto.touched && !precioValido()">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          El monto debe ser mayor a 0
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ PROGRAMACIÓN ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon programacion">
+          <ion-icon name="calendar-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Programación</h2>
+          <p>Cada cuánto y qué días se atiende</p>
+        </div>
+      </div>
+
+      <!-- Frecuencia -->
+      <div class="campo" [class.invalido]="intentoGuardar && !nuevoCliente.programacion.frecuencia">
+        <span class="campo-label">Frecuencia <span class="req">*</span></span>
+        <div class="segmentos frecuencia-opciones">
+          <button
+            *ngFor="let opcion of frecuencias"
+            type="button"
+            class="segmento"
+            [class.activo]="nuevoCliente.programacion.frecuencia === opcion.valor"
+            (click)="seleccionarFrecuencia(opcion.valor)">
+            {{ opcion.texto }}
+          </button>
+        </div>
+      </div>
+
+      <ng-container *ngIf="nuevoCliente.programacion.frecuencia">
+        <!-- Cantidad por período -->
+        <div class="campo campo-inline">
+          <span class="campo-label">Servicios por {{ getFrecuenciaText() }}</span>
+          <div class="stepper">
+            <button
+              type="button"
+              (click)="cambiarCantidad(-1)"
+              [disabled]="nuevoCliente.programacion.cantidadPorPeriodo <= 1"
+              aria-label="Menos servicios">
+              <ion-icon name="remove-outline"></ion-icon>
+            </button>
+            <span class="stepper-valor">{{ nuevoCliente.programacion.cantidadPorPeriodo }}</span>
+            <button
+              type="button"
+              (click)="cambiarCantidad(1)"
+              [disabled]="nuevoCliente.programacion.cantidadPorPeriodo >= getMaxServicios()"
+              aria-label="Más servicios">
+              <ion-icon name="add-outline"></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Días -->
+        <div class="campo" [class.invalido]="intentoGuardar && !diasSeleccionadosValidos()">
+          <span class="campo-label">
+            Días de servicio <span class="req">*</span>
+            <span class="contador">{{ getDiasSeleccionados().length }}/{{ nuevoCliente.programacion.cantidadPorPeriodo }}</span>
+          </span>
+          <div class="dias-chips">
+            <button
+              *ngFor="let dia of diasSemana"
+              type="button"
+              class="dia-chip"
+              [class.activo]="dia.seleccionado"
+              [attr.aria-pressed]="dia.seleccionado"
+              [attr.aria-label]="dia.nombre"
+              (click)="toggleDia(dia)">
+              {{ dia.corto }}
+            </button>
+          </div>
+          <p class="campo-error" *ngIf="intentoGuardar && !diasSeleccionadosValidos()">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            Elige {{ nuevoCliente.programacion.cantidadPorPeriodo }} día(s)
+          </p>
+        </div>
 
         <!-- Hora preferida -->
-        <ion-item *ngIf="nuevoCliente.programacion.frecuencia">
-          <ion-label position="floating">Hora Preferida</ion-label>
-          <ion-datetime
-            [(ngModel)]="nuevoCliente.programacion.horaPreferida"
+        <div class="campo campo-inline">
+          <label class="campo-label" for="campo-hora">Hora preferida <span class="opcional">(opcional)</span></label>
+          <input
+            id="campo-hora"
+            class="hora-input"
+            type="time"
             name="horaPreferida"
-            presentation="time"
-            [showDefaultButtons]="true"
-            (ionChange)="onInputChange('horaPreferida', $event.target.value)"
-          ></ion-datetime>
-        </ion-item>
+            [(ngModel)]="horaPreferida">
+        </div>
+      </ng-container>
 
-        <!-- Notas adicionales -->
-        <ion-item>
-          <ion-label position="floating">Notas Adicionales</ion-label>
+      <!-- Notas -->
+      <div class="campo">
+        <label class="campo-label" for="campo-notas">Notas <span class="opcional">(opcional)</span></label>
+        <div class="campo-caja area">
           <ion-textarea
+            id="campo-notas"
             [(ngModel)]="nuevoCliente.programacion.notas"
             name="notas"
             rows="3"
-            placeholder="Instrucciones especiales, acceso a la propiedad, etc."
-            (ionInput)="onInputChange('notas', $event.target.value)"
-          ></ion-textarea>
-        </ion-item>
-        </ion-card-content>
-      </ion-card>
+            [autoGrow]="true"
+            placeholder="Acceso a la propiedad, perro, llave, etc.">
+          </ion-textarea>
+        </div>
+      </div>
+    </section>
 
-      <!-- ESTADO DEL CLIENTE -->
-      <ion-card class="form-section">
-        <ion-card-header>
-          <ion-icon name="toggle-outline"></ion-icon>
-          <ion-card-title>Estado</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
+    <!-- ============ ESTADO ============ -->
+    <section class="card estado-card">
+      <div class="estado-fila">
+        <div class="card-header-icon" [class.inactivo]="!nuevoCliente.activo">
+          <ion-icon [name]="nuevoCliente.activo ? 'checkmark-circle-outline' : 'pause-circle-outline'"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>{{ nuevoCliente.activo ? 'Cliente activo' : 'Cliente inactivo' }}</h2>
+          <p>{{ nuevoCliente.activo ? 'Aparece en tu agenda de mantenciones' : 'No aparece en la agenda' }}</p>
+        </div>
+        <ion-toggle
+          [(ngModel)]="nuevoCliente.activo"
+          name="activo"
+          aria-label="Cliente activo">
+        </ion-toggle>
+      </div>
+    </section>
 
-        <ion-item>
-          <ion-label class="estado-label">
-            <span
-              class="estado-badge"
-              [class.activo]="nuevoCliente.activo"
-              [class.inactivo]="!nuevoCliente.activo"
-            >
-              {{ nuevoCliente.activo ? 'Cliente Activo' : 'Cliente Inactivo' }}
-            </span>
-          </ion-label>
-          <ion-toggle
-            slot="end"
-            [(ngModel)]="nuevoCliente.activo"
-            name="activo"
-            (ionChange)="onInputChange('activo', $event.target.checked)"
-          ></ion-toggle>
-        </ion-item>
-        </ion-card-content>
-      </ion-card>
-    </form>
-
-    <!-- Información de depuración (remover en producción) -->
-    <div class="debug-info" *ngIf="isEditing">
-      <p><strong>Modo:</strong> {{ isEditing ? 'Editando' : 'Creando' }}</p>
-      <p><strong>ID Cliente:</strong> {{ nuevoCliente.id }}</p>
-      <p><strong>Formulario válido:</strong> {{ validarFormulario() }}</p>
-      <p><strong>Días seleccionados:</strong> {{ getDiasSeleccionados().join(', ') }}</p>
-    </div>
-
-    <!-- Botones de acción -->
-    <div class="button-container">
+    <!-- ============ ACCIONES ============ -->
+    <div class="acciones">
       <ion-button
         expand="block"
-        color="primary"
+        class="gradient-button"
         [disabled]="isLoading"
-        (click)="crearClienteSinParametros()"
-      >
-        <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
-        {{ isLoading ? 'Procesando...' : (isEditing ? 'Actualizar Cliente' : 'Guardar Cliente') }}
+        (click)="crearClienteSinParametros()">
+        <ion-spinner name="crescent" *ngIf="isLoading" slot="start"></ion-spinner>
+        <ion-icon name="save-outline" slot="start" *ngIf="!isLoading"></ion-icon>
+        {{ isLoading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear cliente') }}
       </ion-button>
 
-      <ion-button
-        expand="block"
-        fill="outline"
-        color="medium"
-        (click)="cancelar()"
-        [disabled]="isLoading"
-      >
+      <button type="button" class="accion-secundaria" (click)="cancelar()" [disabled]="isLoading">
         Cancelar
-      </ion-button>
+      </button>
 
-      <!-- Botón de eliminar - solo se muestra en modo edición -->
-      <ion-button
-        expand="block"
-        fill="outline"
-        color="danger"
+      <button
+        type="button"
+        class="accion-secundaria peligro"
         (click)="eliminarCliente()"
         [disabled]="isLoading"
-        *ngIf="isEditing"
-      >
-        <ion-icon name="trash-outline" slot="start"></ion-icon>
-        Eliminar Cliente
-      </ion-button>
+        *ngIf="isEditing">
+        <ion-icon name="trash-outline"></ion-icon>
+        Eliminar cliente
+      </button>
     </div>
-  </div>
+  </form>
 </ion-content>

@@ -1,0 +1,150 @@
+:host {
+  display: block;
+}
+
+/* ==================== */
+/* Resumen del día       */
+/* ==================== */
+.dia-resumen {
+  margin: 0 0 var(--sp-3);
+  padding: 14px var(--sp-4);
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  box-shadow: 0 10px 24px rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.28);
+  color: #ffffff;
+}
+
+.dia-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.dia-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dia-etiqueta {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.dia-total {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+
+  strong {
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  span {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    opacity: 0.9;
+  }
+}
+
+/* Barra de lo hecho sobre el total */
+.dia-progreso {
+  position: relative;
+  height: 8px;
+  margin-top: var(--sp-3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.dia-progreso-relleno {
+  position: relative;
+  height: 100%;
+  border-radius: 999px;
+  // Verde siempre: lo hecho se lee como avance
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  overflow: hidden;
+  // Se llena con un pequeño rebote
+  transition: width 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// Contador "1/2": blanco mientras falta; verde al completar el día
+.dia-progreso-contador {
+  flex-shrink: 0;
+  min-width: 52px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ion-color-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+  font-size: var(--fs-md);
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Celebración al completar una mantención ---------- */
+.celebrando {
+  // Brillo que recorre la barra
+  .dia-progreso-relleno::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.6) 50%, transparent 80%);
+    transform: translateX(-100%);
+    animation: brillo 0.9s ease-out 0.25s;
+  }
+
+  // El contador da un salto
+  .dia-progreso-contador {
+    animation: salto 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s;
+  }
+}
+
+/* Día completo: la tarjeta brilla y los botones de estado se tiñen de éxito */
+.dia-completo.celebrando {
+  animation: brilloTarjeta 1.4s ease-out;
+}
+
+.dia-completo .dia-progreso-contador {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+@keyframes brillo {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes salto {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+@keyframes brilloTarjeta {
+  0% { box-shadow: 0 10px 24px rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.28); }
+  30% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.55), 0 14px 32px rgba(22, 163, 74, 0.45); }
+  100% { box-shadow: 0 10px 24px rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.28); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dia-progreso-relleno {
+    transition: none;
+  }
+
+  .celebrando .dia-progreso-relleno::after,
+  .celebrando .dia-progreso-contador,
+  .dia-completo.celebrando {
+    animation: none;
+  }
+}

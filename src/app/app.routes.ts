@@ -6,6 +6,7 @@ export const routes: Routes = [
   {
     path: 'tabs',
     component: TabsComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: 'home',
@@ -60,8 +61,18 @@ export const routes: Routes = [
       },
       {
         path: 'perfil',
-        loadComponent: () =>
-          import('./pages/perfil/perfil.page').then(m => m.PerfilPage),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/perfil/perfil.page').then(m => m.PerfilPage),
+          },
+          {
+            path: 'recordatorios',
+            loadComponent: () =>
+              import('./pages/perfil/recordatorios/recordatorios.page').then(m => m.RecordatoriosPage),
+          },
+        ],
       },
       {
         path: '',
@@ -81,10 +92,12 @@ export const routes: Routes = [
   },
   {
     path: 'historial-cliente',
+    canActivate: [authGuard],
     loadComponent: () => import('./pages/clientes/historial-cliente/historial-cliente.page').then( m => m.HistorialClientePage)
   },
   {
     path: 'mantenimiento-exitoso',
+    canActivate: [authGuard],
     loadComponent: () => import('./components/mantenimiento-exitoso/mantenimiento-exitoso.page').then( m => m.MantenimientoExitosoPage)
   }
 ];

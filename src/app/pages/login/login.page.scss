@@ -1,30 +1,191 @@
-.logo-container {
-  text-align: center;
-  margin-bottom: 20px;
+.login {
+  --background: var(--ion-background-color);
+}
 
-  .logo {
-    width: 120px;
-    height: auto;
+/* Franja superior con el degradado de marca y una ola de agua */
+.login__fondo {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 46vh;
+  min-height: 300px;
+  background: var(--app-gradient);
+  overflow: hidden;
+
+  /* Reflejos suaves, como luz sobre el agua */
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  &::before {
+    width: 320px;
+    height: 320px;
+    top: -120px;
+    right: -100px;
+  }
+
+  &::after {
+    width: 200px;
+    height: 200px;
+    top: 40%;
+    left: -80px;
   }
 }
 
-.separator {
+.login__ola {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 72px;
+
+  path {
+    fill: var(--ion-background-color);
+  }
+}
+
+.login__contenido {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: calc(var(--sp-6) * 2 + env(safe-area-inset-top)) var(--sp-5) calc(var(--sp-6) + env(safe-area-inset-bottom));
   display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 20px 0;
+  flex-direction: column;
+}
 
-  span {
-    flex: 1;
-    border-bottom: 1px solid #ccc;
-    line-height: 0.1em;
-    margin: 0 10px;
-    color: #888;
+.login__marca {
+  text-align: center;
+  color: #fff;
+  margin-bottom: var(--sp-6);
+
+  h1 {
+    margin: var(--sp-4) 0 var(--sp-1);
+    font-size: var(--fs-2xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--fs-sm);
+    opacity: 0.9;
   }
 }
 
-.google-icon {
+.login__logo {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 12px 28px rgba(2, 40, 70, 0.25);
+  animation: aparecer 0.5s ease-out both;
+
+  img {
+    width: 76%;
+    height: 76%;
+    object-fit: contain;
+  }
+}
+
+.login__tarjeta {
+  background: var(--ion-card-background);
+  border: 1px solid var(--ion-border-color);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sombra-2);
+  padding: var(--sp-6) var(--sp-5);
+  animation: aparecer 0.5s 0.08s ease-out both;
+
+  h2 {
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-xl);
+    font-weight: 700;
+  }
+}
+
+.login__ayuda {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.login__google {
+  --background: var(--ion-item-background);
+  --background-hover: var(--control-bg);
+  --background-activated: var(--control-bg);
+  --color: var(--ion-text-color);
+  --border-radius: var(--r-md);
+  --box-shadow: var(--sombra-1);
+  margin: 0;
+  height: 52px;
+  border: 1px solid var(--ion-border-color);
+  border-radius: var(--r-md);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+
+  ion-spinner {
+    width: 20px;
+    height: 20px;
+    margin-right: var(--sp-3);
+  }
+}
+
+.login__google-icono {
   width: 20px;
   height: 20px;
-  margin-right: 10px;
+  margin-right: var(--sp-3);
+}
+
+.login__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+  color: var(--ion-color-danger);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+
+  ion-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+}
+
+.login__pie {
+  margin-top: auto;
+  padding-top: var(--sp-6);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login__logo,
+  .login__tarjeta {
+    animation: none;
+  }
 }

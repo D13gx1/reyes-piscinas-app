@@ -1,175 +1,205 @@
-<ion-header [translucent]="true">
-  <ion-toolbar class="header-toolbar">
-    <ion-title class="fade-in">Mi Perfil</ion-title>
+<ion-header class="encabezado ion-no-border">
+  <ion-toolbar>
+    <app-encabezado titulo="Mi perfil" subtitulo="Cuenta y ajustes" [enPerfil]="true"></app-encabezado>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="profile-content">
-  <!-- Avatar + Nombre -->
-  <div class="profile-header ion-text-center fade-in-up">
-    <h2>{{ userName }}</h2>
-  </div>
+<ion-content class="profile-content">
+  <div class="perfil">
 
-  <div class="migration-notification" [class.expanded]="isMigrationExpanded">
-    <div class="notification-header" (click)="toggleMigration()">
-      <div class="notification-content">
-        <ion-icon name="build-outline" class="notification-icon"></ion-icon>
-        <div class="notification-text">
-          <h4>🔧 Migración de Precios</h4>
-          <p *ngIf="!isMigrationExpanded">Actualiza tu historial para estadísticas correctas</p>
+    <!-- ============ CUENTA ============ -->
+    <section class="cuenta fade-in-up">
+      <div class="cuenta-fila">
+        <div class="cuenta-avatar">
+          <img *ngIf="foto && !fotoFallo" [src]="foto" alt="" referrerpolicy="no-referrer" (error)="fotoFallo = true">
+          <span *ngIf="!foto || fotoFallo">{{ iniciales }}</span>
+        </div>
+        <div class="cuenta-texto">
+          <h2>{{ userName }}</h2>
+          <span class="cuenta-email" *ngIf="email">{{ email }}</span>
         </div>
       </div>
-      <ion-icon
-        [name]="isMigrationExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"
-        class="expand-icon">
-      </ion-icon>
-    </div>
 
-    <div class="notification-body" *ngIf="isMigrationExpanded">
-      <p class="notification-description">
-        Este proceso actualizará todo tu historial de mantenimientos para que las estadísticas se calculen correctamente con los precios reales cobrados en cada momento.
-        <br>
-        <br>
-        Recuerda dejar a tus clientes registrados bien con el precio que cobraste en cada mantenimiento.
-      </p>
-      <ion-button
-        expand="block"
-        color="warning"
-        class="migration-button"
-        (click)="migrarPreciosHistorial()">
-        <ion-icon name="sync-outline" slot="start"></ion-icon>
-        Migrar historial de precios
-      </ion-button>
-      <p class="migration-note">
-        <ion-icon name="information-circle-outline"></ion-icon>
-        Ejecutar solo una vez
-      </p>
-    </div>
-  </div>
-
-  <!-- Estado de unidades de químicos -->
-  <ion-list class="fade-in-up" *ngIf="!unidadesCargando && !unidadesEnKilos">
-    <ion-item>
-      <ion-icon name="scale-outline" slot="start" color="warning"></ion-icon>
-      <ion-label class="ion-text-wrap">
-        <h3>Unidades pendientes de actualizar</h3>
-        <p>Hay cantidades químicas guardadas en gramos. Actualízalas a kilos para que las estadísticas se calculen bien.</p>
-      </ion-label>
-      <ion-button slot="end" size="small" color="warning" (click)="migrarUnidadesAKilos()">
-        <ion-icon name="sync-outline" slot="start"></ion-icon>
-        Migrar
-      </ion-button>
-    </ion-item>
-  </ion-list>
-
-  <!-- Opciones de Perfil -->
-  <ion-list class="fade-in-up delay-1">
-    <ion-item button detail="false">
-      <ion-icon name="person-outline" slot="start"></ion-icon>
-      <ion-label>Editar perfil</ion-label>
-    </ion-item>
-
-    <ion-item detail="false">
-      <ion-icon name="moon-outline" slot="start"></ion-icon>
-      <ion-label>Modo oscuro</ion-label>
-      <ion-toggle slot="end" [checked]="isDarkMode" (ionChange)="toggleDarkMode($event)"></ion-toggle>
-    </ion-item>
-
-    <ion-item detail="false">
-      <ion-icon name="notifications-outline" slot="start"></ion-icon>
-      <ion-label class="notification-setting">
-        <h3>Notificaciones</h3>
-        <p *ngIf="!notificacionesActivadas">Recordatorios de mantenciones y avisos de cobro.</p>
-        <p *ngIf="notificacionesActivadas">{{ resumenNotificaciones }}</p>
-      </ion-label>
-      <ion-toggle
-        slot="end"
-        [checked]="notificacionesActivadas"
-        (ionChange)="toggleNotificaciones($event)">
-      </ion-toggle>
-    </ion-item>
-
-    <!-- Configuración de notificaciones (solo si están activadas) -->
-    <div class="notif-config" *ngIf="notificacionesActivadas">
-      <div class="notif-opcion">
-        <div class="notif-opcion-head">
-          <div class="notif-opcion-texto">
-            <span class="notif-opcion-titulo">Mantenciones de mañana</span>
-            <span class="notif-opcion-desc">Aviso la noche anterior con los clientes que te tocan</span>
-          </div>
-          <ion-toggle
-            [checked]="configNotif.recordatorioDiario"
-            (ionChange)="cambiarConfig({ recordatorioDiario: $event.detail.checked })"
-            aria-label="Recordatorio de mantenciones">
-          </ion-toggle>
+      <div class="cuenta-stats">
+        <div class="stat">
+          <strong>{{ clientesActivos }}</strong>
+          <span>{{ clientesActivos === 1 ? 'cliente activo' : 'clientes activos' }}</span>
         </div>
-        <label class="notif-campo" *ngIf="configNotif.recordatorioDiario">
-          <ion-icon name="time-outline"></ion-icon>
-          <span>Hora del aviso</span>
-          <input
-            type="time"
-            [value]="configNotif.horaRecordatorio"
-            (change)="cambiarHora('horaRecordatorio', $any($event.target).value)">
-        </label>
+        <div class="stat">
+          <strong>{{ mantencionesMes }}</strong>
+          <span>mantenciones este mes</span>
+        </div>
+        <button type="button" class="stat stat-ganancia" (click)="siguientePeriodoGanancia()"
+                [attr.aria-label]="'Ganado ' + gananciaActual.etiqueta + ': ' + formatearMonto(gananciaActual.monto) + '. Toca para cambiar'">
+          <ng-container *ngFor="let i of [periodoGanancia]">
+            <strong class="cambio-periodo precio-tag">{{ formatearMonto(gananciaActual.monto) }}</strong>
+            <span class="cambio-periodo">ganado {{ gananciaActual.etiqueta }}</span>
+          </ng-container>
+        </button>
+      </div>
+    </section>
+
+    <!-- Aviso importante: datos en gramos pendientes de pasar a kilos -->
+    <button type="button" class="aviso fade-in-up" *ngIf="!unidadesCargando && !unidadesEnKilos"
+            (click)="migrarUnidadesAKilos()">
+      <span class="icono naranja"><ion-icon name="scale-outline"></ion-icon></span>
+      <span class="fila-texto">
+        <span class="fila-titulo">Unidades pendientes de actualizar</span>
+        <span class="fila-desc">Hay químicos guardados en gramos. Toca para pasarlos a kilos.</span>
+      </span>
+      <ion-icon name="chevron-forward-outline" class="fila-chevron"></ion-icon>
+    </button>
+
+    <!-- ============ PREFERENCIAS ============ -->
+    <h3 class="seccion-titulo">Preferencias</h3>
+    <section class="grupo fade-in-up delay-1">
+      <div class="fila">
+        <span class="icono morado"><ion-icon name="moon-outline"></ion-icon></span>
+        <span class="fila-texto">
+          <span class="fila-titulo">Modo oscuro</span>
+          <span class="fila-desc">{{ isDarkMode ? 'Activado' : 'Desactivado' }}</span>
+        </span>
+        <ion-toggle [checked]="isDarkMode" (ionChange)="toggleDarkMode($event)" aria-label="Modo oscuro"></ion-toggle>
       </div>
 
-      <div class="notif-opcion">
-        <div class="notif-opcion-head">
-          <div class="notif-opcion-texto">
-            <span class="notif-opcion-titulo">Aviso de cobro</span>
-            <span class="notif-opcion-desc">Recordatorio mensual para cobrar a tus clientes</span>
+      <div class="fila">
+        <span class="icono rojo"><ion-icon name="notifications-outline"></ion-icon></span>
+        <span class="fila-texto">
+          <span class="fila-titulo">Notificaciones</span>
+          <span class="fila-desc">
+            {{ notificacionesActivadas ? resumenNotificaciones : 'Recordatorios de mantenciones y avisos de cobro' }}
+          </span>
+        </span>
+        <ion-toggle [checked]="notificacionesActivadas" (ionChange)="toggleNotificaciones($event)"
+                    aria-label="Notificaciones"></ion-toggle>
+      </div>
+
+      <!-- Configuración de notificaciones (solo si están activadas) -->
+      <div class="notif-config" *ngIf="notificacionesActivadas">
+        <div class="notif-opcion">
+          <div class="notif-opcion-head">
+            <div class="notif-opcion-texto">
+              <span class="notif-opcion-titulo">Mantenciones de mañana</span>
+              <span class="notif-opcion-desc">Aviso la noche anterior con los clientes que te tocan</span>
+            </div>
+            <ion-toggle
+              [checked]="configNotif.recordatorioDiario"
+              (ionChange)="cambiarConfig({ recordatorioDiario: $event.detail.checked })"
+              aria-label="Recordatorio de mantenciones">
+            </ion-toggle>
           </div>
-          <ion-toggle
-            [checked]="configNotif.avisoCobro"
-            (ionChange)="cambiarConfig({ avisoCobro: $event.detail.checked })"
-            aria-label="Aviso de cobro">
-          </ion-toggle>
-        </div>
-        <ng-container *ngIf="configNotif.avisoCobro">
-          <label class="notif-campo">
-            <ion-icon name="calendar-outline"></ion-icon>
-            <span>Día del mes</span>
-            <select
-              [value]="configNotif.diaCobro"
-              (change)="cambiarConfig({ diaCobro: +$any($event.target).value })">
-              <option *ngFor="let dia of diasDelMes" [value]="dia" [selected]="dia === configNotif.diaCobro">
-                {{ dia }}
-              </option>
-            </select>
-          </label>
-          <label class="notif-campo">
+          <label class="notif-campo" *ngIf="configNotif.recordatorioDiario">
             <ion-icon name="time-outline"></ion-icon>
             <span>Hora del aviso</span>
             <input
               type="time"
-              [value]="configNotif.horaCobro"
-              (change)="cambiarHora('horaCobro', $any($event.target).value)">
+              [value]="configNotif.horaRecordatorio"
+              (change)="cambiarHora('horaRecordatorio', $any($event.target).value)">
           </label>
-        </ng-container>
+        </div>
+
+        <div class="notif-opcion">
+          <div class="notif-opcion-head">
+            <div class="notif-opcion-texto">
+              <span class="notif-opcion-titulo">Aviso de cobro</span>
+              <span class="notif-opcion-desc">Recordatorio mensual para cobrar a tus clientes</span>
+            </div>
+            <ion-toggle
+              [checked]="configNotif.avisoCobro"
+              (ionChange)="cambiarConfig({ avisoCobro: $event.detail.checked })"
+              aria-label="Aviso de cobro">
+            </ion-toggle>
+          </div>
+          <ng-container *ngIf="configNotif.avisoCobro">
+            <label class="notif-campo">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>Día del mes</span>
+              <select
+                [value]="configNotif.diaCobro"
+                (change)="cambiarConfig({ diaCobro: +$any($event.target).value })">
+                <option *ngFor="let dia of diasDelMes" [value]="dia" [selected]="dia === configNotif.diaCobro">
+                  {{ dia }}
+                </option>
+              </select>
+            </label>
+            <label class="notif-campo">
+              <ion-icon name="time-outline"></ion-icon>
+              <span>Hora del aviso</span>
+              <input
+                type="time"
+                [value]="configNotif.horaCobro"
+                (change)="cambiarHora('horaCobro', $any($event.target).value)">
+            </label>
+          </ng-container>
+        </div>
+
+        <button type="button" class="notif-prueba" (click)="enviarPrueba()" [disabled]="enviandoPrueba">
+          <ion-icon name="paper-plane-outline"></ion-icon>
+          {{ enviandoPrueba ? 'Enviando...' : 'Enviar notificación de prueba' }}
+        </button>
       </div>
+    </section>
 
-      <button type="button" class="notif-prueba" (click)="enviarPrueba()" [disabled]="enviandoPrueba">
-        <ion-icon name="paper-plane-outline"></ion-icon>
-        {{ enviandoPrueba ? 'Enviando...' : 'Enviar notificación de prueba' }}
+    <!-- ============ CLIENTES ============ -->
+    <h3 class="seccion-titulo">Clientes</h3>
+    <section class="grupo fade-in-up delay-1">
+      <button type="button" class="fila" (click)="irARecordatorios()">
+        <span class="icono verde"><ion-icon name="megaphone-outline"></ion-icon></span>
+        <span class="fila-texto">
+          <span class="fila-titulo">Recordatorios a clientes</span>
+          <span class="fila-desc">Mensajes por WhatsApp: verano, vacaciones, precios…</span>
+        </span>
+        <ion-icon name="chevron-forward-outline" class="fila-chevron"></ion-icon>
       </button>
-    </div>
+    </section>
 
-    <ion-item button detail="false">
-      <ion-icon name="help-circle-outline" slot="start"></ion-icon>
-      <ion-label>Ayuda y soporte</ion-label>
-    </ion-item>
-  </ion-list>
+    <!-- ============ CIERRE DE MES ============ -->
+    <!-- La tarjeta aparece sola al entrar en un mes nuevo; aquí se puede ver cuando quieras -->
+    <h3 class="seccion-titulo">Resumen del mes</h3>
+    <section class="grupo fade-in-up delay-1">
+      <button type="button" class="fila" (click)="verResumenMesPasado()">
+        <span class="icono"><ion-icon name="calendar-number-outline"></ion-icon></span>
+        <span class="fila-texto">
+          <span class="fila-titulo">Ver el resumen del mes pasado</span>
+          <span class="fila-desc">Con tus números reales</span>
+        </span>
+        <ion-icon name="chevron-forward-outline" class="fila-chevron"></ion-icon>
+      </button>
+    </section>
 
-  <!-- Botón Cerrar Sesión -->
-  <div class="ion-padding fade-in-up delay-2">
-    <ion-button 
-      expand="block" 
-      color="danger" 
-      shape="round"
-      (click)="logout()"
-    >
-      <ion-icon name="log-out-outline" slot="start"></ion-icon>
+    <!-- ============ DATOS ============ -->
+    <h3 class="seccion-titulo">Datos</h3>
+    <section class="grupo fade-in-up delay-2">
+      <button type="button" class="fila" (click)="toggleMigration()" [attr.aria-expanded]="isMigrationExpanded">
+        <span class="icono naranja"><ion-icon name="build-outline"></ion-icon></span>
+        <span class="fila-texto">
+          <span class="fila-titulo">Migración de precios</span>
+          <span class="fila-desc">Ajusta el historial para que las estadísticas usen lo cobrado</span>
+        </span>
+        <ion-icon [name]="isMigrationExpanded ? 'chevron-up-outline' : 'chevron-down-outline'" class="fila-chevron"></ion-icon>
+      </button>
+
+      <div class="migracion" *ngIf="isMigrationExpanded">
+        <p>
+          Actualiza todo tu historial para que las estadísticas usen el precio real cobrado en cada mantención.
+          Antes, revisa que tus clientes tengan bien su precio.
+        </p>
+        <button type="button" class="migracion-btn" (click)="migrarPreciosHistorial()">
+          <ion-icon name="sync-outline"></ion-icon>
+          Migrar historial de precios
+        </button>
+        <span class="migracion-nota">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          Ejecutar solo una vez
+        </span>
+      </div>
+    </section>
+
+    <!-- ============ SALIR ============ -->
+    <button type="button" class="cerrar-sesion fade-in-up delay-2" (click)="logout()">
+      <ion-icon name="log-out-outline"></ion-icon>
       Cerrar sesión
-    </ion-button>
+    </button>
+
   </div>
 </ion-content>

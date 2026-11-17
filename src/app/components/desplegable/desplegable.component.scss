@@ -1,0 +1,145 @@
+@use '../../../theme/texto' as *;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.campo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  &.abierto {
+    z-index: 41;
+  }
+}
+
+.etiqueta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
+.disparador {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--ion-border-color, #dfeafc);
+  background: var(--ion-color-light, #f4f5f8);
+  color: var(--ion-text-color, #0f172a);
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease;
+
+  .texto {
+    overflow: hidden;
+    white-space: nowrap;
+    @include desvanecer;
+  }
+
+  .chevron {
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--ion-color-medium);
+    transition: transform 0.2s ease;
+  }
+}
+
+.abierto .disparador {
+  border-color: var(--ion-color-primary);
+
+  .chevron {
+    transform: rotate(180deg);
+    color: var(--ion-color-primary);
+  }
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 160px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--ion-card-background, #ffffff);
+  border: 1px solid var(--ion-border-color, #dfeafc);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+  transform-origin: top center;
+  animation: desplegar 0.16s ease-out;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ion-text-color, #0f172a);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 18px;
+    color: var(--ion-color-primary);
+  }
+
+  &:active {
+    background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.08);
+  }
+
+  &.activa {
+    background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.1);
+    color: var(--ion-color-primary);
+    font-weight: 700;
+  }
+}
+
+@keyframes desplegar {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:host-context(body.dark),
+:host-context(html.dark) {
+  .disparador {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--ion-border-color);
+  }
+
+  .menu {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+}

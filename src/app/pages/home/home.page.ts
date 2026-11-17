@@ -2,8 +2,16 @@ import { Component, OnInit, ViewChild, ElementRef, DestroyRef, inject } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, AlertController, ToastController, ActionSheetController } from '@ionic/angular';
+import { IonicModule, IonItemSliding, IonContent, AlertController, ToastController } from '@ionic/angular';
 import { RouterModule, Router } from '@angular/router';
+import { defineCustomElement as defineIonModal } from '@ionic/core/components/ion-modal.js';
+import { defineCustomElement as defineIonDatetime } from '@ionic/core/components/ion-datetime.js';
+import { defineCustomElement as defineIonRefresher } from '@ionic/core/components/ion-refresher.js';
+import { defineCustomElement as defineIonRefresherContent } from '@ionic/core/components/ion-refresher-content.js';
+import { defineCustomElement as defineIonItemSliding } from '@ionic/core/components/ion-item-sliding.js';
+import { defineCustomElement as defineIonItemOptions } from '@ionic/core/components/ion-item-options.js';
+import { defineCustomElement as defineIonItemOption } from '@ionic/core/components/ion-item-option.js';
+import { defineCustomElement as defineIonItem } from '@ionic/core/components/ion-item.js';
 import { addIcons } from 'ionicons';
 import {
   refreshOutline,
@@ -18,16 +26,35 @@ import {
   addCircleOutline,
   buildOutline,
   calendarOutline,
+  chevronDownOutline,
   pauseCircleOutline,
   waterOutline,
+  callOutline,
   flaskOutline,
   arrowDownCircleOutline,
   arrowUpCircleOutline,
-  discOutline
+  discOutline,
+  closeOutline,
+  leafOutline,
+  layersOutline,
+  constructOutline,
+  ellipsisHorizontal,
+  pencilOutline,
+  chevronUpOutline,
+  navigateOutline
 } from 'ionicons/icons';
 import { ClienteService, Cliente } from '../../services/cliente.service';
 import { formatearKgValor, formatearGramos, formatearUnidades, CAMPO_UNIDAD_MASA, UNIDAD_MASA } from '../../utils/unidades';
-import { nuevoIdRegistro, esMantencionSaltada } from '../../utils/mantencion';
+import { nuevoIdRegistro, esMantencionSaltada, esMantencionPagada, totalCobrado } from '../../utils/mantencion';
+import { take } from 'rxjs/operators';
+import { SERVICIO_MANTENCION, ProductoUsado, productosUsados, infoServicio } from '../../utils/servicios';
+import { SelectorClienteComponent, OpcionCliente, SeleccionCliente } from '../../components/selector-cliente/selector-cliente.component';
+import { EncabezadoComponent } from '../../components/encabezado/encabezado.component';
+import { ResumenDiaComponent } from '../../components/resumen-dia/resumen-dia.component';
+import { colorNivel, etiquetaNivel, MUESTRA_CLORO, MUESTRA_PH } from '../../utils/niveles';
+import { celebrarProgreso, ContadorGanancia, EstadoGanancia } from '../../utils/celebracion';
+import { tomarPagoPendiente } from '../../utils/pago-reciente';
+import { TabsToqueService } from '../../services/tabs-toque.service';
 
 interface ClienteDelDia {
   id: string;
@@ -38,6 +65,8 @@ interface ClienteDelDia {
   precio: number; // Agregamos el precio
   servicio?: string; // Servicio a realizar (especial o por defecto)
   realizado: boolean;
+  /** Solo en realizadas: si esa mantención ya se cobró */
+  pagado?: boolean;
   mantenimiento?: {
     estadoCloro: string;
     estadoPh: string;
@@ -50,6 +79,8 @@ interface ClienteDelDia {
     /** Unidades de pastillas de cloro */
     cantidadPastillas: number;
     fecha: string;
+    /** Lo que se usó (químicos y materiales del servicio), ya listo para mostrar */
+    productos?: ProductoUsado[];
     hora: string;
   };
 }
@@ -61,7 +92,20 @@ interface DiaCalendario {
   esHoy: boolean;
   seleccionado: boolean;
   cantidadPiscinas: number;
+  /** Un punto por cliente del día, con su estado (ver actualizarEventosCalendario) */
+  puntos?: EstadoPunto[];
+  /** Resumen para lectores de pantalla: "2 hechas, 1 suspendida" */
+  resumen?: string;
+  /** Puntos que no caben en la tira semanal */
+  puntosExtra?: number;
 }
+
+type EstadoPunto = 'hecho' | 'movido' | 'suspendido' | 'pendiente';
+
+/** Máximo de puntos por día: dos filas de 6 caben en la celda del calendario */
+const MAX_PUNTOS_DIA = 12;
+/** En la tira semanal cabe una sola fila; el resto se resume como "+n" */
+const MAX_PUNTOS_SEMANA = 4;
 
 addIcons({
   'refresh-outline': refreshOutline,
@@ -76,23 +120,55 @@ addIcons({
   'add-circle-outline': addCircleOutline,
   'build-outline': buildOutline,
   'calendar-outline': calendarOutline,
+  'chevron-down-outline': chevronDownOutline,
   'pause-circle-outline': pauseCircleOutline,
   'water-outline': waterOutline,
+  'call-outline': callOutline,
   'flask-outline': flaskOutline,
   'arrow-down-circle-outline': arrowDownCircleOutline,
   'arrow-up-circle-outline': arrowUpCircleOutline,
-  'disc-outline': discOutline
+  'disc-outline': discOutline,
+  'close-outline': closeOutline,
+  'leaf-outline': leafOutline,
+  'layers-outline': layersOutline,
+  'construct-outline': constructOutline,
+  'ellipsis-horizontal': ellipsisHorizontal,
+  'pencil-outline': pencilOutline,
+  'chevron-up-outline': chevronUpOutline,
+  'navigate-outline': navigateOutline
 });
+
+// La app arranca con provideIonicAngular() (standalone), que solo registra los
+// componentes importados desde '@ionic/angular/standalone'. Esta página usa
+// IonicModule, y ion-modal / ion-datetime / ion-refresher no se importan en otro
+// lado: sin esto el calendario de "Cambiar de día", la hoja de elegir cliente y el
+// deslizar para actualizar no aparecen.
+defineIonModal();
+defineIonDatetime();
+defineIonRefresher();
+defineIonRefresherContent();
+defineIonItemSliding();
+defineIonItemOptions();
+defineIonItemOption();
+defineIonItem();
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, RouterModule],
+  imports: [CommonModule, FormsModule, IonicModule, RouterModule, SelectorClienteComponent, EncabezadoComponent, ResumenDiaComponent],
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  readonly colorNivel = colorNivel;
+  readonly infoServicio = infoServicio;
+  readonly etiquetaNivel = etiquetaNivel;
+
+  /** Tarjeta con las opciones de suspender desplegadas (id del cliente), o null. */
+
   private destroyRef = inject(DestroyRef);
+  private tabsToque = inject(TabsToqueService);
+  @ViewChild('contenido', { static: true }) private contenido?: IonContent;
 
   // Formato de unidades químicas (los valores llegan en kilos)
   formatearKgValor = formatearKgValor;
@@ -117,6 +193,8 @@ export class HomePage implements OnInit {
   clientesRealizados: ClienteDelDia[] = [];
   clientesSuspendidos: ClienteDelDia[] = [];
   seccionActiva: string = 'porRealizar';
+  /** Tras elegir un día, la primera carga decide la pestaña (día terminado → Realizadas) */
+  private elegirSeccionAlCargar = true;
   isLoading = false;
   progresoDelDia = 0;
   // Contador de clientes borrados (saltados) para la fecha seleccionada
@@ -133,6 +211,21 @@ export class HomePage implements OnInit {
   fechaSeleccionada = new Date();
   mesVista = new Date();
   diasDelMes: DiaCalendario[] = [];
+  /** Tira semanal (lunes a domingo) que se ve en el inicio */
+  semana: DiaCalendario[] = [];
+  /** Lunes de la semana que muestra la tira */
+  inicioSemana = new Date();
+  /** Calendario desplegado: muestra el mes completo en vez de la semana */
+  calendarioAbierto = false;
+  /** Tarjeta pendiente con las opciones (suspender / cambiar de día) desplegadas */
+  opcionesId: string | null = null;
+  /** Punto donde empezó el arrastre sobre el calendario */
+  private toqueInicio: { x: number; y: number } | null = null;
+  /** Iniciales de la tira y del mes: la semana parte el lunes */
+  readonly letrasSemana = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  readonly nombresSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  /** Tarjetas de "Realizados" abiertas para ver los productos */
+  expandidos = new Set<string>();
   mesAnioActual = '';
 
   // Selector de mes
@@ -155,11 +248,12 @@ export class HomePage implements OnInit {
   constructor(
     private alertController: AlertController,
     private toastController: ToastController,
-    private actionSheetController: ActionSheetController,
     private clienteService: ClienteService,
     private router: Router
   ) {
     this.configurarFecha();
+    this.inicioSemana = this.lunesDe(this.fechaSeleccionada);
+    this.generarSemana();
     this.generarCalendario();
   }
 
@@ -168,6 +262,15 @@ export class HomePage implements OnInit {
     this.clienteService.clientes$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.cargarClientesDelDia());
+
+    // Tocar "Inicio" estando ya en el inicio: vuelve al día de hoy y arriba
+    this.tabsToque.retoque$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(tab => {
+        if (tab !== 'home') return;
+        this.irAHoy();
+        this.contenido?.scrollToTop(300);
+      });
   }
 
   async deshacerBorrado(clienteId: string) {
@@ -201,13 +304,23 @@ export class HomePage implements OnInit {
     });
   }
 
+  /** Sin pendientes: Realizadas aunque haya suspendidas (o Suspendidas si no se hizo ninguna) */
+  private seccionInicialDelDia(): string {
+    if (this.clientesPendientes.length > 0) return 'porRealizar';
+    if (this.clientesRealizados.length > 0) return 'realizados';
+    if (this.clientesSuspendidos.length > 0) return 'suspendidos';
+    return 'porRealizar';
+  }
+
   setSeccion(seccion: string) {
     this.seccionActiva = seccion;
   }
 
   irACompletar(cliente: ClienteDelDia) {
     try {
-      this.router.navigate(['/tabs/home/completar_mantencion', cliente.id]);
+      this.router.navigate(['/tabs/home/completar_mantencion', cliente.id], {
+        queryParams: { fecha: this.formatearFechaLocal(this.fechaSeleccionada) }
+      });
     } catch (error) {
       console.error('❌ Error en navegación:', error);
       this.showToast('Error al navegar a completar mantención ❌', 'danger');
@@ -226,46 +339,88 @@ export class HomePage implements OnInit {
     });
   }
 
-  // Agregar una mantención realizada: muestra clientes disponibles del día y navega a completarla
-  async agregarMantencionRealizada() {
+  // ===== Hoja para elegir cliente (y servicio) =====
+
+  /** Configuración de la hoja abierta; null = cerrada. */
+  selector: {
+    modo: 'agregar' | 'realizada' | 'suspender';
+    titulo: string;
+    clientes: OpcionCliente[];
+    pedirServicio: boolean;
+    textoConfirmar: string;
+    iconoConfirmar: string;
+    peligro: boolean;
+  } | null = null;
+
+  get subtituloSelector(): string {
+    return this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  private aOpciones(clientes: Cliente[]): OpcionCliente[] {
+    const pendientes = new Set(this.clientesPendientes.map(c => c.id));
+    const suspendidos = new Set(this.clientesSuspendidos.map(c => c.id));
+    const esHoy = this.esMismaFecha(this.fechaSeleccionada, new Date());
+    return clientes.map(c => ({
+      id: c.id || '',
+      nombre: c.nombre,
+      direccion: c.direccion,
+      etiqueta: pendientes.has(c.id || '') ? (esHoy ? 'Toca hoy' : 'Toca este día')
+        : suspendidos.has(c.id || '') ? 'Suspendido' : undefined
+    }));
+  }
+
+  cerrarSelector() {
+    this.selector = null;
+  }
+
+  onSeleccionCliente(seleccion: SeleccionCliente) {
+    const modo = this.selector?.modo;
+    const cliente = this.selector?.clientes.find(c => c.id === seleccion.clienteId);
+    this.selector = null;
+    if (!cliente) return;
+
+    switch (modo) {
+      case 'agregar':
+        this.guardarServicioExtra(cliente.id, seleccion.servicio);
+        break;
+      case 'realizada':
+        this.router.navigate(['/tabs/home/completar_mantencion', cliente.id], {
+          queryParams: { servicio: seleccion.servicio, fecha: this.formatearFechaLocal(this.fechaSeleccionada) }
+        });
+        break;
+      case 'suspender':
+        this.ejecutarSuspension({
+          id: cliente.id,
+          nombre: cliente.nombre,
+          direccion: cliente.direccion || '',
+          telefono: '',
+          horaPreferida: '',
+          precio: 0,
+          servicio: SERVICIO_MANTENCION,
+          realizado: false
+        });
+        break;
+    }
+  }
+
+  // Agregar una mantención realizada: elegir cliente y servicio, y completarla
+  agregarMantencionRealizada() {
     this.clienteService.getClientes().subscribe({
-      next: async (clientes) => {
+      next: (clientes) => {
         const disponibles = this.filtrarDisponibles(clientes);
         if (disponibles.length === 0) {
           this.showToast('No hay clientes disponibles para este día', 'warning');
           return;
         }
-
-        const alert = await this.alertController.create({
-          header: 'Agregar Mantención Realizada',
-          subHeader: this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }),
-          message: 'Selecciona el cliente cuya mantención realizaste:',
-          inputs: disponibles.map(cliente => ({
-            name: 'cliente',
-            type: 'radio' as const,
-            label: cliente.nombre,
-            value: cliente.id
-          })),
-          buttons: [
-            {
-              text: 'Cancelar',
-              role: 'cancel'
-            },
-            {
-              text: 'Continuar',
-              handler: (clienteId) => {
-                if (!clienteId) {
-                  this.showToast('Selecciona un cliente ❌', 'danger');
-                  return false;
-                }
-                this.router.navigate(['/tabs/home/completar_mantencion', clienteId]);
-                return true;
-              }
-            }
-          ]
-        });
-
-        await alert.present();
+        this.selector = {
+          modo: 'realizada',
+          titulo: 'Mantención realizada',
+          clientes: this.aOpciones(disponibles),
+          pedirServicio: true,
+          textoConfirmar: 'Completar',
+          iconoConfirmar: 'arrow-forward-outline',
+          peligro: false
+        };
       },
       error: (err) => {
         console.error('Error al cargar clientes:', err);
@@ -274,58 +429,24 @@ export class HomePage implements OnInit {
     });
   }
 
-  // Agregar un cliente suspendido desde los disponibles del día seleccionado
-  async agregarClienteSuspendido() {
+  // Suspender un cliente del día seleccionado
+  agregarClienteSuspendido() {
     this.clienteService.getClientes().subscribe({
-      next: async (clientes) => {
+      next: (clientes) => {
         const disponibles = this.filtrarDisponibles(clientes);
         if (disponibles.length === 0) {
           this.showToast('No hay clientes disponibles para este día', 'warning');
           return;
         }
-
-        const alert = await this.alertController.create({
-          header: 'Suspender Cliente',
-          subHeader: this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }),
-          message: 'Selecciona el cliente a suspender para este día:',
-          inputs: disponibles.map(cliente => ({
-            name: 'cliente',
-            type: 'radio' as const,
-            label: cliente.nombre,
-            value: cliente.id
-          })),
-          buttons: [
-            {
-              text: 'Cancelar',
-              role: 'cancel'
-            },
-            {
-              text: 'Continuar',
-              handler: (clienteId) => {
-                if (!clienteId) {
-                  this.showToast('Selecciona un cliente ❌', 'danger');
-                  return false;
-                }
-                const seleccionado = disponibles.find(c => c.id === clienteId);
-                if (seleccionado) {
-                  this.suspenderCliente({
-                    id: seleccionado.id || '',
-                    nombre: seleccionado.nombre,
-                    direccion: seleccionado.direccion,
-                    telefono: seleccionado.telefono,
-                    horaPreferida: seleccionado.programacion?.horaPreferida || 'Sin horario específico',
-                    precio: seleccionado.precio || 0,
-                    servicio: 'Mantención de piscina',
-                    realizado: false
-                  });
-                }
-                return true;
-              }
-            }
-          ]
-        });
-
-        await alert.present();
+        this.selector = {
+          modo: 'suspender',
+          titulo: 'Suspender mantención',
+          clientes: this.aOpciones(disponibles),
+          pedirServicio: false,
+          textoConfirmar: 'Suspender',
+          iconoConfirmar: 'pause-circle-outline',
+          peligro: true
+        };
       },
       error: (err) => {
         console.error('Error al cargar clientes:', err);
@@ -384,8 +505,8 @@ export class HomePage implements OnInit {
     const primerDia = new Date(this.mesVista.getFullYear(), this.mesVista.getMonth(), 1);
     const ultimoDia = new Date(this.mesVista.getFullYear(), this.mesVista.getMonth() + 1, 0);
 
-    // Día de la semana del primer día (0 = Domingo, 1 = Lunes, etc.)
-    const diaSemanaPrimerDia = primerDia.getDay();
+    // Celdas antes del día 1: la semana parte el lunes (lunes = 0 … domingo = 6)
+    const diaSemanaPrimerDia = (primerDia.getDay() + 6) % 7;
 
     // Agregar celdas vacías antes del primer día para alinear con el día de la semana
     for (let i = 0; i < diaSemanaPrimerDia; i++) {
@@ -430,11 +551,24 @@ export class HomePage implements OnInit {
   }
 
   seleccionarDia(dia: DiaCalendario) {
-    // Actualizar selección
-    this.diasDelMes.forEach(d => d.seleccionado = false);
-    dia.seleccionado = true;
-
+    // El mes desplegado sigue abierto: se pliega con la flecha o deslizando
+    this.menuMesAbierto = false;
     this.fechaSeleccionada = new Date(dia.fecha);
+
+    // La tira y el mes son listas distintas: se marca por fecha en ambas
+    [...this.diasDelMes, ...this.semana].forEach(d =>
+      d.seleccionado = d.numero !== 0 && this.esMismaFecha(d.fecha, this.fechaSeleccionada));
+
+    // Elegido desde el mes: la tira salta a esa semana
+    const lunes = this.lunesDe(this.fechaSeleccionada);
+    if (lunes.getTime() !== this.inicioSemana.getTime()) {
+      this.inicioSemana = lunes;
+      this.generarSemana();
+      this.actualizarEventosCalendario();
+    }
+
+    // "Hoy" con otro mes a la vista: el mes desplegado salta al del día elegido
+    if (this.calendarioAbierto) this.abrirMes();
 
     // Actualizar día seleccionado para filtrar clientes
     const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
@@ -445,14 +579,19 @@ export class HomePage implements OnInit {
     this.dayShort = this.diaHoy.substring(0, 3).toUpperCase();
     this.isToday = this.esMismaFecha(this.fechaSeleccionada, this.fechaActual);
 
-    // Al cambiar de día siempre se parte viendo lo pendiente
+    // Al cambiar de día se parte viendo lo pendiente; si el día ya quedó
+    // terminado, al cargar se pasa a Realizadas
     this.seccionActiva = 'porRealizar';
+    this.elegirSeccionAlCargar = true;
 
     // Recargar clientes para el día seleccionado
     this.cargarClientesDelDia();
   }
 
   cambiarMes(direccion: number) {
+    this.menuMesAbierto = false;
+    // Se parte del día 1: desde un 31, sumar un mes podía saltarse al siguiente
+    this.mesVista.setDate(1);
     this.mesVista.setMonth(this.mesVista.getMonth() + direccion);
     this.mesSeleccionado = this.mesVista.getMonth();
     this.generarCalendario();
@@ -460,77 +599,200 @@ export class HomePage implements OnInit {
   }
 
   cambiarMesSeleccionado() {
+    this.mesVista.setDate(1);
     this.mesVista.setMonth(this.mesSeleccionado);
     this.generarCalendario();
     this.actualizarEventosCalendario();
   }
 
-  async mostrarSelectorMes() {
-    const buttons = this.meses.map(mes => ({
-      text: mes.nombre,
-      handler: () => {
-        this.mesSeleccionado = mes.value;
-        this.cambiarMesSeleccionado();
-      }
-    }));
+  /** Menú de meses desplegado bajo su botón */
+  menuMesAbierto = false;
 
-    const actionSheet = await this.actionSheetController.create({
-      header: 'Seleccionar Mes',
-      buttons: [
-        ...buttons,
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        }
-      ]
+  // ===== Tira semanal =====
+
+  /** Lunes (a las 00:00) de la semana de una fecha */
+  private lunesDe(fecha: Date): Date {
+    const lunes = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+    lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+    return lunes;
+  }
+
+  generarSemana() {
+    this.semana = Array.from({ length: 7 }, (_, i) => {
+      const fecha = new Date(this.inicioSemana);
+      fecha.setDate(fecha.getDate() + i);
+      return {
+        fecha,
+        numero: fecha.getDate(),
+        diaSemana: this.nombresSemana[i],
+        esHoy: this.esMismaFecha(fecha, this.fechaActual),
+        seleccionado: this.esMismaFecha(fecha, this.fechaSeleccionada),
+        cantidadPiscinas: 0
+      };
     });
+  }
 
-    await actionSheet.present();
+  cambiarSemana(direccion: number) {
+    this.inicioSemana = new Date(this.inicioSemana);
+    this.inicioSemana.setDate(this.inicioSemana.getDate() + 7 * direccion);
+    this.generarSemana();
+    this.actualizarEventosCalendario();
+  }
+
+  /** Vuelve la tira, el mes y la lista a hoy */
+  irAHoy() {
+    const hoy = this.semana.find(d => d.esHoy);
+    if (hoy) {
+      this.seleccionarDia(hoy);
+      return;
+    }
+    this.inicioSemana = this.lunesDe(this.fechaActual);
+    this.generarSemana();
+    this.seleccionarDia(this.semana.find(d => d.esHoy)!);
+  }
+
+  /** Despliega o pliega el mes completo (flecha, nombre del mes o deslizar) */
+  alternarCalendario(abrir = !this.calendarioAbierto) {
+    if (abrir === this.calendarioAbierto) return;
+    if (abrir) {
+      this.abrirMes();
+    } else {
+      this.calendarioAbierto = false;
+      this.menuMesAbierto = false;
+    }
+  }
+
+  onToqueInicio(evento: TouchEvent) {
+    const t = evento.touches[0];
+    this.toqueInicio = { x: t.clientX, y: t.clientY };
+  }
+
+  /** Deslizar hacia abajo despliega el mes, hacia arriba lo pliega */
+  onToqueFin(evento: TouchEvent) {
+    if (!this.toqueInicio) return;
+    const t = evento.changedTouches[0];
+    const dx = t.clientX - this.toqueInicio.x;
+    const dy = t.clientY - this.toqueInicio.y;
+    this.toqueInicio = null;
+    if (Math.abs(dy) < 40 || Math.abs(dy) < Math.abs(dx)) return;
+    this.alternarCalendario(dy > 0);
+  }
+
+  /** Flechas: mueven la semana o, con el calendario abierto, el mes */
+  navegar(direccion: number) {
+    if (this.calendarioAbierto) this.cambiarMes(direccion);
+    else this.cambiarSemana(direccion);
+  }
+
+  /** Prepara el mes del día elegido y lo despliega */
+  abrirMes() {
+    const mismoMes = this.mesVista.getFullYear() === this.fechaSeleccionada.getFullYear() &&
+      this.mesVista.getMonth() === this.fechaSeleccionada.getMonth();
+    if (!mismoMes) {
+      this.mesVista = new Date(this.fechaSeleccionada.getFullYear(), this.fechaSeleccionada.getMonth(), 1);
+      this.mesSeleccionado = this.mesVista.getMonth();
+      this.generarCalendario();
+      this.actualizarEventosCalendario();
+    }
+    this.calendarioAbierto = true;
+  }
+
+  /** Nombre del mes en la cabecera: el del mes visible si está desplegado */
+  get tituloCalendario(): string {
+    return this.calendarioAbierto ? this.mesAnioActual.replace(' de ', ' ') : this.mesDeLaSemana;
+  }
+
+  /** "Octubre 2026" del día elegido, para el botón de la tira */
+  get mesDeLaSemana(): string {
+    const mes = this.fechaSeleccionada.toLocaleDateString('es-CL', { month: 'long' });
+    return `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${this.fechaSeleccionada.getFullYear()}`;
+  }
+
+  elegirMes(mes: number) {
+    this.menuMesAbierto = false;
+    if (mes === this.mesSeleccionado) return;
+    this.mesSeleccionado = mes;
+    this.cambiarMesSeleccionado();
   }
 
 
+  /**
+   * Puntos del calendario: uno por cliente del día.
+   * - verde: mantención hecha
+   * - amarillo: se cambió a otro día
+   * - rojo: suspendida
+   * - color de la app: pendiente (incluye días pasados sin marcar)
+   */
   actualizarEventosCalendario() {
-    // Obtener todos los clientes
     this.clienteService.getClientes().subscribe({
       next: (clientes) => {
-        // Para cada día del mes actual en diasDelMes
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
+        const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        const orden: Record<EstadoPunto, number> = { hecho: 0, movido: 1, suspendido: 2, pendiente: 3 };
 
-        this.diasDelMes.forEach(dia => {
-          if (dia.numero === 0) return; // Skip empty cells
+        const enSemana = new Set(this.semana);
+        [...this.diasDelMes, ...this.semana].forEach(dia => {
+          if (dia.numero === 0) return; // Celdas vacías
 
           const fechaDia = new Date(dia.fecha);
           fechaDia.setHours(0, 0, 0, 0);
-          const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][fechaDia.getDay()];
+          const fechaStr = this.formatearFechaLocal(fechaDia);
+          const diaSemana = diasSemana[fechaDia.getDay()];
+          const esPasado = fechaDia < hoy;
 
-          // Contar clientes con mantenimiento programado o servicio extra para este día y pendiente
-          let count = 0;
+          const puntos: EstadoPunto[] = [];
           clientes.forEach(cliente => {
-            if (!cliente.activo) return;
-            const fechaStr = this.formatearFechaLocal(fechaDia);
-            const hasHistorial = cliente.historial.some(h => h.fecha === fechaStr);
-            if (hasHistorial || fechaDia < hoy) return;
-
-            const extras = (cliente as any).serviciosExtra || [];
-            const extraDia = extras.find((s: any) => s.fecha === fechaStr);
-            const tieneExtra = !!extraDia;
-
-            const diasProgramados = cliente.programacion?.diasSemana || [];
-            const esProgramado = diasProgramados.includes(diaSemana);
-
-            if (tieneExtra || esProgramado) {
-              count++;
-            }
+            const estado = this.estadoClienteEnDia(cliente, fechaStr, diaSemana, esPasado);
+            if (estado) puntos.push(estado);
           });
 
-          dia.cantidadPiscinas = Math.min(count, 3); // Cap at 3
+          puntos.sort((a, b) => orden[a] - orden[b]);
+          const maximo = enSemana.has(dia) ? MAX_PUNTOS_SEMANA : MAX_PUNTOS_DIA;
+          dia.puntos = puntos.slice(0, maximo);
+          dia.puntosExtra = Math.max(0, puntos.length - maximo);
+          dia.cantidadPiscinas = puntos.length;
+          dia.resumen = this.resumenPuntos(puntos);
         });
       },
       error: (err) => {
         console.error('Error al cargar eventos del calendario:', err);
       }
     });
+  }
+
+  /** Estado de un cliente en una fecha, o null si ese día no le tocaba nada. */
+  private estadoClienteEnDia(cliente: Cliente, fechaStr: string, diaSemana: string, esPasado: boolean): EstadoPunto | null {
+    const registros = (cliente.historial || []).filter(h => h.fecha === fechaStr);
+
+    if (registros.some(h => !esMantencionSaltada(h))) return 'hecho';
+
+    const saltado = registros.find(h => esMantencionSaltada(h));
+    if (saltado) {
+      // Al cambiar de día se deja un registro saltado con "Cambio de día" en el servicio
+      return /cambio de d[ií]a/i.test(saltado.servicio || '') ? 'movido' : 'suspendido';
+    }
+    if ((cliente.skippedDates || []).includes(fechaStr)) return 'suspendido';
+
+    // Pendientes (también de días pasados que quedaron sin marcar), solo clientes activos
+    if (!cliente.activo) return null;
+    const tieneExtra = (cliente.serviciosExtra || []).some(s => s.fecha === fechaStr);
+    // Antes de crear al cliente no le tocaba nada
+    const creadoDespues = esPasado && !!cliente.fechaCreacion &&
+      this.formatearFechaLocal(new Date(cliente.fechaCreacion)) > fechaStr;
+    const esProgramado = !creadoDespues && (cliente.programacion?.diasSemana || []).includes(diaSemana);
+    return tieneExtra || esProgramado ? 'pendiente' : null;
+  }
+
+  private resumenPuntos(puntos: EstadoPunto[]): string {
+    const n = (estado: EstadoPunto) => puntos.filter(p => p === estado).length;
+    const partes: string[] = [];
+    const hechas = n('hecho'), movidas = n('movido'), suspendidas = n('suspendido'), pendientes = n('pendiente');
+    if (hechas) partes.push(`${hechas} ${hechas === 1 ? 'hecha' : 'hechas'}`);
+    if (movidas) partes.push(`${movidas} ${movidas === 1 ? 'cambiada' : 'cambiadas'} de día`);
+    if (suspendidas) partes.push(`${suspendidas} ${suspendidas === 1 ? 'suspendida' : 'suspendidas'}`);
+    if (pendientes) partes.push(`${pendientes} ${pendientes === 1 ? 'pendiente' : 'pendientes'}`);
+    return partes.join(', ');
   }
 
   cargarClientesDelDia() {
@@ -605,7 +867,9 @@ export class HomePage implements OnInit {
             telefono: cliente.telefono,
             horaPreferida: cliente.programacion?.horaPreferida || 'Sin horario específico',
             precio: (historialDia?.precioCobrado ?? cliente.precio) || 0,
+            servicio: historialDia?.servicio,
             realizado: true,
+            pagado: historialDia ? esMantencionPagada(historialDia) : false,
             mantenimiento: historialDia ? {
               estadoCloro: historialDia.estadoCloro || '',
               estadoPh: historialDia.estadoPh || '',
@@ -615,7 +879,8 @@ export class HomePage implements OnInit {
               cantidadSubePh: historialDia.cantidadSubePh || 0,
               cantidadPastillas: historialDia.cantidadPastillas || 0,
               fecha: fechaSeleccionadaStr,
-              hora: historialDia.hora || ''
+              hora: historialDia.hora || '',
+              productos: productosUsados(historialDia)
             } : undefined
           };
         });
@@ -645,6 +910,11 @@ export class HomePage implements OnInit {
         this.deletedTodayCount = this.clientesSuspendidos.length;
         console.log('Clientes suspendidos computed:', this.deletedTodayCount, this.clientesSuspendidos);
 
+        if (this.elegirSeccionAlCargar) {
+          this.elegirSeccionAlCargar = false;
+          this.seccionActiva = this.seccionInicialDelDia();
+        }
+
         this.calcularProgreso();
         this.actualizarEventosCalendario();
         this.isLoading = false;
@@ -669,11 +939,31 @@ export class HomePage implements OnInit {
     return this.precioFormatter.format(precio);
   }
 
-  // Editar el precio del cliente desde el home
+  // Editar el precio del cliente desde el home: se escribe el precio y se
+  // elige en el mismo diálogo si vale solo para el día o para siempre.
   async editarPrecioCliente(cliente: ClienteDelDia) {
+    const fecha = this.formatearFechaLocal(this.fechaSeleccionada);
+    const esHoy = fecha === this.formatearFechaLocal(new Date());
+    const textoDia = esHoy
+      ? 'Solo hoy'
+      : `Solo el ${this.fechaSeleccionada.getDate()}/${this.fechaSeleccionada.getMonth() + 1}`;
+
+    const leerPrecio = (data: any): number | null => {
+      const nuevoPrecio = Math.round(parseFloat(data?.nuevoPrecio));
+      if (!nuevoPrecio || nuevoPrecio <= 0) {
+        this.showToast('Ingresa un precio válido ❌', 'danger');
+        return null;
+      }
+      return nuevoPrecio;
+    };
+
     const alert = await this.alertController.create({
-      header: 'Editar Precio',
-      subHeader: `Cliente: ${cliente.nombre}`,
+      header: 'Cambiar precio',
+      subHeader: cliente.nombre,
+      message: cliente.realizado
+        ? 'La mantención ya está hecha: "' + textoDia.toLowerCase() + '" cambia solo lo cobrado ese día.'
+        : undefined,
+      cssClass: 'alerta-precio',
       inputs: [
         {
           name: 'nuevoPrecio',
@@ -685,20 +975,26 @@ export class HomePage implements OnInit {
       ],
       buttons: [
         {
+          text: textoDia,
+          handler: (data) => {
+            const nuevoPrecio = leerPrecio(data);
+            if (nuevoPrecio === null) return false;
+            this.guardarPrecio(cliente, nuevoPrecio, 'dia');
+            return true;
+          }
+        },
+        {
+          text: 'Para siempre',
+          handler: (data) => {
+            const nuevoPrecio = leerPrecio(data);
+            if (nuevoPrecio === null) return false;
+            this.guardarPrecio(cliente, nuevoPrecio, 'siempre');
+            return true;
+          }
+        },
+        {
           text: 'Cancelar',
           role: 'cancel'
-        },
-        {
-          text: 'Continuar',
-          handler: (data) => {
-            const nuevoPrecio = parseFloat(data.nuevoPrecio);
-            if (!nuevoPrecio || nuevoPrecio <= 0) {
-              this.showToast('Ingresa un precio válido ❌', 'danger');
-              return false;
-            }
-            this.preguntarAlcancePrecio(cliente, nuevoPrecio);
-            return true;
-          }
         }
       ]
     });
@@ -706,66 +1002,48 @@ export class HomePage implements OnInit {
     await alert.present();
   }
 
-  // Preguntar si el precio se aplica solo esta vez o para siempre
-  async preguntarAlcancePrecio(cliente: ClienteDelDia, nuevoPrecio: number) {
-    const alert = await this.alertController.create({
-      header: '¿Cómo aplicas el nuevo precio?',
-      subHeader: `${cliente.nombre} • $${this.formatearPrecio(nuevoPrecio)}`,
-      message: 'Elige el alcance del cambio de precio:',
-      inputs: [
-        {
-          name: 'alcance',
-          type: 'radio',
-          label: 'Solo por hoy',
-          value: 'una_vez',
-          checked: true
-        },
-        {
-          name: 'alcance',
-          type: 'radio',
-          label: 'Para siempre',
-          value: 'para_siempre'
-        }
-      ],
-      buttons: [
-        {
-          text: 'Volver',
-          role: 'cancel'
-        },
-        {
-          text: 'Guardar',
-          handler: (data) => {
-            const alcance = data;
-            if (alcance === 'para_siempre') {
-              this.guardarPrecioPermanente(cliente, nuevoPrecio);
-            } else if (alcance === 'una_vez') {
-              this.guardarPrecioUnaVez(cliente, nuevoPrecio);
-            } else {
-              this.showToast('Selecciona una opción ❌', 'danger');
-              return false;
-            }
-            return true;
-          }
-        }
-      ]
-    });
+  /**
+   * Guarda el nuevo precio.
+   * - 'dia': precio especial para la fecha seleccionada.
+   * - 'siempre': cambia el precio del cliente desde ahora; si en esa fecha había
+   *   un precio especial se quita, porque si no seguiría mandando sobre el nuevo.
+   * En ambos casos, si la mantención de ese día ya está registrada, se corrige lo
+   * cobrado en ella (es lo que leen las estadísticas y la deuda).
+   */
+  private guardarPrecio(cliente: ClienteDelDia, nuevoPrecio: number, alcance: 'dia' | 'siempre') {
+    const fecha = this.formatearFechaLocal(this.fechaSeleccionada);
 
-    await alert.present();
-  }
-
-  // Guardar el precio nuevo como definitivo del cliente
-  guardarPrecioPermanente(cliente: ClienteDelDia, nuevoPrecio: number) {
     this.clienteService.getClienteById(cliente.id).subscribe({
       next: (clienteCompleto) => {
-        clienteCompleto.precio = nuevoPrecio;
+        const especiales = { ...(clienteCompleto.preciosEspeciales || {}) };
+
+        if (alcance === 'siempre') {
+          clienteCompleto.precio = nuevoPrecio;
+          delete especiales[fecha];
+        } else {
+          especiales[fecha] = nuevoPrecio;
+        }
+        clienteCompleto.preciosEspeciales = especiales;
+
+        (clienteCompleto.historial || []).forEach(h => {
+          if (h.fecha === fecha && !esMantencionSaltada(h)) {
+            h.precioCobrado = nuevoPrecio;
+          }
+        });
+
         this.clienteService.updateCliente(clienteCompleto).subscribe({
           next: () => {
             cliente.precio = nuevoPrecio;
             this.cargarClientesDelDia();
-            this.showToast(`Precio de ${cliente.nombre} actualizado a $${this.formatearPrecio(nuevoPrecio)} ✅`, 'success');
+            this.showToast(
+              alcance === 'siempre'
+                ? `Nuevo precio de ${cliente.nombre}: $${this.formatearPrecio(nuevoPrecio)} ✅`
+                : `Precio solo para ese día: $${this.formatearPrecio(nuevoPrecio)} ✅`,
+              'success'
+            );
           },
           error: (err) => {
-            console.error('Error al actualizar precio permanente:', err);
+            console.error('Error al actualizar precio:', err);
             this.showToast('Error al actualizar precio ❌', 'danger');
           }
         });
@@ -777,36 +1055,10 @@ export class HomePage implements OnInit {
     });
   }
 
-  // Guardar el precio nuevo solo para la fecha seleccionada
-  guardarPrecioUnaVez(cliente: ClienteDelDia, nuevoPrecio: number) {
-    const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
-    this.clienteService.getClienteById(cliente.id).subscribe({
-      next: (clienteCompleto) => {
-        (clienteCompleto as any).preciosEspeciales = (clienteCompleto as any).preciosEspeciales || {};
-        (clienteCompleto as any).preciosEspeciales[fechaSeleccionadaStr] = nuevoPrecio;
-        this.clienteService.updateCliente(clienteCompleto).subscribe({
-          next: () => {
-            cliente.precio = nuevoPrecio;
-            this.cargarClientesDelDia();
-            this.showToast(`Precio asignado solo para hoy: $${this.formatearPrecio(nuevoPrecio)} ✅`, 'success');
-          },
-          error: (err) => {
-            console.error('Error al asignar precio de una vez:', err);
-            this.showToast('Error al asignar precio ❌', 'danger');
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Error obteniendo cliente:', err);
-        this.showToast('Error al obtener cliente ❌', 'danger');
-      }
-    });
-  }
-
   // Agregar un cliente para el día seleccionado con un servicio puntual
-  async agregarClienteDia() {
+  agregarClienteDia() {
     this.clienteService.getClientes().subscribe({
-      next: async (clientes) => {
+      next: (clientes) => {
         const activos = clientes.filter(c => c.activo);
         if (activos.length === 0) {
           this.showToast('No hay clientes activos para agregar', 'warning');
@@ -815,10 +1067,11 @@ export class HomePage implements OnInit {
 
         const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
         const yaPendientes = this.clientesPendientes.map(c => c.id);
+        // Se excluye solo a los que ya se ven como pendientes o ya están hechos. Un suspendido
+        // del día sí aparece: al agregarlo se levanta la suspensión (ver guardarServicioExtra)
         const disponibles = activos.filter(c => {
-          const yaCompletado = (c.historial || []).some(h => h.fecha === fechaSeleccionadaStr && h.estadoCloro !== 'saltada');
-          const yaAgregado = (c as any).serviciosExtra?.some((s: any) => s.fecha === fechaSeleccionadaStr);
-          return !yaCompletado && !yaAgregado && !yaPendientes.includes(c.id || '');
+          const yaCompletado = (c.historial || []).some(h => h.fecha === fechaSeleccionadaStr && !esMantencionSaltada(h));
+          return !yaCompletado && !yaPendientes.includes(c.id || '');
         });
 
         if (disponibles.length === 0) {
@@ -826,36 +1079,15 @@ export class HomePage implements OnInit {
           return;
         }
 
-        const alertCliente = await this.alertController.create({
-          header: 'Agregar Cliente',
-          subHeader: this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }),
-          message: 'Selecciona el cliente a agregar:',
-          inputs: disponibles.map(cliente => ({
-            name: 'cliente',
-            type: 'radio' as const,
-            label: cliente.nombre,
-            value: cliente.id
-          })),
-          buttons: [
-            {
-              text: 'Cancelar',
-              role: 'cancel'
-            },
-            {
-              text: 'Siguiente',
-              handler: (clienteId) => {
-                if (!clienteId) {
-                  this.showToast('Selecciona un cliente ❌', 'danger');
-                  return false;
-                }
-                this.seleccionarServicioExtra(clienteId);
-                return true;
-              }
-            }
-          ]
-        });
-
-        await alertCliente.present();
+        this.selector = {
+          modo: 'agregar',
+          titulo: 'Agregar al día',
+          clientes: this.aOpciones(disponibles),
+          pedirServicio: true,
+          textoConfirmar: 'Agregar',
+          iconoConfirmar: 'add-circle-outline',
+          peligro: false
+        };
       },
       error: (err) => {
         console.error('Error al cargar clientes:', err);
@@ -864,58 +1096,27 @@ export class HomePage implements OnInit {
     });
   }
 
-  // Elegir el tipo de servicio para el cliente agregado
-  async seleccionarServicioExtra(clienteId: string) {
-    const servicios = [
-      'Mantención de piscina',
-      'Recuperación de agua',
-      'Cambio de cuarzo'
-    ];
-
-    const alertServicio = await this.alertController.create({
-      header: 'Tipo de Servicio',
-      message: 'Selecciona el servicio a realizar:',
-      inputs: servicios.map(servicio => ({
-        name: 'servicio',
-        type: 'radio' as const,
-        label: servicio,
-        value: servicio
-      })),
-      buttons: [
-        {
-          text: 'Volver',
-          role: 'cancel'
-        },
-        {
-          text: 'Agregar',
-          handler: (servicio) => {
-            if (!servicio) {
-              this.showToast('Selecciona un servicio ❌', 'danger');
-              return false;
-            }
-            this.guardarServicioExtra(clienteId, servicio);
-            return true;
-          }
-        }
-      ]
-    });
-
-    await alertServicio.present();
-  }
-
   // Guardar el servicio extra para la fecha seleccionada
   guardarServicioExtra(clienteId: string, servicio: string) {
     const fechaSeleccionadaStr = this.formatearFechaLocal(this.fechaSeleccionada);
     this.clienteService.getClienteById(clienteId).subscribe({
       next: (clienteCompleto) => {
-        (clienteCompleto as any).serviciosExtra = (clienteCompleto as any).serviciosExtra || [];
-        if (!(clienteCompleto as any).serviciosExtra.some((s: any) => s.fecha === fechaSeleccionadaStr)) {
-          (clienteCompleto as any).serviciosExtra.push({ fecha: fechaSeleccionadaStr, servicio });
-        }
+        // Si ya tenía un servicio extra ese día se reemplaza por el elegido ahora
+        clienteCompleto.serviciosExtra = (clienteCompleto.serviciosExtra || [])
+          .filter(s => s.fecha !== fechaSeleccionadaStr);
+        clienteCompleto.serviciosExtra.push({ fecha: fechaSeleccionadaStr, servicio });
+
+        // Si ese día estaba suspendido (o cambiado de día) se levanta la suspensión:
+        // si no, el cliente quedaba agregado pero oculto en la lista del día
+        clienteCompleto.skippedDates = (clienteCompleto.skippedDates || []).filter(f => f !== fechaSeleccionadaStr);
+        clienteCompleto.historial = (clienteCompleto.historial || []).filter(
+          h => !(h.fecha === fechaSeleccionadaStr && esMantencionSaltada(h))
+        );
+
         this.clienteService.updateCliente(clienteCompleto).subscribe({
           next: () => {
             this.cargarClientesDelDia();
-            this.showToast(`${servicio} agregado para hoy ✅`, 'success');
+            this.showToast(`${servicio} agregado al día ✅`, 'success');
           },
           error: (err) => {
             console.error('Error al agregar servicio extra:', err);
@@ -960,14 +1161,140 @@ export class HomePage implements OnInit {
 
   calcularProgreso() {
     const total = this.clientesPendientes.length + this.clientesRealizados.length;
-    if (total === 0) {
-      this.progresoDelDia = 0;
-      return;
+    this.progresoDelDia = total === 0 ? 0 : (this.clientesRealizados.length / total) * 100;
+    this.detectarAvance(total);
+    // Si hay una celebración guardada para cuando se vuelva, la barra se queda donde estaba
+    if (this.celebracionPendiente === null) {
+      this.progresoMostrado = this.progresoDelDia;
+      this.hechasMostradas = this.clientesRealizados.length;
     }
-    this.progresoDelDia = (this.clientesRealizados.length / total) * 100;
+  }
+
+  // ===== Celebración al avanzar el día =====
+
+  /** Activa la animación de la barra y el contador */
+  celebrando = false;
+  /** Lo que muestra la barra: se iguala al progreso real al celebrar, así se ve llenarse */
+  progresoMostrado = 0;
+  hechasMostradas = 0;
+  private ultimoProgreso: { fecha: string; hechas: number } | null = null;
+  private visible = false;
+  /** Avance ocurrido mientras se estaba en otra pantalla (p. ej. completar): se celebra al volver */
+  private celebracionPendiente: boolean | null = null;
+
+  /** Si en el mismo día subieron las hechas, celebra (o lo deja para cuando se vuelva al inicio). */
+  private detectarAvance(total: number) {
+    const fecha = this.formatearFechaLocal(this.fechaSeleccionada);
+    const hechas = this.clientesRealizados.length;
+    const anterior = this.ultimoProgreso;
+    this.ultimoProgreso = { fecha, hechas };
+
+    if (!anterior || anterior.fecha !== fecha || hechas <= anterior.hechas) return;
+
+    const completo = total > 0 && hechas === total;
+    if (this.visible) {
+      this.celebrar(completo);
+    } else {
+      this.celebracionPendiente = completo || !!this.celebracionPendiente;
+    }
+  }
+
+  private celebrar(completo: boolean) {
+    this.celebrando = false;
+    // Un tick después para que la animación CSS se reinicie aunque ya estuviera puesta
+    setTimeout(() => {
+      this.progresoMostrado = this.progresoDelDia;
+      this.hechasMostradas = this.clientesRealizados.length;
+      this.celebrando = true;
+      celebrarProgreso(completo);
+      setTimeout(() => (this.celebrando = false), completo ? 1600 : 1000);
+    }, 30);
+  }
+
+  /** Se vuelve de completar una mantención: se abre "Realizadas" para verla ahí */
+  ionViewWillEnter() {
+    if (this.celebracionPendiente !== null) this.seccionActiva = 'realizados';
+  }
+
+  ionViewDidEnter() {
+    this.visible = true;
+    const habiaProgreso = this.celebracionPendiente !== null;
+    if (habiaProgreso) {
+      const completo = this.celebracionPendiente!;
+      this.celebracionPendiente = null;
+      // Deja ver primero la barra en su valor anterior y luego se llena
+      setTimeout(() => this.celebrar(completo), 250);
+    }
+
+    // Pago marcado en "Mantención exitosa": chip con lo cobrado hoy (después de la barra)
+    const pagado = tomarPagoPendiente();
+    if (pagado > 0) {
+      setTimeout(() => this.mostrarGanancia(pagado), habiaProgreso ? 1300 : 300);
+    }
+  }
+
+  // ===== Chip "cobrado hoy" en el encabezado =====
+
+  private contadorGanancia = new ContadorGanancia();
+
+  /** Chip visible con todo lo ganado; null = oculto */
+  get ganancia(): EstadoGanancia | null {
+    return this.contadorGanancia.estado;
+  }
+
+  /** Todo lo ganado con animación: sube desde (total - monto) hasta el total y luego se va */
+  private mostrarGanancia(monto: number) {
+    // take(1): la lista llega en vivo y cada cambio repetía la animación
+    this.clienteService.getClientes().pipe(take(1)).subscribe(clientes => {
+      this.contadorGanancia.mostrar(totalCobrado(clientes), monto);
+    });
+  }
+
+  formatearMonto(valor: number): string {
+    return '$' + this.precioFormatter.format(valor || 0);
+  }
+
+  ionViewWillLeave() {
+    this.visible = false;
   }
 
   // Los datos ya llegan en vivo; el botón solo rearma el día y lo confirma
+  /** Mantenciones del día elegido (hechas + por hacer) para el chip del encabezado */
+  get totalDelDia(): number {
+    return this.clientesRealizados.length + this.clientesPendientes.length;
+  }
+
+  /** "Hoy", "Mañana", "Ayer" o el día de la semana, para el resumen del día */
+  get etiquetaDia(): string {
+    const inicio = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const dias = Math.round((inicio(this.fechaSeleccionada) - inicio(new Date())) / 86400000);
+    if (dias === 0) return 'Hoy';
+    if (dias === 1) return 'Mañana';
+    if (dias === -1) return 'Ayer';
+    const texto = this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'long' });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  get diaSemanaCorto(): string {
+    return this.fechaSeleccionada.toLocaleDateString('es-CL', { weekday: 'short' }).replace('.', '').toUpperCase();
+  }
+
+  get mesCorto(): string {
+    return this.fechaSeleccionada.toLocaleDateString('es-CL', { month: 'short' }).replace('.', '');
+  }
+
+  /** "Martes 30 de septiembre" para el encabezado */
+  get fechaHoyTexto(): string {
+    const texto = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  /** Deslizar hacia abajo: recarga el día y el calendario, y cierra el indicador */
+  onRefrescar(evento: any) {
+    this.cargarClientesDelDia();
+    setTimeout(() => evento.target.complete(), 600);
+  }
+
   refrescarClientes() {
     this.cargarClientesDelDia();
     this.showToast('Lista actualizada ✅', 'success');
@@ -1017,70 +1344,86 @@ export class HomePage implements OnInit {
   }
 
   // Botón de suspender una mantención pendiente: ofrece las dos opciones
-  async suspenderCliente(cliente: ClienteDelDia) {
-    const actionSheet = await this.actionSheetController.create({
-      header: `Mantención de ${cliente.nombre}`,
-      buttons: [
-        {
-          text: 'Suspender mantención',
-          icon: 'pause-circle-outline',
-          handler: () => {
-            this.confirmarSuspender(cliente);
-          }
-        },
-        {
-          text: 'Cambiar de día',
-          icon: 'calendar-outline',
-          handler: () => {
-            this.abrirSelectorCambioDia(cliente);
-          }
-        },
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        }
-      ]
-    });
-
-    await actionSheet.present();
+  /** "⋯" de la tarjeta: despliega las opciones bajo ella (otra vez la cierra) */
+  toggleOpciones(cliente: ClienteDelDia) {
+    this.opcionesId = this.opcionesId === cliente.id ? null : cliente.id;
   }
 
-  // Confirmación de suspender la mantención del día seleccionado
-  async confirmarSuspender(cliente: ClienteDelDia) {
-    const alert = await this.alertController.create({
-      header: 'Suspender Mantención',
-      message: `¿Estás seguro de que quieres suspender la mantención de ${cliente.nombre} para el día seleccionado?`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'Suspender',
-          cssClass: 'danger',
-          handler: () => {
-            // Actualizar UI inmediatamente para evitar que se vea el cliente re-aparecer
-            this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
-            // Añadir al contador local y lista de suspendidos
-            this.deletedClientsList.push({ id: cliente.id, nombre: cliente.nombre });
-            this.deletedTodayCount = this.deletedClientsList.length;
+  suspenderDesdeOpciones(cliente: ClienteDelDia) {
+    this.opcionesId = null;
+    this.ejecutarSuspension(cliente);
+  }
 
-            this.maintenanceCount = this.clientesPendientes.length;
-            this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
-            this.calcularProgreso();
-            this.actualizarEventosCalendario();
+  cambiarDiaDesdeOpciones(cliente: ClienteDelDia) {
+    this.opcionesId = null;
+    this.abrirSelectorCambioDia(cliente);
+  }
 
-            // Luego persistir como registro saltado en la base de datos (si falla, revertimos)
+  /** Acciones al deslizar la tarjeta: cierran el deslizable antes de actuar */
+  suspenderDeslizando(deslizable: IonItemSliding, cliente: ClienteDelDia) {
+    deslizable.close();
+    this.ejecutarSuspension(cliente);
+  }
 
-            this.agregarRegistroSaltado(cliente);
+  cambiarDiaDeslizando(deslizable: IonItemSliding, cliente: ClienteDelDia) {
+    deslizable.close();
+    this.abrirSelectorCambioDia(cliente);
+  }
 
-            this.showToast(`Mantención de ${cliente.nombre} suspendida ❌`, 'danger');
-          }
-        }
-      ]
-    });
+  toggleExpandido(cliente: ClienteDelDia) {
+    if (!this.expandidos.delete(cliente.id)) this.expandidos.add(cliente.id);
+  }
 
-    await alert.present();
+  /** Color de la muestra del comparador; gris si no se registró */
+  muestraCloro(estado: string | null | undefined): string {
+    return MUESTRA_CLORO[(estado || '').trim().toLowerCase()] ?? 'var(--ion-color-light)';
+  }
+
+  muestraPh(estado: string | null | undefined): string {
+    return MUESTRA_PH[(estado || '').trim().toLowerCase()] ?? 'var(--ion-color-light)';
+  }
+
+  /** La mantención normal no lleva etiqueta: solo se destacan los servicios especiales */
+  esServicioEspecial(servicio?: string): boolean {
+    return infoServicio(servicio).valor !== SERVICIO_MANTENCION;
+  }
+
+  trackPorId(_: number, cliente: ClienteDelDia): string {
+    return cliente.id;
+  }
+
+  /** Abre la dirección en la app de mapas (en Android ofrece Google Maps) */
+  urlMapa(direccion: string): string {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(direccion || '');
+  }
+
+  /** "09:30" desde lo que se haya guardado como hora preferida */
+  horaCorta(hora: string): string {
+    if (!this.tieneHorario(hora)) return '';
+    if (hora.includes('T')) {
+      const fecha = new Date(hora);
+      if (!isNaN(fecha.getTime())) return fecha.toTimeString().substring(0, 5);
+    }
+    return hora;
+  }
+
+  /** Suspende la mantención del día seleccionado (se puede restaurar desde "Suspendidos"). */
+  private ejecutarSuspension(cliente: ClienteDelDia) {
+    // Actualizar UI inmediatamente para evitar que se vea el cliente re-aparecer
+    this.clientesPendientes = this.clientesPendientes.filter(c => c.id !== cliente.id);
+    // Añadir al contador local y lista de suspendidos
+    this.deletedClientsList.push({ id: cliente.id, nombre: cliente.nombre });
+    this.deletedTodayCount = this.deletedClientsList.length;
+
+    this.maintenanceCount = this.clientesPendientes.length;
+    this.maintenanceWord = this.maintenanceCount === 1 ? 'mantención' : 'mantenciones';
+    this.calcularProgreso();
+    this.actualizarEventosCalendario();
+
+    // Luego persistir como registro saltado en la base de datos (si falla, revertimos)
+    this.agregarRegistroSaltado(cliente);
+
+    this.showToast(`Mantención de ${cliente.nombre} suspendida ❌`, 'danger');
   }
 
   // Abre el selector de fecha para "cambiar de día"
@@ -1165,6 +1508,8 @@ export class HomePage implements OnInit {
           tipoPh: null,
           estadoCloro: 'saltada',
           estadoPh: 'saltada',
+          // Para que el historial diga a qué día se cambió
+          movidaA: fechaNuevaStr,
           hora: ahora.toTimeString().split(' ')[0].substring(0, 5),
           [CAMPO_UNIDAD_MASA]: UNIDAD_MASA
         };
@@ -1336,6 +1681,22 @@ export class HomePage implements OnInit {
   }
 
   // Método para formatear la hora
+  tieneHorario(hora: string): boolean {
+    return !!hora && hora !== 'Sin horario específico';
+  }
+
+  /** Detalle de un ícono de la tarjeta, en un aviso corto */
+  async mostrarDetalle(texto: string) {
+    await this.toastController.dismiss().catch(() => {});
+    const toast = await this.toastController.create({
+      message: texto,
+      duration: 1600,
+      position: 'top',
+      cssClass: 'toast-detalle'
+    });
+    toast.present();
+  }
+
   formatearHora(hora: string): string {
     if (!hora || hora === 'Sin horario específico') {
       return 'Sin horario específico';

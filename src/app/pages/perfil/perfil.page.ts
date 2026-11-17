@@ -2,31 +2,57 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonTitle, 
-  IonToolbar, 
-  IonButton, 
-  IonIcon, 
-  IonItem, 
-  IonList,
-  IonLabel,
+import {
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonIcon,
   IonToggle,
   ToastController,
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
+import { EncabezadoComponent } from '../../components/encabezado/encabezado.component';
 import { ClienteService } from '../../services/cliente.service';
 import { ConfigNotificaciones, NotificacionesService } from '../../services/notificaciones.service';
 import { addIcons } from 'ionicons';
-import { timeOutline, calendarOutline, paperPlaneOutline } from 'ionicons/icons';
+import {
+  timeOutline,
+  calendarOutline,
+  paperPlaneOutline,
+  megaphoneOutline,
+  moonOutline,
+  notificationsOutline,
+  scaleOutline,
+  chevronForwardOutline,
+  chevronUpOutline,
+  chevronDownOutline,
+  buildOutline,
+  syncOutline,
+  informationCircleOutline,
+  logOutOutline,
+  calendarNumberOutline,
+} from 'ionicons/icons';
+import { MigracionUnidadesService } from '../../services/migracion-unidades.service';
+import { EstadisticasService } from '../../services/estadisticas.service';
+import { ResumenMesService } from '../../services/resumen-mes.service';
 
 addIcons({
   'time-outline': timeOutline,
   'calendar-outline': calendarOutline,
   'paper-plane-outline': paperPlaneOutline,
+  'megaphone-outline': megaphoneOutline,
+  'moon-outline': moonOutline,
+  'notifications-outline': notificationsOutline,
+  'scale-outline': scaleOutline,
+  'chevron-forward-outline': chevronForwardOutline,
+  'calendar-number-outline': calendarNumberOutline,
+  'chevron-up-outline': chevronUpOutline,
+  'chevron-down-outline': chevronDownOutline,
+  'build-outline': buildOutline,
+  'sync-outline': syncOutline,
+  'information-circle-outline': informationCircleOutline,
+  'log-out-outline': logOutOutline,
 });
-import { MigracionUnidadesService } from '../../services/migracion-unidades.service';
 
 @Component({
   selector: 'app-perfil',
@@ -35,16 +61,12 @@ import { MigracionUnidadesService } from '../../services/migracion-unidades.serv
   standalone: true,
   imports: [
     CommonModule,
-    IonContent, 
-    IonHeader, 
-    IonTitle, 
-    IonToolbar, 
-    IonButton, 
-    IonIcon, 
-    IonItem, 
-    IonList,
-    IonLabel,
-    IonToggle
+    IonContent,
+    IonHeader,
+    IonToolbar,
+    IonIcon,
+    IonToggle,
+    EncabezadoComponent
   ]
 })
 export class PerfilPage implements OnInit, OnDestroy {
@@ -61,12 +83,49 @@ export class PerfilPage implements OnInit, OnDestroy {
   unidadesCargando = false;
   private userSub: Subscription | undefined;
 
+  // Tarjeta de cuenta
+  email = '';
+  foto = '';
+  /** La foto de Google no cargó (sin conexión, etc.): se muestran las iniciales */
+  fotoFallo = false;
+  clientesActivos = 0;
+  mantencionesMes = 0;
+  gananciaMes = 0;
+  gananciaAnio = 0;
+  gananciaTotal = 0;
+  /** Qué muestra el recuadro de ganancia: 0 = este mes, 1 = este año, 2 = total general */
+  periodoGanancia = 0;
+  private readonly formatoMonto = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
   private authService = inject(AuthService);
   private router = inject(Router);
   private clienteService = inject(ClienteService);
   private notificacionesService = inject(NotificacionesService);
   private toastController = inject(ToastController);
   private migracionService = inject(MigracionUnidadesService);
+  private estadisticasService = inject(EstadisticasService);
+  private resumenMes = inject(ResumenMesService);
+
+  get iniciales(): string {
+    const partes = (this.userName || '').trim().split(/\s+/).filter(Boolean);
+    return partes.slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('') || '?';
+  }
+
+  get gananciaActual(): { monto: number; etiqueta: string } {
+    switch (this.periodoGanancia) {
+      case 1: return { monto: this.gananciaAnio, etiqueta: 'este año' };
+      case 2: return { monto: this.gananciaTotal, etiqueta: 'en total' };
+      default: return { monto: this.gananciaMes, etiqueta: 'este mes' };
+    }
+  }
+
+  siguientePeriodoGanancia() {
+    this.periodoGanancia = (this.periodoGanancia + 1) % 3;
+  }
+
+  formatearMonto(valor: number): string {
+    return '$' + this.formatoMonto.format(valor || 0);
+  }
 
   ngOnInit() {
     this.userSub = this.authService.getUserName().subscribe(name => {
@@ -76,6 +135,27 @@ export class PerfilPage implements OnInit, OnDestroy {
     this.userSub.add(
       this.authService.getCurrentUser().subscribe(u => {
         if (u) this.revisarEstadoUnidades(u.uid);
+        this.email = u?.email || '';
+        this.foto = u?.photoURL || '';
+        this.fotoFallo = false;
+      })
+    );
+
+    // Números de la tarjeta de cuenta (en vivo)
+    this.userSub.add(
+      this.clienteService.clientes$.subscribe(clientes => {
+        this.clientesActivos = clientes.filter(c => c.activo).length;
+      })
+    );
+    const hoy = new Date();
+    this.userSub.add(
+      this.estadisticasService.getIngresosPorAnio().subscribe(anios => {
+        const anio = anios.find(a => a.anio === hoy.getFullYear());
+        const mes = anio?.meses[hoy.getMonth()];
+        this.mantencionesMes = mes?.cantidad ?? 0;
+        this.gananciaMes = mes?.total ?? 0;
+        this.gananciaAnio = anio?.total ?? 0;
+        this.gananciaTotal = anios.reduce((suma, a) => suma + a.total, 0);
       })
     );
 
@@ -248,6 +328,17 @@ export class PerfilPage implements OnInit, OnDestroy {
       position: 'bottom'
     });
     await toast.present();
+  }
+
+  // ===== Cierre de mes =====
+
+  async verResumenMesPasado() {
+    const hay = await this.resumenMes.verMesPasado();
+    if (!hay) await this.mostrarToast('Aún no hay mantenciones para armar el resumen');
+  }
+
+  irARecordatorios() {
+    this.router.navigate(['/tabs/perfil/recordatorios']);
   }
 
   async logout() {

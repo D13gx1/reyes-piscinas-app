@@ -1,0 +1,345 @@
+:host {
+  display: block;
+  margin: 12px auto;
+  max-width: 900px;
+  padding: 0 14px;
+  box-sizing: border-box;
+
+  /* Ancho del eje Y: las barras y las etiquetas del eje X se alinean con esto */
+  --eje-y: 54px;
+}
+
+.grafico-card {
+  background: var(--ion-card-background, #ffffff);
+  border: 1px solid var(--ion-border-color, #dfeafc);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  padding: 16px;
+}
+
+/* ---------- Cabecera ---------- */
+.grafico-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  ion-icon {
+    font-size: 1.15rem;
+    color: var(--ion-color-primary);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ion-text-color, #0f172a);
+  }
+}
+
+.segmentos {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--ion-color-light, #f4f5f8);
+
+  button {
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ion-color-medium);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &.activo {
+      background: var(--ion-card-background, #ffffff);
+      color: var(--ion-text-color, #0f172a);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+    }
+  }
+}
+
+.estado {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+/* ---------- Navegación de año ---------- */
+.anio-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  button {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--ion-border-color, #dfeafc);
+    background: transparent;
+    color: var(--ion-text-color, #0f172a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+  }
+}
+
+.anio-nav-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.anio-nav-anio {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ion-text-color, #0f172a);
+}
+
+.anio-nav-total {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+/* ---------- Detalle de la barra seleccionada ---------- */
+.detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: var(--ion-color-light, #f4f5f8);
+}
+
+.detalle-nombre {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
+.detalle-valor {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ion-text-color, #0f172a);
+  line-height: 1.2;
+}
+
+.detalle-sub {
+  font-size: 0.78rem;
+  color: var(--ion-color-medium);
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  color: var(--ion-text-color, #334155);
+
+  ion-icon {
+    font-size: 0.8rem;
+  }
+
+  &.sube ion-icon {
+    color: #16a34a;
+  }
+
+  &.baja ion-icon {
+    color: #dc2626;
+  }
+}
+
+.ver-meses {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ion-color-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- Gráfico ---------- */
+.grafico {
+  position: relative;
+  display: flex;
+  height: 170px;
+}
+
+.eje-y {
+  position: relative;
+  width: var(--eje-y);
+  flex-shrink: 0;
+
+  span {
+    position: absolute;
+    right: 8px;
+    transform: translateY(50%);
+    font-size: 0.66rem;
+    color: var(--ion-color-medium);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Líneas guía: finas, sólidas y apagadas para que no compitan con las barras */
+.linea-guia {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ion-border-color, #e2e8f0);
+}
+
+.barras {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.columna {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  padding: 0 1px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  // Zona tocable: toda la columna, no solo la barra
+  &:hover,
+  &.seleccionada {
+    background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.05);
+    border-radius: 6px;
+  }
+}
+
+.barra {
+  display: block;
+  width: 100%;
+  max-width: 24px;
+  min-height: 0;
+  // Punta redondeada, base recta sobre el eje
+  border-radius: 4px 4px 0 0;
+  background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.35);
+  transition: height 0.35s ease, background 0.2s ease;
+
+  &.cero {
+    height: 0 !important;
+  }
+}
+
+.columna.seleccionada .barra {
+  background: var(--ion-color-primary);
+}
+
+.sin-datos {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ion-color-medium);
+  text-align: center;
+  pointer-events: none;
+}
+
+.eje-x {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin-left: var(--eje-y);
+  padding-top: 6px;
+
+  span {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--ion-color-medium);
+    font-variant-numeric: tabular-nums;
+
+    &.seleccionada {
+      color: var(--ion-text-color, #0f172a);
+      font-weight: 700;
+    }
+  }
+}
+
+/* ---------- Modo oscuro ---------- */
+:host-context(body.dark),
+:host-context(html.dark) {
+  .grafico-card {
+    background: var(--ion-card-background);
+    border-color: var(--ion-border-color);
+    box-shadow: none;
+  }
+
+  .segmentos,
+  .detalle {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .segmentos button.activo {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .linea-guia {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .barra {
+    background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.4);
+  }
+
+  .columna.seleccionada .barra {
+    background: var(--ion-color-primary-tint, var(--ion-color-primary));
+  }
+
+  .delta.sube ion-icon {
+    color: #4ade80;
+  }
+
+  .delta.baja ion-icon {
+    color: #f87171;
+  }
+}

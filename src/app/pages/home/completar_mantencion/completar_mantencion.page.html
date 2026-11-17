@@ -1,18 +1,10 @@
-<ion-header [translucent]="true">
+<ion-header class="encabezado ion-no-border">
   <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button default-href="/tabs/home"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Completar Mantención</ion-title>
+    <app-encabezado [titulo]="cliente?.nombre || 'Completar mantención'" subtitulo="Completar mantención" volver="/tabs/home"></app-encabezado>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Completar Mantención</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
 
   <!-- Carga -->
   <div class="loading-state" *ngIf="cargando">
@@ -26,82 +18,251 @@
     (ngSubmit)="guardarMantencion()"
     [formGroup]="mantencionForm">
 
-    <!-- ============ CLIENTE ============ -->
-    <section class="card cliente-card">
-      <div class="cliente-head">
-        <div class="cliente-avatar">{{ iniciales }}</div>
-        <div class="cliente-datos">
-          <h2 class="cliente-nombre">{{ cliente.nombre }}</h2>
-          <p class="cliente-sub">
-            <ion-icon name="location-outline"></ion-icon>
-            {{ cliente.direccion }}
-          </p>
-          <p class="cliente-sub">
-            <ion-icon name="resize-outline"></ion-icon>
-            {{ dimensiones }}
-          </p>
+    <!-- ============ CLIENTE + PROGRESO ============ -->
+    <div class="info-cliente">
+      <span class="info-dato" *ngIf="cliente.direccion">
+        <ion-icon name="location-outline"></ion-icon>{{ cliente.direccion }}
+      </span>
+      <span class="info-dato">
+        <ion-icon name="resize-outline"></ion-icon>{{ dimensiones }}
+      </span>
+      <span class="info-progreso" *ngIf="requeridos.total > 0"
+            [class.completo]="requeridos.listos === requeridos.total"
+            [attr.aria-label]="requeridos.listos + ' de ' + requeridos.total + ' datos obligatorios listos'">
+        <ion-icon [name]="requeridos.listos === requeridos.total ? 'checkmark-circle-outline' : 'alert-circle-outline'"></ion-icon>
+        {{ requeridos.listos }}/{{ requeridos.total }} obligatorios
+      </span>
+    </div>
+
+    <!-- ============ SERVICIO ============ -->
+    <div class="servicios-fila" role="radiogroup" aria-label="Servicio que se está haciendo">
+      <button
+        *ngFor="let opcion of serviciosDisponibles"
+        type="button"
+        role="radio"
+        class="servicio-btn"
+        [class.activo]="servicio === opcion.valor"
+        [attr.aria-checked]="servicio === opcion.valor"
+        (click)="seleccionarServicio(opcion.valor)">
+        <ion-icon [name]="opcion.icono"></ion-icon>
+        <span>{{ opcion.corto }}</span>
+      </button>
+    </div>
+
+    <!-- ============ CAMBIO DE CUARZO ============ -->
+    <section class="card" *ngIf="servicio === SERVICIO_CUARZO" formGroupName="cuarzo">
+      <div class="card-header">
+        <div class="card-header-icon cuarzo">
+          <ion-icon name="layers-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Cambio de cuarzo</h2>
+          <p>Material usado y costos del trabajo</p>
+        </div>
+      </div>
+
+      <div class="extra-campo" #campoCuarzoTipo
+           [class.faltante]="faltaTipoCuarzo" [class.sacudir]="campoResaltado === 'cuarzoTipo'">
+        <span class="extra-label">Tipo de cuarzo <span class="req">*</span></span>
+        <div class="chips">
+          <button *ngFor="let tipo of tiposCuarzo" type="button" class="chip"
+                  [class.activo]="tipoCuarzoSeleccionado === tipo" (click)="seleccionarTipoCuarzo(tipo)">
+            {{ tipo }}
+          </button>
+          <button type="button" class="chip" [class.activo]="tipoCuarzoSeleccionado === 'Otro'"
+                  (click)="seleccionarTipoCuarzo('Otro')">
+            Otro
+          </button>
+        </div>
+        <div class="extra-input" *ngIf="tipoCuarzoSeleccionado === 'Otro'">
+          <ion-input formControlName="tipoOtro" placeholder="¿Qué material usaste?" aria-label="Otro tipo de cuarzo"></ion-input>
+        </div>
+        <p class="campo-error" *ngIf="faltaTipoCuarzo">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Elige el tipo de cuarzo
+        </p>
+      </div>
+
+      <div class="extra-campo" #campoCuarzoKilos
+           [class.faltante]="faltaKilosCuarzo" [class.sacudir]="campoResaltado === 'cuarzoKilos'">
+        <span class="extra-label">Cantidad <span class="req">*</span></span>
+        <div class="extra-input">
+          <ion-input type="number" inputmode="decimal" min="0" formControlName="kilos" aria-label="Kilos de cuarzo"></ion-input>
+          <span class="extra-sufijo">kg</span>
+        </div>
+        <div class="chips">
+          <button *ngFor="let kg of atajosKilosCuarzo" type="button" class="chip chip-num"
+                  [class.activo]="esAtajoActivo('cuarzo.kilos', kg)" (click)="usarAtajo('cuarzo.kilos', kg)">
+            {{ kg }} kg
+          </button>
+        </div>
+        <p class="campo-error" *ngIf="faltaKilosCuarzo">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Indica cuántos kilos usaste
+        </p>
+      </div>
+
+      <div class="extra-dos">
+        <div class="extra-campo">
+          <span class="extra-label">Precio del cuarzo <span class="opcional">(opcional)</span></span>
+          <div class="extra-input">
+            <span class="extra-prefijo">$</span>
+            <ion-input type="number" inputmode="numeric" min="0" formControlName="precioCuarzo" placeholder="Ya pagado" aria-label="Precio del cuarzo"></ion-input>
+          </div>
+        </div>
+        <div class="extra-campo">
+          <span class="extra-label">Mano de obra</span>
+          <div class="extra-input">
+            <span class="extra-prefijo">$</span>
+            <ion-input type="number" inputmode="numeric" min="0" formControlName="manoObra" aria-label="Mano de obra"></ion-input>
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- ============ REPARACIÓN DE BOMBA ============ -->
+    <section class="card" *ngIf="servicio === SERVICIO_BOMBA" formGroupName="bomba">
+      <div class="card-header">
+        <div class="card-header-icon bomba">
+          <ion-icon name="construct-outline"></ion-icon>
+        </div>
+        <div class="card-header-texto">
+          <h2>Reparación de bomba</h2>
+          <p>Qué se reparó, repuestos y costos</p>
+        </div>
+      </div>
+
+      <div class="extra-campo">
+        <span class="extra-label">Marca / modelo <span class="opcional">(opcional)</span></span>
+        <div class="extra-input">
+          <ion-input formControlName="marcaModelo" placeholder="Ej: Hayward 1 HP" aria-label="Marca y modelo de la bomba"></ion-input>
+        </div>
+      </div>
+
+      <div class="extra-campo" #campoBombaReparaciones
+           [class.faltante]="faltaReparacion" [class.sacudir]="campoResaltado === 'bombaReparaciones'">
+        <span class="extra-label">¿Qué se reparó? <span class="req">*</span></span>
+        <div class="chips">
+          <button *ngFor="let reparacion of reparacionesBomba" type="button" class="chip"
+                  [class.activo]="reparacionesSeleccionadas.includes(reparacion)"
+                  [attr.aria-pressed]="reparacionesSeleccionadas.includes(reparacion)"
+                  (click)="toggleReparacion(reparacion)">
+            {{ reparacion }}
+          </button>
+        </div>
+        <p class="campo-error" *ngIf="faltaReparacion">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          Marca al menos una reparación
+        </p>
+      </div>
+
+      <div class="extra-campo">
+        <span class="extra-label">Repuestos usados <span class="opcional">(opcional)</span></span>
+        <div class="extra-input area">
+          <ion-textarea formControlName="repuestos" rows="2" [autoGrow]="true"
+                        placeholder="Ej: sello 5/8, 2 rodamientos 6203" aria-label="Repuestos usados"></ion-textarea>
+        </div>
+      </div>
+
+      <div class="extra-dos">
+        <div class="extra-campo">
+          <span class="extra-label">Costo repuestos</span>
+          <div class="extra-input">
+            <span class="extra-prefijo">$</span>
+            <ion-input type="number" inputmode="numeric" min="0" formControlName="costoRepuestos" aria-label="Costo de repuestos"></ion-input>
+          </div>
+        </div>
+        <div class="extra-campo">
+          <span class="extra-label">Mano de obra</span>
+          <div class="extra-input">
+            <span class="extra-prefijo">$</span>
+            <ion-input type="number" inputmode="numeric" min="0" formControlName="manoObra" aria-label="Mano de obra"></ion-input>
+          </div>
+        </div>
+      </div>
+
+      <ion-item lines="none" class="fila">
+        <ion-icon name="checkmark-outline" slot="start" class="fila-icon"></ion-icon>
+        <ion-label>¿La bomba quedó funcionando?</ion-label>
+        <ion-toggle slot="end" formControlName="quedoFuncionando"></ion-toggle>
+      </ion-item>
+    </section>
+
+    <!-- ============ COBRO (cuarzo / bomba) ============ -->
+    <section class="card cobro-card" *ngIf="esServicioConCobroExtra">
+      <ion-item lines="none" class="fila">
+        <ion-icon name="water-outline" slot="start" class="fila-icon"></ion-icon>
+        <ion-label class="ion-text-wrap">
+          También se hizo la mantención
+          <span class="fila-sub">Suma <span class="precio-tag">{{ formatearMonto(precioBase) }}</span> al cobro</span>
+        </ion-label>
+        <ion-toggle slot="end" formControlName="incluirMantencion" (ionChange)="actualizarValidadoresNiveles()"></ion-toggle>
+      </ion-item>
+      <div class="cobro-total">
+        <span>Total a cobrar</span>
+        <strong class="precio-tag">{{ formatearMonto(totalCobrar) }}</strong>
+      </div>
+    </section>
+
     <!-- ============ NIVELES DE AGUA ============ -->
-    <section class="card">
+    <!-- Se oculta en cuarzo / bomba cuando no se hizo la mantención: no hubo químicos -->
+    <section class="card" *ngIf="muestraQuimicos">
       <div class="card-header">
         <div class="card-header-icon niveles">
           <ion-icon name="water-outline"></ion-icon>
         </div>
         <div class="card-header-texto">
           <h2>Niveles del agua</h2>
-          <p>Selecciona el rango medido en la piscina</p>
+          <p>Toca el color que se parece al de tu tester</p>
         </div>
       </div>
 
       <div class="levels-grid">
-        <!-- Cloro -->
         <div
-          class="levels-col"
+          class="nivel-columna"
           #campoCloro
           [class.faltante]="faltaCloro"
           [class.sacudir]="campoResaltado === 'cloro'">
-          <div class="levels-col-head">
+          <div class="nivel-columna-head">
             <span class="levels-col-title">
               <ion-icon name="water-outline"></ion-icon>
               Cloro
             </span>
             <span class="levels-col-valor" [class.vacio]="cloroActual === null">
-              {{ cloroActual !== null ? cloroActual + ' ppm' : '—' }}
+              {{ cloroActual !== null ? cloroActual+ ' ppm' : '—' }}
             </span>
           </div>
-
-          <div class="levels-list">
+          <!-- Como el tester: alto arriba, bajo abajo; el color es el del agua en el tubo -->
+          <div class="nivel-tubos" role="radiogroup" [attr.aria-label]="'Nivel de Cloro'">
             <button
               *ngFor="let opcion of opcionesCloro"
               type="button"
-              class="nivel-btn"
+              role="radio"
+              class="nivel-tubo"
               [class.selected]="cloroSeleccionado === opcion.estado"
-              [style.--nivel-color]="opcion.color"
+              [attr.aria-checked]="cloroSeleccionado === opcion.estado"
+              [attr.aria-label]="opcion.etiqueta + ' (' + opcion.rango + ')'"
+              [style.--muestra]="opcion.muestra"
               (click)="seleccionarCloro(opcion)">
-              <span class="nivel-dot"></span>
-              <span class="nivel-texto">
-                <span class="nivel-etiqueta">{{ opcion.etiqueta }}</span>
-                <span class="nivel-rango">{{ opcion.rango }}</span>
+              <span class="tubo-color"></span>
+              <span class="tubo-texto">
+                <span class="tubo-etiqueta">{{ opcion.etiqueta }}</span>
+                <span class="tubo-rango">{{ opcion.rango }}</span>
               </span>
-              <ion-icon name="checkmark-outline" class="nivel-check"></ion-icon>
+              <ion-icon name="checkmark-circle" class="tubo-check"></ion-icon>
             </button>
           </div>
           <p class="campo-error" *ngIf="faltaCloro">
             <ion-icon name="alert-circle-outline"></ion-icon>
-            Selecciona el nivel de cloro
+            Elige el nivel de cloro
           </p>
         </div>
-
-        <!-- pH -->
         <div
-          class="levels-col"
+          class="nivel-columna"
           #campoPh
           [class.faltante]="faltaPh"
           [class.sacudir]="campoResaltado === 'ph'">
-          <div class="levels-col-head">
+          <div class="nivel-columna-head">
             <span class="levels-col-title">
               <ion-icon name="flask-outline"></ion-icon>
               pH
@@ -110,40 +271,44 @@
               {{ phActual !== null ? phActual : '—' }}
             </span>
           </div>
-
-          <div class="levels-list">
+          <!-- Como el tester: alto arriba, bajo abajo; el color es el del agua en el tubo -->
+          <div class="nivel-tubos" role="radiogroup" [attr.aria-label]="'Nivel de pH'">
             <button
               *ngFor="let opcion of opcionesPh"
               type="button"
-              class="nivel-btn"
+              role="radio"
+              class="nivel-tubo"
               [class.selected]="phSeleccionado === opcion.estado"
-              [style.--nivel-color]="opcion.color"
+              [attr.aria-checked]="phSeleccionado === opcion.estado"
+              [attr.aria-label]="opcion.etiqueta + ' (' + opcion.rango + ')'"
+              [style.--muestra]="opcion.muestra"
               (click)="seleccionarPh(opcion)">
-              <span class="nivel-dot"></span>
-              <span class="nivel-texto">
-                <span class="nivel-etiqueta">{{ opcion.etiqueta }}</span>
-                <span class="nivel-rango">{{ opcion.rango }}</span>
+              <span class="tubo-color"></span>
+              <span class="tubo-texto">
+                <span class="tubo-etiqueta">{{ opcion.etiqueta }}</span>
+                <span class="tubo-rango">{{ opcion.rango }}</span>
               </span>
-              <ion-icon name="checkmark-outline" class="nivel-check"></ion-icon>
+              <ion-icon name="checkmark-circle" class="tubo-check"></ion-icon>
             </button>
           </div>
           <p class="campo-error" *ngIf="faltaPh">
             <ion-icon name="alert-circle-outline"></ion-icon>
-            Selecciona el nivel de pH
+            Elige el nivel de pH
           </p>
         </div>
       </div>
     </section>
 
     <!-- ============ PRODUCTOS APLICADOS ============ -->
-    <section class="card">
+    <!-- Se oculta en cuarzo / bomba cuando no se hizo la mantención: no hubo químicos -->
+    <section class="card" *ngIf="muestraQuimicos">
       <div class="card-header">
         <div class="card-header-icon productos">
           <ion-icon name="flask-outline"></ion-icon>
         </div>
         <div class="card-header-texto">
           <h2>Productos aplicados</h2>
-          <p>Las cantidades se registran en kilos y en unidades de pastillas</p>
+          <p>Kilos, unidades de pastilla{{ servicio === SERVICIO_RECUPERACION ? ' y litros de algicida' : '' }}</p>
         </div>
         <div class="card-header-resumen" *ngIf="kilosTotales > 0 || pastillasTotales > 0">
           <span class="resumen-item" *ngIf="kilosTotales > 0">
@@ -160,6 +325,7 @@
       <div class="productos-grid">
         <div
           class="producto-card"
+          [class.ancho-completo]="producto.control === 'cantidadAlgicida'"
           *ngFor="let producto of productos"
           [style.--producto-color]="producto.color">
 
@@ -170,12 +336,17 @@
             <div class="producto-info">
               <span class="producto-nombre">{{ producto.nombre }}</span>
               <span class="producto-tipo">
-                {{ producto.unidad === 'kg' ? 'Por peso' : 'Por unidades' }}
+                {{ producto.unidad === 'kg' ? 'Por peso' : producto.unidad === 'L' ? 'Por litros' : 'Por unidades' }}
               </span>
             </div>
           </div>
 
-          <div class="producto-input-row">
+          <div class="producto-stepper">
+            <button type="button" class="stepper-btn" (click)="sumar(producto.control, -pasoBoton(producto))"
+                    [disabled]="cantidad(producto.control) <= 0"
+                    [attr.aria-label]="'Restar ' + pasoBoton(producto) + ' ' + producto.unidad + ' de ' + producto.nombre">
+              <ion-icon name="remove-outline"></ion-icon>
+            </button>
             <div class="producto-input">
               <ion-input
                 type="number"
@@ -187,15 +358,11 @@
               </ion-input>
               <span class="producto-sufijo">{{ producto.unidad }}</span>
             </div>
-            <button
-              type="button"
-              class="producto-clear"
-              (click)="limpiarCantidad(producto.control)"
-              [attr.aria-label]="'Limpiar ' + producto.nombre">
-              <ion-icon name="close-outline"></ion-icon>
+            <button type="button" class="stepper-btn mas" (click)="sumar(producto.control, pasoBoton(producto))"
+                    [attr.aria-label]="'Sumar ' + pasoBoton(producto) + ' ' + producto.unidad + ' de ' + producto.nombre">
+              <ion-icon name="add-outline"></ion-icon>
             </button>
           </div>
-
           <div class="producto-atajos">
             <button
               *ngFor="let atajo of producto.atajos"
@@ -218,7 +385,7 @@
         </div>
         <div class="card-header-texto">
           <h2>Cierre de la mantención</h2>
-          <p>Servicio realizado y observaciones</p>
+          <p>Estado en que queda la piscina y observaciones</p>
         </div>
       </div>
 
@@ -255,16 +422,6 @@
           </p>
         </div>
 
-        <ion-item lines="none" class="fila">
-          <ion-icon name="build-outline" slot="start" class="fila-icon"></ion-icon>
-          <ion-label class="fila-label-stack">Servicio realizado</ion-label>
-          <ion-select formControlName="servicio" class="fila-select" interface="popover">
-            <ion-select-option *ngFor="let opcion of servicios" [value]="opcion">
-              {{ opcion }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
         <ion-item lines="none" class="fila fila-notas">
           <ion-icon name="document-text-outline" slot="start" class="fila-icon"></ion-icon>
           <ion-label position="stacked">Notas adicionales</ion-label>
@@ -277,15 +434,18 @@
   <!-- ============ GUARDAR (FIJO ABAJO) ============ -->
   <!-- slot="fixed" lo saca del scroll: queda anclado al borde inferior de la pantalla -->
   <div class="guardar-bar" slot="fixed" *ngIf="!cargando && cliente">
+    <div class="guardar-total">
+      <span>Total</span>
+      <strong class="precio-tag">{{ formatearMonto(totalCobrar) }}</strong>
+    </div>
     <ion-button
-      expand="block"
       type="submit"
       class="gradient-button"
       [disabled]="guardando"
       (click)="guardarMantencion()">
       <ion-spinner name="crescent" *ngIf="guardando" slot="start"></ion-spinner>
-      <ion-icon name="save-outline" slot="start" *ngIf="!guardando"></ion-icon>
-      {{ guardando ? 'Guardando...' : 'Guardar mantención' }}
+      <ion-icon name="checkmark-outline" slot="start" *ngIf="!guardando"></ion-icon>
+      {{ guardando ? 'Guardando...' : 'Guardar' }}
     </ion-button>
   </div>
 </ion-content>

@@ -1,343 +1,105 @@
-// Importar estilos base de clientes
-.modern-header {
-  --background: #2c3e50;
+// ===== HISTORIAL DE UN CLIENTE =====
+// Ficha del cliente arriba, deuda en una fila y luego su historial (app-historial-mantenciones).
 
-  .custom-toolbar {
-    --background: transparent;
-    --color: #ffffff;
+ion-content {
+  --padding-bottom: 110px;
+  --background: var(--ion-background-color);
+}
 
-    .custom-title {
-      --color: #ffffff !important;
-      font-weight: 600;
-    }
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
 
-    ion-back-button {
-      --color: #ffffff !important;
-      color: #ffffff !important;
-    }
+/* ---------- Ficha: precio, dirección y tres números; nada más ---------- */
+.ficha {
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-1);
+}
 
-    ion-buttons {
-      --color: #ffffff !important;
-      color: #ffffff !important;
-    }
+.ficha-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
 
-    ion-icon {
-      color: #ffffff !important;
-    }
+.ficha-precio {
+  font-size: var(--fs-lg);
+}
+
+.btn-icono.plano {
+  border-color: transparent;
+  background: transparent;
+  color: var(--texto-suave);
+  margin-right: calc(-1 * var(--sp-2));
+}
+
+.ficha-direccion {
+  margin-top: var(--sp-1);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  color: var(--texto-suave);
+  text-decoration: none;
+
+  ion-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 15px;
+    color: var(--ion-color-primary);
+  }
+
+  span {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    text-underline-offset: 3px;
   }
 }
 
-:host-context(body.dark) {
-  .modern-header {
-    --background: var(--ion-toolbar-background);
-
-    .custom-toolbar {
-      --color: var(--ion-text-color);
-
-      .custom-title,
-      ion-back-button,
-      ion-buttons,
-      ion-icon {
-        --color: var(--ion-text-color) !important;
-        color: var(--ion-text-color) !important;
-      }
-    }
-  }
+.ficha-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--ion-border-color);
 }
 
-.loading-container {
+.stat {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  color: var(--ion-color-medium);
-  
-  ion-spinner {
-    width: 40px;
-    height: 40px;
-  }
-  
-  p {
-    margin: 0;
-    font-size: 0.95rem;
-  }
-}
-
-.error {
-  color: var(--ion-color-danger);
-  background: color-mix(in srgb, var(--ion-color-danger) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ion-color-danger) 30%, transparent);
-  padding: 12px;
-  border-radius: 8px;
-  margin: 16px;
-}
-
-// Estilos para tarjetas de historial
-.historial-card {
-  margin-bottom: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  
-  .header-container {
-    background: var(--ion-color-light);
-    padding: 16px;
-    
-    .historial-header {
-      .historial-info {
-        ion-card-title {
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: var(--ion-text-color);
-          margin: 0 0 4px 0;
-          
-          .fecha-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            
-            .fecha-pill {
-              display: inline-flex;
-              align-items: center;
-              padding: 6px 12px;
-              border-radius: 999px;
-              background: var(--ion-color-primary);
-              color: white;
-              font-weight: 600;
-              font-size: 0.9em;
-              letter-spacing: 0.2px;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-            }
-            
-            .chip-hora {
-              margin: 0;
-              height: 24px;
-              font-size: 0.8rem;
-            }
-          }
-        }
-        
-        ion-card-subtitle {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.95rem;
-          color: var(--ion-color-medium);
-          
-          ion-icon {
-            color: var(--ion-color-primary);
-          }
-        }
-      }
-    }
-  }
-  
-  .contenido-container {
-    background: var(--ion-background-color);
-    padding: 16px;
-    
-    .detalles-historial {
-      .quimicos-section {
-        margin-bottom: 16px;
-        
-        h3 {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin: 0 0 12px 0;
-          font-size: 1.05rem;
-          font-weight: 600;
-          color: var(--ion-text-color);
-          
-          ion-icon {
-            color: var(--ion-color-primary);
-          }
-        }
-        
-        .quimicos-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          
-          @media (max-width: 480px) {
-            grid-template-columns: 1fr;
-          }
-        }
-        
-        .quimico-card {
-          border: 1px solid var(--ion-color-light-shade);
-          border-radius: 12px;
-          padding: 12px;
-          background: var(--ion-color-light);
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-          
-          .q-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--ion-text-color);
-            font-size: 0.95rem;
-            
-            ion-icon {
-              font-size: 1.1rem;
-            }
-          }
-          
-          .q-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 6px 0;
-            font-size: 0.9rem;
-            
-            .label {
-              color: var(--ion-color-medium);
-              font-weight: 500;
-            }
-            
-            .value {
-              color: var(--ion-text-color);
-              font-weight: 600;
-            }
-          }
-        }
-        
-        .cloro-card {
-          border-left: 4px solid var(--ion-color-primary);
-        }
-        
-        .ph-card {
-          border-left: 4px solid var(--ion-color-tertiary);
-        }
-      }
-      
-      .payment-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
-        padding-top: 12px;
-        border-top: 1px solid var(--ion-color-light-shade);
-        
-        .payment-info {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          
-          .payment-status {
-            ion-chip {
-              margin: 0;
-              height: 24px;
-              font-size: 0.8rem;
-            }
-          }
-          
-          .payment-amount {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--ion-color-primary);
-          }
-        }
-        
-        .action-buttons {
-          display: flex;
-          gap: 4px;
-          
-          .pay-button {
-            --background: transparent;
-            background: #f3f4f6;
-            color: #1f2937;
-            border-radius: 10px;
-            padding: 6px 10px;
-            height: 36px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 1px 3px rgba(16,24,40,0.06);
-            border: 1px solid rgba(0,0,0,0.06);
-            font-size: 0.85rem;
-            
-            ion-icon {
-              font-size: 1rem;
-              color: #065f46;
-            }
-            
-            &.whatsapp {
-              background: #25d366;
-              color: white;
-              border-color: #25d366;
-              
-              ion-icon {
-                color: white;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-.empty-state {
   text-align: center;
-  color: var(--ion-color-medium);
-  padding: 60px 20px;
-  
-  ion-icon {
-    font-size: 4rem;
-    margin-bottom: 16px;
-    opacity: 0.5;
+  gap: 1px;
+
+  & + .stat {
+    border-left: 1px solid var(--ion-border-color);
   }
-  
-  h4 {
-    margin: 0 0 8px 0;
-    font-size: 1.2rem;
-    font-weight: 600;
+
+  strong {
+    font-size: var(--fs-md);
+    font-weight: 700;
     color: var(--ion-text-color);
+    white-space: nowrap;
   }
-  
-  p {
-    margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.4;
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--texto-suave);
   }
 }
 
-// Responsive adjustments
-@media (max-width: 576px) {
-  .container {
-    padding: 12px;
-  }
-  
-  .historial-card {
-    margin-bottom: 12px;
-    
-    .header-container {
-      padding: 12px;
-    }
-    
-    .contenido-container {
-      padding: 12px;
-      
-      .payment-section {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        
-        .payment-info {
-          align-items: center;
-          text-align: center;
-        }
-        
-        .action-buttons {
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-      }
-    }
-  }
+/* El historial trae su propio margen lateral */
+.historial-wrap {
+  margin: 0 calc(-1 * var(--sp-4));
 }

@@ -2,8 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Acceso: el correo debe tener un documento en la colección "equipo"
+    // (ID = correo en minúsculas). Se administra desde la consola de Firebase.
+    function esDelEquipo() {
+      return request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/equipo/$(request.auth.token.email.lower()));
+    }
+
     function autenticado() {
-      return request.auth != null;
+      return request.auth != null && esDelEquipo();
     }
 
     // El documento ya existente debe pertenecer al usuario conectado.
@@ -24,6 +31,15 @@ service cloud.firestore {
       // updatePodría reescribir el userId de un cliente ajeno y tomar su control.
       allow update: if esDuenioDelDoc() && esDuenioDelDocNuevo();
       allow delete: if esDuenioDelDoc();
+    }
+
+    // "equipo": lista de acceso. Cada persona solo puede leer su propio
+    // documento, para que nadie descargue la lista. Se edita solo desde la consola.
+    match /equipo/{correo} {
+      allow read:  if request.auth != null
+                   && request.auth.token.email_verified == true
+                   && request.auth.token.email.lower() == correo;
+      allow write: if false;
     }
 
     // "migraciones": marcador de versión de la migración de unidades.

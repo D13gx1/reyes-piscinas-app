@@ -1,67 +1,52 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>Login</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="login">
 
-<ion-content [fullscreen]="true" class="ion-padding">
-
-  <!-- Logo o título -->
-  <div class="logo-container">
-    <img src="assets/reyes-piscinas.png" alt="App Logo" class="logo" />
+  <div class="login__fondo" aria-hidden="true">
+    <svg class="login__ola" viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <path d="M0,64 C240,120 480,0 720,48 C960,96 1200,24 1440,64 L1440,120 L0,120 Z" />
+    </svg>
   </div>
 
-  <!-- Formulario de login -->
-  <ion-card>
-    <ion-card-content>
-      <ion-item>
-        <ion-label position="floating">Usuario</ion-label>
-        <ion-input type="text" [(ngModel)]="email"></ion-input>
-      </ion-item>
+  <main class="login__contenido">
 
-      <ion-item>
-        <ion-label position="floating">Contraseña</ion-label>
-        <ion-input type="password" [(ngModel)]="password"></ion-input>
-      </ion-item>
-
-      <!-- <ion-button expand="block" (click)="login()">Iniciar Sesión</ion-button> -->
-
-      <!-- Separador -->
-      <div class="separator">
-        <span>O</span>
+    <header class="login__marca">
+      <div class="login__logo">
+        <img src="assets/reyes-piscinas.png" alt="Reyes Piscinas" />
       </div>
+      <h1>Reyes Piscinas</h1>
+      <p>Mantenciones, clientes y cobros en un solo lugar</p>
+    </header>
 
-      <!-- Botón de Google para Móvil -->
+    <section class="login__tarjeta">
+      <h2>Bienvenido</h2>
+      <p class="login__ayuda">Inicia sesión con tu cuenta de Google para continuar.</p>
+
       <ion-button
-        *ngIf="isMobile"
+        class="login__google"
         expand="block"
-        fill="outline"
+        fill="clear"
         (click)="loginWithGoogle()"
         [disabled]="isLoading"
       >
-        <img *ngIf="!isLoading" src="assets/google-icon.svg" alt="Google" class="google-icon" />
-        <ion-spinner *ngIf="isLoading" name="crescent" color="primary"></ion-spinner>
-        <span>{{ isLoading ? 'Conectando...' : 'Continuar con Google ' }}</span>
+        @if (isLoading) {
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+        } @else {
+          <img src="assets/google-icon.svg" alt="" class="login__google-icono" />
+        }
+        <span>{{ isLoading ? 'Conectando…' : 'Continuar con Google' }}</span>
       </ion-button>
 
-      <!-- Botón de Google para Web -->
-      <ion-button
-        *ngIf="!isMobile"
-        expand="block"
-        fill="outline"
-        (click)="loginWithGoogle()"
-        [disabled]="isLoading"
-      >
-        <img *ngIf="!isLoading" src="assets/google-icon.svg" alt="Google" class="google-icon" />
-        <ion-spinner *ngIf="isLoading" name="crescent" color="primary"></ion-spinner>
-        <span>{{ isLoading ? 'Conectando...' : 'Continuar con Google (Web)' }}</span>
-      </ion-button>
+      @if (errorMessage) {
+        <div class="login__error" role="alert">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+    </section>
 
-      <!-- Mensaje de error -->
-      <ion-text color="danger" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </ion-text>
-    </ion-card-content>
-  </ion-card>
+    <footer class="login__pie">
+      Solo personal autorizado
+    </footer>
+
+  </main>
 
 </ion-content>

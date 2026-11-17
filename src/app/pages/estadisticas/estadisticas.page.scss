@@ -1,388 +1,463 @@
 // ===== ESTADÍSTICAS =====
-// Nota: el historial de mantenciones lo renderiza `app-historial-mantenciones`,
-// que tiene sus propios estilos encapsulados. Acá solo va lo de esta página.
+// Nota: el historial de mantenciones lo renderiza `app-historial-mantenciones`
+// y el gráfico `app-grafico-ingresos`, con sus propios estilos. Acá solo va lo de
+// esta página, con tokens (el modo oscuro sale solo).
 
 ion-content {
-  --padding-bottom: 100px;
-  --background: var(--ion-background-color, #f4f8ff);
+  --padding-bottom: 110px;
+  --background: var(--ion-background-color);
 }
 
-/* ---------- Tarjetas ---------- */
-ion-card {
-  margin: 12px 14px;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
-  background: var(--ion-card-background, #ffffff);
-  border: 1px solid var(--ion-border-color, #dfeafc);
+.contenido {
   max-width: 900px;
-  margin-inline: auto;
-
-  ion-card-header {
-    padding: 16px 16px 8px;
-
-    ion-card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--ion-text-color, #0f172a);
-
-      ion-icon {
-        color: var(--ion-color-primary);
-        font-size: 1.15rem;
-        flex-shrink: 0;
-      }
-    }
-
-    ion-card-subtitle {
-      margin-top: 4px;
-      font-size: 0.78rem;
-      color: var(--ion-color-medium);
-    }
-  }
-
-  ion-card-content {
-    padding: 12px 16px 16px;
-  }
-}
-
-/* ---------- Selector de período ---------- */
-.card-periodo {
-  margin-top: 14px;
-}
-
-ion-segment {
-  --background: var(--ion-color-light);
-  border-radius: 12px;
-  padding: 4px;
-
-  ion-segment-button {
-    --indicator-color: var(--app-surface);
-    --color-checked: var(--ion-color-primary);
-    --border-radius: 9px;
-    font-weight: 600;
-    font-size: 0.88rem;
-    min-height: 34px;
-  }
-}
-
-.selectores-fecha {
-  margin-top: 14px;
+  margin: 0 auto;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-3);
+}
 
-  .selector-item {
+app-grafico-ingresos {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ---------- Período ---------- */
+.periodo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.periodo-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.periodo-etiqueta {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--ion-text-color);
+  text-transform: capitalize;
+}
+
+// Selector de fecha invisible sobre la etiqueta: tocarla abre el calendario nativo
+.periodo-fecha {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+}
+
+.btn-icono.plano {
+  border-color: transparent;
+  background: transparent;
+  color: var(--texto-suave);
+
+  &:disabled {
+    opacity: 0.3;
+  }
+}
+
+/* ---------- Héroe ---------- */
+// Tarjeta clara: el verde del dinero y el verde/rojo de la variación se leen sin competir con el azul
+.heroe {
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-1);
+  color: var(--ion-text-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heroe-etiqueta {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.heroe-fila {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.heroe-total {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+// Creció frente al período anterior: verde; si no: rojo
+.heroe-variacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+
+  ion-icon {
+    font-size: 16px;
+  }
+
+  &.sube {
+    background: color-mix(in srgb, #16a34a 14%, transparent);
+    color: #15803d;
+  }
+
+  &.baja {
+    background: color-mix(in srgb, #dc2626 12%, transparent);
+    color: #b91c1c;
+  }
+}
+
+:host-context(body.dark) .heroe-variacion {
+  &.sube { color: #4ade80; }
+  &.baja { color: #f87171; }
+}
+
+.heroe-sub {
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+}
+
+// Cobrado (verde) frente a lo que falta por cobrar (ámbar)
+.cobro-barra {
+  height: 8px;
+  margin-top: var(--sp-3);
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 30%, transparent);
+  overflow: hidden;
+}
+
+.cobro-relleno {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #16a34a;
+  transition: width 0.6s ease;
+}
+
+.cobro-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+
+    &.pagado { background: #16a34a; }
+    &.pendiente { background: #f59e0b; }
+  }
+}
+
+/* ---------- KPIs ---------- */
+.kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+.kpi,
+.tarjeta-stats {
+  border-radius: var(--r-lg);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-1);
+}
+
+.kpi {
+  padding: 14px var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-valor {
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  color: var(--ion-text-color);
+}
+
+.kpi-etiqueta {
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+}
+
+/* ---------- Químicos ---------- */
+.tarjeta-stats {
+  padding: var(--sp-4);
+
+  .card-header {
+    margin-bottom: var(--sp-3);
+  }
+}
+
+.seg-chico button {
+  min-height: 36px;
+  font-size: 13px;
+}
+
+.tab-explica {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.filas-stats {
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--sp-3);
+    min-height: 48px;
+    border-bottom: 1px solid var(--ion-border-color);
 
-    .selector-icon {
-      font-size: 17px;
-      color: var(--ion-color-primary);
-      flex-shrink: 0;
+    &:last-child {
+      border-bottom: 0;
     }
 
-    ion-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--ion-color-medium);
-      min-width: 44px;
-    }
-
-    input[type="date"],
-    ion-select {
-      flex: 1;
-      min-width: 0;
-    }
-
-    input[type="date"] {
-      padding: 0.65rem 0.85rem;
-      border: 1px solid var(--ion-border-color, #dfeafc);
-      border-radius: 10px;
-      background: var(--ion-color-light);
-      color: var(--ion-text-color, #0f172a);
-      font-weight: 600;
-      min-height: 42px;
-      box-sizing: border-box;
-    }
-
-    ion-select {
-      --background: var(--ion-color-light);
-      --border-radius: 10px;
-      --padding-start: 12px;
-      --padding-end: 10px;
-      --color: var(--ion-text-color, #0f172a);
-      font-weight: 600;
-      min-height: 42px;
-      border-radius: 10px;
-      overflow: hidden;
+    &.sin-datos {
+      opacity: 0.5;
     }
   }
 
-  .selectores-mes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-}
-
-/* ---------- Loading ---------- */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 60px 20px;
-  color: var(--ion-color-medium);
-
-  p {
-    margin: 0;
-    font-size: 0.9rem;
-  }
-}
-
-/* ---------- Grilla de estadísticas ---------- */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-
-  &.dos {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.stat-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 2px;
-  padding: 14px 10px 12px;
-  background: var(--ion-color-light);
-  border: 1px solid var(--ion-border-color, #dfeafc);
-  border-radius: 14px;
-  box-sizing: border-box;
-  min-width: 0;
-}
-
-.stat-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-  background: rgba(var(--ion-color-primary-rgb, 81, 69, 255), 0.12);
-  color: var(--ion-color-primary);
-
-  ion-icon {
-    font-size: 18px;
-  }
-
-  &.ingresos { background: rgba(16, 185, 129, 0.14); color: #059669; }
-  &.cantidad { background: rgba(83, 162, 212, 0.16); color: #0369a1; }
-  &.pendiente { background: rgba(245, 158, 11, 0.16); color: #d97706; }
-  &.pagado { background: rgba(34, 197, 94, 0.14); color: #15803d; }
-  &.promedio { background: rgba(139, 92, 246, 0.14); color: #7c3aed; }
-  &.cloro { background: rgba(14, 165, 233, 0.15); color: #0284c7; }
-  &.baja { background: rgba(249, 115, 22, 0.15); color: #ea580c; }
-  &.sube { background: rgba(139, 92, 246, 0.15); color: #7c3aed; }
-  &.pastillas { background: rgba(16, 185, 129, 0.15); color: #059669; }
-  &.ph { background: rgba(20, 184, 166, 0.15); color: #0d9488; }
-}
-
-.stat-value {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--ion-text-color, #0f172a);
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-  word-break: break-word;
-
-  small {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--ion-color-medium);
-    margin-left: 3px;
-  }
-}
-
-.stat-sub {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ion-color-medium);
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-label {
-  font-size: 0.7rem;
-  color: var(--ion-color-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  line-height: 1.25;
-  margin-top: 2px;
-}
-
-.stat-quimico {
-  // Los tiles se distinguen por el color de su ícono, sin franjas de color
-  &.sin-datos {
-    opacity: 0.55;
-
-    .stat-value {
-      color: var(--ion-color-medium);
-    }
-  }
-}
-
-/* Total recaudado: va abajo de los 4 números, a todo el ancho */
-.total-destacado {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 12px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ion-color-primary) 14%, var(--ion-card-background, #ffffff)),
-    color-mix(in srgb, var(--ion-color-secondary) 12%, var(--ion-card-background, #ffffff))
-  );
-  border: 1px solid var(--ion-border-color, #dfeafc);
-  box-sizing: border-box;
-
-  .total-texto {
+  // Icono del producto con su color (mismo que en el historial)
+  .fila-icono {
+    --producto-color: var(--ion-color-primary);
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 9px;
     display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
+    align-items: center;
+    justify-content: center;
+    background: var(--producto-color);
+    color: #ffffff;
 
-  .total-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--ion-color-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .total-valor {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--ion-text-color, #0f172a);
-    line-height: 1.15;
-    font-variant-numeric: tabular-nums;
-    word-break: break-word;
-  }
-}
-
-/* ---------- Historial ---------- */
-.mantenciones-container {
-  background: var(--ion-background-color, #f4f8ff);
-  padding: 0 0 20px;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 50px 20px;
-  color: var(--ion-color-medium);
-  text-align: center;
-
-  ion-icon {
-    font-size: 3rem;
-    opacity: 0.5;
-  }
-
-  p {
-    margin: 0;
-    font-size: 0.9rem;
-  }
-}
-
-/* ---------- Modo oscuro ---------- */
-:host-context(body.dark),
-:host-context(html.dark) {
-  ion-card {
-    background: var(--ion-card-background);
-    border-color: var(--ion-border-color);
-    box-shadow: none;
-
-    ion-card-title {
-      color: var(--ion-text-color);
+    ion-icon {
+      font-size: 17px;
     }
   }
 
-  .stat-item {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: var(--ion-border-color);
-  }
-
-  .stat-value {
+  .fila-nombre {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--fs-sm);
     color: var(--ion-text-color);
   }
 
-  .total-destacado {
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--ion-color-primary) 22%, var(--ion-card-background)),
-      color-mix(in srgb, var(--ion-color-secondary) 18%, var(--ion-card-background))
-    );
-    border-color: var(--ion-border-color);
-  }
+  .fila-valor {
+    font-size: var(--fs-md);
+    font-weight: 800;
+    color: var(--ion-text-color);
+    text-align: right;
 
-  ion-segment {
-    --background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--ion-border-color);
-
-    ion-segment-button {
-      --indicator-color: rgba(var(--ion-color-primary-rgb), 0.22);
-      --color: #94a3b8;
-      --color-checked: var(--ion-color-primary-tint);
-    }
-  }
-
-  .selectores-fecha .selector-item {
-    input[type="date"] {
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--ion-text-color);
-      border-color: var(--ion-border-color);
-      color-scheme: dark;
+    small {
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--texto-suave);
     }
 
-    ion-select {
-      --background: rgba(255, 255, 255, 0.04);
-      --color: var(--ion-text-color);
-      border: 1px solid var(--ion-border-color);
+    em {
+      display: block;
+      font-style: normal;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--texto-suave);
     }
-  }
-
-  .mantenciones-container {
-    background: var(--ion-background-color);
   }
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 576px) {
-  ion-card {
-    margin: 10px 12px;
+/* ---------- Niveles del agua ---------- */
+.niveles-stats {
+  margin-top: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.nivel-bloque + .nivel-bloque {
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--ion-border-color);
+}
+
+.nivel-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-2);
+}
+
+.nivel-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.nivel-valor {
+  font-size: var(--fs-md);
+  font-weight: 800;
+  color: var(--ion-text-color);
+
+  small {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--texto-suave);
+  }
+}
+
+// Estado del promedio: punto con el color de la muestra
+.nivel-estado {
+  height: 26px;
+  padding: 0 10px 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--ion-border-color);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ion-text-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// Punto sólido con el color de la muestra; el borde hace visible el amarillo claro
+.punto-muestra {
+  --muestra: var(--ion-color-light);
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--muestra);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.18);
+}
+
+// Reparto de las visitas por estado, de bajo a alto
+.reparto-barra {
+  height: 12px;
+  margin-top: var(--sp-3);
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+  background: var(--ion-color-light);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+
+  span {
+    height: 100%;
+    min-width: 4px;
+  }
+}
+
+.reparto-leyenda {
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px var(--sp-3);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--fs-xs);
+    color: var(--texto-suave);
   }
 
-  .selectores-mes {
-    grid-template-columns: 1fr;
+  strong {
+    color: var(--ion-text-color);
+    font-weight: 800;
+  }
+}
+
+.sin-lecturas {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--texto-suave);
+}
+
+/* ---------- Historial ---------- */
+.ver-historial {
+  min-height: 52px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--ion-border-color);
+  border-radius: var(--r-lg);
+  background: var(--app-surface);
+  color: var(--ion-text-color);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  box-shadow: var(--sombra-1);
+
+  > span:first-of-type {
+    flex: 1;
+    text-align: left;
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+  ion-icon {
+    font-size: 20px;
+    color: var(--ion-color-primary);
   }
 
-  .stat-value {
-    font-size: 1.15rem;
+  .seg-num {
+    min-width: 24px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--ion-color-light);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 22px;
+    font-variant-numeric: tabular-nums;
   }
+
+  .chevron {
+    font-size: 18px;
+    color: var(--texto-suave);
+    transition: transform 0.2s ease;
+
+    &.abierto {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.mantenciones-container {
+  margin: 0 calc(-1 * var(--sp-4));
 }

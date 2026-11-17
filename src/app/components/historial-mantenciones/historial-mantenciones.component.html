@@ -1,185 +1,184 @@
-<!-- ===== HISTORIAL DE MANTENCIONES COMPONENTE ===== -->
+<!-- ===== HISTORIAL DE MANTENCIONES ===== -->
+<div class="historial" *ngIf="mantenciones.length > 0; else noMantenciones">
 
-<!-- Header con filtros -->
-<div class="historial-container" *ngIf="mantenciones.length > 0; else noMantenciones">
-  <!-- Header con filtros (opcional) -->
-  <div class="historial-header" *ngIf="mostrarFiltros">
-    <h2 class="historial-title">
-      {{ titulo }}
-    </h2>
-    <div class="filter-tabs">
-      <button class="filter-tab active" style="--tab-index: 0;" (click)="setFilter('todos')">
-        Todos
+  <!-- ============ FILTRO, BÚSQUEDA Y ORDEN ============ -->
+  <div class="herramientas" *ngIf="mostrarFiltros">
+    <!-- Toque fuera del menú de orden: lo cierra -->
+    <div class="orden-backdrop" *ngIf="menuOrdenAbierto" (click)="menuOrdenAbierto = false"></div>
+
+    <div class="seg" role="tablist" aria-label="Filtrar por pago">
+      <button type="button" role="tab" [class.activo]="filtroActual === 'todos'"
+              [attr.aria-selected]="filtroActual === 'todos'" (click)="setFilter('todos')">
+        Todas <span class="seg-num">{{ conteo.todos }}</span>
       </button>
-      <button class="filter-tab" style="--tab-index: 1;" (click)="setFilter('pagados')">
-        Pagados
+      <button type="button" role="tab" [class.activo]="filtroActual === 'pendientes'"
+              [attr.aria-selected]="filtroActual === 'pendientes'" (click)="setFilter('pendientes')">
+        Sin pagar <span class="seg-num">{{ conteo.pendientes }}</span>
       </button>
-      <button class="filter-tab" style="--tab-index: 2;" (click)="setFilter('pendientes')">
-        Pendientes
+      <button type="button" role="tab" [class.activo]="filtroActual === 'pagados'"
+              [attr.aria-selected]="filtroActual === 'pagados'" (click)="setFilter('pagados')">
+        Pagadas <span class="seg-num">{{ conteo.pagados }}</span>
       </button>
+    </div>
+
+    <div class="busqueda-fila">
+      <div class="busqueda-input" *ngIf="variosClientes">
+        <ion-icon name="search-outline"></ion-icon>
+        <input type="search" placeholder="Buscar cliente" autocomplete="off" aria-label="Buscar cliente"
+               [value]="busqueda" (input)="onBusqueda($any($event.target).value)">
+        <button type="button" class="limpiar" *ngIf="busqueda" (click)="limpiarBusqueda()" aria-label="Borrar búsqueda">
+          <ion-icon name="close-circle"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Un solo cliente: no hay búsqueda, solo cuántas se ven -->
+      <span class="resultado" *ngIf="!variosClientes">
+        {{ mantencionesFiltradas.length }} {{ mantencionesFiltradas.length === 1 ? 'registro' : 'registros' }}
+      </span>
+
+      <div class="orden-wrap">
+        <button type="button" class="orden-btn" [class.abierto]="menuOrdenAbierto" [class.suelto]="!variosClientes"
+                (click)="menuOrdenAbierto = !menuOrdenAbierto"
+                [attr.aria-label]="'Ordenar: ' + textoOrden" aria-haspopup="menu" [attr.aria-expanded]="menuOrdenAbierto">
+          <ion-icon name="swap-vertical-outline"></ion-icon>
+          <span>{{ textoOrden }}</span>
+          <ion-icon name="chevron-down-outline" class="orden-chevron"></ion-icon>
+        </button>
+
+        <div class="orden-menu" *ngIf="menuOrdenAbierto" role="menu">
+          <span class="orden-menu-titulo">Ordenar por</span>
+          <button type="button" role="menuitemradio" *ngFor="let o of opcionesDisponibles"
+                  [class.activo]="esOrdenActual(o)" [attr.aria-checked]="esOrdenActual(o)"
+                  (click)="seleccionarOrden(o)">
+            <span>{{ o.texto }}</span>
+            <ion-icon name="checkmark-outline" *ngIf="esOrdenActual(o)"></ion-icon>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Lista de mantenciones -->
-  <ng-container *ngIf="mantenciones.length > 0; else noMantenciones">
-    <ion-card class="mantencion-card" *ngFor="let item of mantencionesFiltradas; trackBy: trackByMantencion">
-      <!-- Header principal -->
-      <div class="mantencion-header">
-        <div class="mantencion-info">
-          <div class="cliente-container">
-            <h3 class="cliente-nombre">{{ item.clienteNombre }}</h3>
-            <div class="precio-badge" [ngClass]="{ 'suspendida-precio': item.suspendida && item.precio === 0 }">
-              {{ formatearPrecio(item.precio) }}
-            </div>
+  <div class="empty-state" *ngIf="mantencionesFiltradas.length === 0">
+    <ion-icon name="search-outline"></ion-icon>
+    <p>{{ busqueda ? 'Ninguna mantención de "' + busqueda + '"' : 'No hay mantenciones con este filtro' }}</p>
+  </div>
+
+  <!-- ============ LISTA (por mes cuando se ordena por fecha) ============ -->
+  <section class="grupo" *ngFor="let grupo of grupos">
+    <div class="grupo-head" *ngIf="grupo.titulo">
+      <span class="grupo-titulo">{{ grupo.titulo }}</span>
+      <span class="grupo-resumen">{{ grupo.cantidad }} <strong class="precio-tag">{{ formatearPrecio(grupo.total) }}</strong></span>
+    </div>
+
+    <div class="lista">
+      <article class="fila" *ngFor="let item of grupo.items; trackBy: trackByMantencion"
+               [class.abierta]="expandidos.has(item.id)" [class.suspendida]="item.suspendida">
+
+        <!-- Fila compacta: tocar abre el detalle -->
+        <div class="fila-resumen" role="button" tabindex="0"
+             [attr.aria-expanded]="expandidos.has(item.id)"
+             (click)="toggleExpandido(item)" (keydown.enter)="toggleExpandido(item)">
+          <div class="fecha-tile" aria-hidden="true">
+            <span class="fecha-dia">{{ diaDe(item.fecha) }}</span>
+            <span class="fecha-mes">{{ mesDe(item.fecha) }}</span>
           </div>
-          <div class="mantencion-fecha">
-            <ion-icon name="calendar-outline"></ion-icon>
-            {{ formatearFechaCompleta(item.fecha) }} · {{ item.hora || 'N/A' }}
-            <span class="suspendida-badge" *ngIf="item.suspendida">
-              <ion-icon name="pause-circle-outline"></ion-icon>
-              Suspendida
+
+          <div class="fila-texto">
+            <span class="fila-titulo">{{ tituloFila(item) }}</span>
+            <span class="fila-sub" *ngIf="subtituloFila(item) as sub">{{ sub }}</span>
+          </div>
+
+          <div class="fila-lado">
+            <span class="fila-precio precio-tag" [class.por-cobrar]="!esPagado(item)" *ngIf="!item.suspendida">{{ formatearPrecio(item.precio) }}</span>
+            <span class="estado-pago pagado" *ngIf="!item.suspendida && esPagado(item)">
+              <ion-icon name="checkmark-circle"></ion-icon>Pagado
+            </span>
+            <button type="button" class="estado-pago cobrar" *ngIf="!item.suspendida && !esPagado(item)"
+                    (click)="onPagoClick(item, $event)" [attr.aria-label]="'Marcar como pagada la del ' + diaDe(item.fecha) + ' ' + mesDe(item.fecha)">
+              <ion-icon name="cash-outline"></ion-icon>Cobrar
+            </button>
+            <span class="estado-pago suspendida" [class.movida]="esCambioDia(item)" *ngIf="item.suspendida">
+              <ion-icon [name]="esCambioDia(item) ? 'calendar-outline' : 'pause-circle-outline'"></ion-icon>
             </span>
           </div>
-        </div>
-      </div>
 
-      <!-- Sub-card: Estado del agua -->
-      <div class="sub-card" *ngIf="!item.suspendida">
-        <div class="sub-card-header">
-          <ion-icon name="water-outline"></ion-icon>
-          <h4 class="sub-card-title">Estado del agua</h4>
+          <ion-icon name="chevron-down-outline" class="chevron" aria-hidden="true"></ion-icon>
         </div>
-        <div class="estado-agua">
-          <div class="estado-item">
-            <div class="estado-fila">
-              <span class="estado-label">
-                <ion-icon name="water-outline"></ion-icon>
-                Cloro
-              </span>
-              <span class="estado-valor">{{ item.cloro }} <small>ppm</small></span>
-            </div>
-            <div [ngClass]="'estado-badge ' + getColorNivel(getNivelCloro(item.cloro))" [style]="getBadgeStyle(getColorNivel(getNivelCloro(item.cloro)))">
-              <span>{{ getNivelCloro(item.cloro) }}</span>
-            </div>
-          </div>
-          <div class="estado-item">
-            <div class="estado-fila">
-              <span class="estado-label">
-                <ion-icon name="flask-outline"></ion-icon>
-                pH
-              </span>
-              <span class="estado-valor">{{ item.ph }}</span>
-            </div>
-            <div [ngClass]="'estado-badge ' + getColorNivel(getNivelPh(item.ph))" [style]="getBadgeStyle(getColorNivel(getNivelPh(item.ph)))">
-              <span>{{ getNivelPh(item.ph) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Sub-card: Productos usados -->
-      <div class="sub-card" *ngIf="!item.suspendida">
-        <div class="sub-card-header">
-          <ion-icon name="flask-outline"></ion-icon>
-          <h4 class="sub-card-title">Productos aplicados</h4>
-        </div>
-        <div class="productos-grid">
-          <div class="producto-item cloro" [class.vacio]="!item.cantidadCloro">
-            <div class="producto-icon">
-              <ion-icon name="flask-outline"></ion-icon>
+        <!-- Detalle -->
+        <div class="fila-detalle" *ngIf="expandidos.has(item.id)">
+          <!-- Agua: el punto tiene el color de como se vio la muestra en el comparador -->
+          <ng-container *ngIf="!item.suspendida && aguaDe(item) as agua">
+            <div class="detalle-bloque" *ngIf="agua.length">
+              <span class="detalle-titulo">Estado del agua</span>
+              <div class="agua">
+                <div class="agua-item" *ngFor="let a of agua" [style.--muestra]="a.muestra">
+                  <span class="punto-muestra" aria-hidden="true"></span>
+                  <span class="agua-texto">
+                    <span class="agua-etiqueta">{{ a.nombre }}</span>
+                    <span class="agua-estado">{{ a.estado }}</span>
+                    <span class="agua-valor num">{{ a.valor }}</span>
+                  </span>
+                </div>
+              </div>
             </div>
-            <div class="producto-texto">
-              <span class="producto-nombre">Cloro granulado</span>
-              <span class="producto-valor">
-                {{ formatearKgValor(item.cantidadCloro) }}<small>kg</small>
-              </span>
-              <span class="producto-sub">{{ formatearGramos(item.cantidadCloro) }}</span>
+          </ng-container>
+
+          <!-- Productos aplicados: cada uno con su color -->
+          <ng-container *ngIf="!item.suspendida">
+            <div class="detalle-bloque" *ngIf="productosDe(item) as productos">
+              <span class="detalle-titulo" *ngIf="productos.length">Productos aplicados</span>
+              <div class="productos-grid">
+                <div class="producto-item" *ngFor="let p of productos" [class.texto]="p.esTexto" [style.--producto-color]="p.color">
+                  <div class="producto-icon"><ion-icon [name]="p.icono"></ion-icon></div>
+                  <div class="producto-texto">
+                    <span class="producto-nombre">{{ p.nombre }}</span>
+                    <span class="producto-valor">{{ p.valor }}<small *ngIf="p.unidad">{{ p.unidad }}</small></span>
+                  </div>
+                </div>
+                <p class="sin-productos" *ngIf="productos.length === 0 && !item.cuarzo && !item.bomba">No se aplicaron productos</p>
+              </div>
             </div>
+          </ng-container>
+
+          <!-- Costos del cuarzo / bomba -->
+          <div class="costos" *ngIf="!item.suspendida && (item.cuarzo || item.bomba)">
+            <span *ngIf="costoMateriales(item)">
+              {{ item.cuarzo ? 'Cuarzo' : 'Repuestos' }} <strong class="precio-tag">{{ formatearPrecio(costoMateriales(item)) }}</strong>
+            </span>
+            <span *ngIf="costoManoObra(item)">Mano de obra <strong class="precio-tag">{{ formatearPrecio(costoManoObra(item)) }}</strong></span>
+            <span *ngIf="item.incluyeMantencion">+ mantención</span>
+            <span class="alerta" *ngIf="item.bomba && item.bomba.quedoFuncionando === false">
+              <ion-icon name="alert-circle-outline"></ion-icon>La bomba no quedó funcionando
+            </span>
           </div>
 
-          <div class="producto-item sube" [class.vacio]="!item.cantidadSubePh">
-            <div class="producto-icon">
-              <ion-icon name="arrow-up-circle-outline"></ion-icon>
-            </div>
-            <div class="producto-texto">
-              <span class="producto-nombre">Sube pH</span>
-              <span class="producto-valor">
-                {{ formatearKgValor(item.cantidadSubePh) }}<small>kg</small>
-              </span>
-              <span class="producto-sub">{{ formatearGramos(item.cantidadSubePh) }}</span>
-            </div>
-          </div>
+          <p class="nota-suspendida" *ngIf="item.suspendida">
+            {{ esCambioDia(item) ? textoNoRealizada(item) + '. Aquí no se cobra.' : 'Esta mantención se suspendió y no se cobra.' }}
+          </p>
 
-          <div class="producto-item pastillas" [class.vacio]="!item.cantidadPastillas">
-            <div class="producto-icon">
-              <ion-icon name="disc-outline"></ion-icon>
-            </div>
-            <div class="producto-texto">
-              <span class="producto-nombre">Pastillas cloro</span>
-              <span class="producto-valor">
-                {{ formatearUnidades(item.cantidadPastillas) }}<small>und.</small>
-              </span>
-              <span class="producto-sub">pastillas</span>
-            </div>
-          </div>
-
-          <div class="producto-item baja" [class.vacio]="!item.cantidadBajaPh">
-            <div class="producto-icon">
-              <ion-icon name="arrow-down-circle-outline"></ion-icon>
-            </div>
-            <div class="producto-texto">
-              <span class="producto-nombre">Baja pH</span>
-              <span class="producto-valor">
-                {{ formatearKgValor(item.cantidadBajaPh) }}<small>kg</small>
-              </span>
-              <span class="producto-sub">{{ formatearGramos(item.cantidadBajaPh) }}</span>
-            </div>
+          <!-- Acciones -->
+          <div class="acciones">
+            <button type="button" class="accion" *ngIf="!item.suspendida" [class.pagado]="esPagado(item)"
+                    (click)="onPagoClick(item, $event)">
+              <ion-icon [name]="esPagado(item) ? 'checkmark-circle' : 'cash-outline'"></ion-icon>
+              {{ esPagado(item) ? 'Pagado · deshacer' : 'Marcar como pagada' }}
+            </button>
+            <button type="button" class="accion borrar" (click)="onBorrar(item, $event)" aria-label="Borrar este registro">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
           </div>
         </div>
-      </div>
-
-      <!-- Sub-card: Mantención suspendida -->
-      <div class="sub-card suspendida-card" *ngIf="item.suspendida">
-        <div class="sub-card-header">
-          <ion-icon name="pause-circle-outline"></ion-icon>
-          <h4 class="sub-card-title">Mantención suspendida</h4>
-        </div>
-        <p class="suspendida-text">Se suspendió esta mantención, no se realizó.</p>
-      </div>
-
-      <!-- Sub-card: Mantenimiento -->
-      <div class="sub-card" *ngIf="item.servicio">
-        <div class="sub-card-header">
-          <ion-icon name="build-outline"></ion-icon>
-          <h4 class="sub-card-title">{{ item.servicio }}</h4>
-          <!-- Suspendida: no hay botón de pago, así que la papelera va junto al título -->
-          <div class="borrar-button borrar-inline" *ngIf="item.suspendida"
-               (click)="onBorrar(item, $event)">
-            <ion-icon name="trash-outline" class="borrar-icon"></ion-icon>
-          </div>
-        </div>
-        <!-- Botones de acción -->
-        <div *ngIf="!item.suspendida" style="display: flex !important; align-items: center !important; gap: 12px !important; width: 100% !important; margin-top: 12px !important;">
-          <div [ngClass]="esPagado(item) ? 'pago-button pagado' : 'pago-button pendiente'"
-               (click)="onPagoClick(item, $event)">
-            <ion-icon [name]="esPagado(item) ? 'checkmark-circle' : 'checkmark-outline'" class="pago-icon"></ion-icon>
-            <span class="pago-text">{{ esPagado(item) ? 'Pagado' : 'Marcar Pagado' }}</span>
-          </div>
-          <div class="borrar-button"
-               (click)="onBorrar(item, $event)">
-            <ion-icon name="trash-outline" class="borrar-icon"></ion-icon>
-          </div>
-        </div>
-      </div>
-    </ion-card>
-  </ng-container>
+      </article>
+    </div>
+  </section>
 </div>
 
-<!-- Empty state -->
+<!-- Sin mantenciones -->
 <ng-template #noMantenciones>
-  <div class="empty-state-modern">
+  <div class="empty-state">
     <ion-icon name="calendar-outline"></ion-icon>
     <h3>No hay mantenciones</h3>
-    <p>No se encontraron mantenciones para el filtro seleccionado</p>
+    <p>Cuando se registren aparecerán aquí</p>
   </div>
 </ng-template>

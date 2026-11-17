@@ -1,0 +1,24 @@
+<section class="dia-resumen" aria-live="polite"
+         [class.celebrando]="celebrando" [class.dia-completo]="total > 0 && pendientes === 0">
+  <div class="dia-fila">
+    <div class="dia-info">
+      <span class="dia-etiqueta">{{ etiqueta }} · {{ numero }} {{ mes }}</span>
+      <div class="dia-total" *ngIf="total > 0">
+        <strong>{{ pendientes === 0 ? '¡Todo listo! 🎉' : pendientes + (pendientes === 1 ? ' pendiente' : ' pendientes') }}</strong>
+        <span *ngIf="pendientes > 0">de {{ total }}</span>
+      </div>
+      <div class="dia-total" *ngIf="total === 0">
+        <strong>Día libre 🌤️</strong>
+      </div>
+    </div>
+    <span class="dia-progreso-contador" *ngIf="total > 0">{{ hechasMostradas }}/{{ total }}</span>
+  </div>
+
+  <!-- Progreso: se llena con cada mantención completada -->
+  <div class="dia-progreso" *ngIf="total > 0"
+       role="progressbar" [attr.aria-valuenow]="hechas"
+       aria-valuemin="0" [attr.aria-valuemax]="total"
+       [attr.aria-label]="hechas + ' de ' + total + ' completadas'">
+    <div class="dia-progreso-relleno" [style.width.%]="progreso"></div>
+  </div>
+</section>

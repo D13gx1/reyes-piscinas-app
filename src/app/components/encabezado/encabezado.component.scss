@@ -1,0 +1,345 @@
+@use '../../../theme/texto' as *;
+
+:host {
+  display: block;
+}
+
+.encabezado-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px 0 18px;
+}
+
+// Con botón de volver: el título queda pegado a la flecha
+.encabezado-fila.con-volver {
+  gap: 10px;
+  padding-left: 12px;
+}
+
+// Círculo igual que la campana: Ionic (modo md) le da min-width 48px y quedaba ovalado
+.volver {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  min-width: 0;
+  min-height: 0;
+  --color: var(--ion-color-primary);
+  --background: var(--ion-card-background, #ffffff);
+  --background-hover: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.08);
+  --border-radius: 50%;
+  --padding-start: 0;
+  --padding-end: 0;
+  --icon-font-size: 22px;
+  --icon-margin-start: 0;
+  --icon-margin-end: 0;
+  --box-shadow: none;
+  display: block;
+  border: 1px solid rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.14);
+  border-radius: 50%;
+  box-shadow: var(--sombra-1);
+  overflow: hidden;
+
+  &::part(native) {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+.encabezado-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ion-text-color, #0f172a);
+    overflow: hidden;
+    white-space: nowrap;
+    @include desvanecer;
+  }
+}
+
+// Misma etiqueta que encabeza las tarjetas ("RECAUDADO EN EL MES", "HOY · 19 OCT")
+.encabezado-sub {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
+  overflow: hidden;
+  white-space: nowrap;
+  @include desvanecer;
+}
+
+.encabezado-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Chip de dato rápido (lo trae cada página con el atributo `chip`) */
+:host ::ng-deep [chip] {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.14);
+  background: var(--ion-card-background, #ffffff);
+  color: var(--ion-text-color, #0f172a);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--sombra-1);
+
+  ion-icon {
+    font-size: 15px;
+    color: var(--ion-color-primary);
+  }
+
+  // Texto chico dentro del chip ("este mes")
+  .chip-nota {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+  }
+
+  &.completo {
+    border-color: rgba(22, 163, 74, 0.35);
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+
+    ion-icon {
+      color: #16a34a;
+    }
+  }
+}
+
+/* Chip "cobrado": entra con rebote mostrando el total de antes; al sumar
+   aparece el +$ flotando y el chip late mientras cuenta; luego se va */
+:host ::ng-deep [chip].ganancia {
+  position: relative;
+  overflow: visible;
+  border-color: rgba(22, 163, 74, 0.45);
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+  animation: gananciaEntra 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  ion-icon {
+    color: #ffffff;
+  }
+
+  .chip-nota {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .ganancia-sube {
+    position: absolute;
+    left: 50%;
+    top: -4px;
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(22, 163, 74, 0.14);
+    color: #15803d;
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  &.sumando {
+    animation: gananciaLate 0.5s ease-out;
+
+    .ganancia-sube {
+      animation: gananciaSube 1.6s ease-out;
+    }
+  }
+
+  &.saliendo {
+    animation: gananciaSale 0.4s ease-in forwards;
+  }
+}
+
+@keyframes gananciaEntra {
+  from { opacity: 0; transform: translateY(-6px) scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes gananciaSube {
+  0% { opacity: 0; transform: translate(-50%, 6px); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -22px); }
+}
+
+@keyframes gananciaLate {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12); box-shadow: 0 8px 22px rgba(22, 163, 74, 0.6); }
+  100% { transform: scale(1); }
+}
+
+@keyframes gananciaSale {
+  to { opacity: 0; transform: scale(0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep [chip].ganancia,
+  :host ::ng-deep [chip].ganancia.sumando,
+  :host ::ng-deep [chip].ganancia.sumando .ganancia-sube {
+    animation: none;
+  }
+}
+
+:host ::ng-deep button[chip] {
+  cursor: pointer;
+  background: var(--ion-color-primary);
+  border-color: var(--ion-color-primary);
+  color: #ffffff;
+
+  ion-icon {
+    color: #ffffff;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* Campana de resúmenes del mes, con punto rojo si hay uno nuevo */
+.campana {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.14);
+  border-radius: 50%;
+  background: var(--ion-card-background, #ffffff);
+  color: var(--ion-color-primary);
+  box-shadow: var(--sombra-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &.abierta {
+    background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.12);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+}
+
+.campana-punto {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px var(--ion-card-background, #ffffff);
+  animation: latido 1.6s ease-in-out infinite;
+}
+
+@keyframes latido {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 2px solid var(--ion-card-background, #ffffff);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.28);
+  cursor: pointer;
+
+  &:active:not(.estatico) {
+    transform: scale(0.94);
+  }
+
+  &.estatico {
+    cursor: default;
+  }
+}
+
+:host-context(body.dark),
+:host-context(html.dark) {
+  ::ng-deep [chip]:not(button) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  ::ng-deep [chip].completo:not(button) {
+    background: rgba(74, 222, 128, 0.16);
+    color: #86efac;
+  }
+
+  .avatar {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .campana {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .volver {
+    --background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    --color: #ffffff;
+  }
+
+  .encabezado-sub {
+    color: var(--ion-color-secondary);
+  }
+}
+
+/* Celulares angostos: que quepan título, chip y avatar sin cortar el título */
+@media (max-width: 400px) {
+  .encabezado-fila {
+    padding: 0 12px 0 16px;
+  }
+
+  .encabezado-texto h1 {
+    font-size: 1.5rem;
+  }
+
+  :host ::ng-deep [chip] {
+    padding: 0 10px;
+
+    .chip-nota {
+      display: none;
+    }
+  }
+}

@@ -1,65 +1,40 @@
-<!-- ===== RESUMEN DEUDA COMPONENTE - VERSIÓN NOTIFICACIÓN ===== -->
+<!-- ===== DEUDA DEL CLIENTE ===== -->
+<section class="deuda" *ngIf="resumenDeuda.cantidadPendientes > 0; else sinDeuda">
+  <div class="deuda-head">
+    <button type="button" class="deuda-toggle" (click)="toggleExpandido()" [attr.aria-expanded]="expandido">
+      <span class="deuda-icono" aria-hidden="true">
+        <ion-icon name="cash-outline"></ion-icon>
+      </span>
+      <span class="deuda-texto">
+        <span class="deuda-titulo">Por cobrar <strong class="precio-tag por-cobrar">{{ formatearPrecio(resumenDeuda.totalPendiente) }}</strong></span>
+        <span class="deuda-sub">
+          {{ resumenDeuda.cantidadPendientes }} {{ resumenDeuda.cantidadPendientes === 1 ? 'mantención sin pagar' : 'mantenciones sin pagar' }}
+          <ion-icon class="chevron" name="chevron-down-outline" aria-hidden="true"></ion-icon>
+        </span>
+      </span>
+    </button>
 
-<div class="resumen-deuda-container" *ngIf="resumenDeuda.cantidadPendientes > 0; else sinDeuda">
-  <!-- Notificación compacta -->
-  <div class="notificacion-deuda" [class.expandida]="expandido">
-    <!-- Header clickeable -->
-    <div class="notificacion-header" (click)="toggleExpandido()">
-      <div class="notificacion-info">
-        <div class="notificacion-icono">
-          <ion-icon name="cash-outline"></ion-icon>
-          <span class="notificacion-badge">{{ resumenDeuda.cantidadPendientes }}</span>
-        </div>
-        <div class="notificacion-texto">
-          <span class="notificacion-titulo">Tienes deuda pendiente</span>
-          <span class="notificacion-monto">{{ formatearPrecio(resumenDeuda.totalPendiente) }}</span>
-        </div>
-      </div>
-      <div class="notificacion-flecha">
-        <ion-icon [name]="expandido ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
-      </div>
-    </div>
-
-    <!-- Contenido expandido -->
-    <div class="notificacion-contenido" *ngIf="expandido">
-      <div class="contenido-detalles">
-        <div class="detalle-item detalle-total">
-          <ion-icon name="cash-outline" class="detalle-icono"></ion-icon>
-          <span class="detalle-texto">Total deuda pendiente</span>
-          <span class="detalle-monto">{{ formatearPrecio(resumenDeuda.totalPendiente) }}</span>
-        </div>
-        <div class="detalle-item">
-          <ion-icon name="document-text-outline" class="detalle-icono"></ion-icon>
-          <span class="detalle-texto">{{ resumenDeuda.cantidadPendientes }} mantenciones sin pagar</span>
-        </div>
-        
-        <!-- Botón WhatsApp -->
-        <div class="whatsapp-container">
-          <ion-button 
-            class="whatsapp-button" 
-            fill="clear" 
-            (click)="enviarPorWhatsApp()"
-            [disabled]="!resumenDeuda.clienteTelefono">
-            <ion-icon name="logo-whatsapp" slot="start"></ion-icon>
-            Enviar recordatorio por WhatsApp
-          </ion-button>
-        </div>
-      </div>
-    </div>
+    <!-- Abre WhatsApp con el mensaje listo: el envío lo haces tú -->
+    <button type="button" class="whatsapp" (click)="enviarPorWhatsApp()" *ngIf="resumenDeuda.clienteTelefono"
+            aria-label="Recordar el pago por WhatsApp">
+      <ion-icon name="logo-whatsapp"></ion-icon>
+      <span>Recordar</span>
+    </button>
   </div>
-</div>
 
-<!-- Estado sin deuda -->
+  <!-- Detalle: qué fechas se deben -->
+  <ul class="deuda-lista" *ngIf="expandido">
+    <li *ngFor="let m of resumenDeuda.mantencionesPendientes">
+      <span>{{ formatearFecha(m.fecha) }}</span>
+      <span class="precio-tag por-cobrar">{{ formatearPrecio(m.precio) }}</span>
+    </li>
+  </ul>
+</section>
+
+<!-- Sin deuda -->
 <ng-template #sinDeuda>
-  <div class="sin-deuda-container">
-    <div class="notificacion-sin-deuda">
-      <div class="sin-deuda-icono">
-        <ion-icon name="checkmark-circle-outline"></ion-icon>
-      </div>
-      <div class="sin-deuda-texto">
-        <span class="sin-deuda-titulo">¡Todo al día!</span>
-        <span class="sin-deuda-subtitulo">No hay mantenciones pendientes</span>
-      </div>
-    </div>
+  <div class="al-dia">
+    <ion-icon name="checkmark-circle-outline"></ion-icon>
+    <span><strong>Todo al día.</strong> No hay mantenciones por cobrar.</span>
   </div>
 </ng-template>

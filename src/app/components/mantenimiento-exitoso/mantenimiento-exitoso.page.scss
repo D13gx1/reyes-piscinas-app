@@ -127,6 +127,95 @@
     transform: translateY(0);
   }
 }
+/* ---------- Marcar como pagado ---------- */
+.pago {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px dashed rgba(22, 163, 74, 0.5);
+  background: var(--ion-card-background, #ffffff);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: fadeInUp 0.5s ease-out 0.8s both;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+  }
+
+  &.pagado {
+    border-style: solid;
+    border-color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+
+    .pago-icono {
+      background: #16a34a;
+      color: #ffffff;
+      animation: pagoOk 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .pago-titulo {
+      color: #15803d;
+    }
+  }
+}
+
+.pago-icono {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+
+  ion-icon {
+    font-size: 22px;
+  }
+}
+
+.pago-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pago-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ion-text-color, #0f172a);
+}
+
+.pago-monto {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.pago-check {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: #16a34a;
+}
+
+@keyframes pagoOk {
+  0% { transform: scale(0.6); }
+  100% { transform: scale(1); }
+}
+
 /* ---------- Modo oscuro (el diseño original) ---------- */
 :host-context(body.dark),
 :host-context(html.dark) {
@@ -158,5 +247,21 @@
   .home-button {
     --background: #0f172a !important;
     border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .pago {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .pago.pagado {
+    background: rgba(22, 163, 74, 0.16);
+
+    .pago-titulo {
+      color: #86efac;
+    }
+  }
+
+  .pago-titulo {
+    color: #e5f2ff;
   }
 }

@@ -1,685 +1,667 @@
-// ===== HISTORIAL DE MANTENCIONES COMPONENTE SCSS =====
+@use '../../../theme/texto' as *;
+
+// ===== HISTORIAL DE MANTENCIONES =====
+// Lista compacta por mes; cada fila se abre para ver el detalle.
+// Solo tokens (variables.scss): el modo oscuro sale solo.
 
 :host {
   display: block;
   width: 100%;
 }
 
-.historial-container {
-  background: #f8fafc;
-  padding: 20px;
-  min-height: 100vh;
-  width: 100%;
-  max-width: 1280px;
+.historial {
+  max-width: 900px;
   margin: 0 auto;
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
   box-sizing: border-box;
 }
 
-:host-context(body.dark),
-:host-context(html.dark) {
-  .historial-container,
-  .empty-state-modern {
-    background: var(--ion-background-color);
-    border-color: var(--ion-border-color);
-  }
-
-  .historial-container {
-    background: var(--ion-background-color);
-  }
-
-  .historial-title,
-  .cliente-nombre,
-  .sub-card-title,
-  .estado-label,
-  .estado-valor,
-  .producto-nombre,
-  .producto-valor,
-  .producto-sub,
-  .mantencion-fecha,
-  .empty-state-modern h3,
-  .empty-state-modern p,
-  .filter-tab {
-    color: var(--ion-text-color) !important;
-  }
-
-  .historial-header .filter-tabs {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--ion-border-color);
-  }
-
-  .filter-tab {
-    color: #dfeaff !important;
-
-    &.active {
-      color: white !important;
-    }
-  }
-
-  .mantencion-card,
-  .sub-card,
-  .producto-item,
-  .empty-state-modern,
-  .borrar-button,
-  .pago-button.pagado {
-    background: var(--ion-card-background);
-    border-color: var(--ion-border-color);
-    color: var(--ion-text-color);
-  }
-
-  .mantencion-card {
-    box-shadow: none;
-    border-radius: 16px !important;
-    --border-radius: 16px;
-  }
-
-  .sub-card {
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  .producto-item {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: var(--ion-border-color);
-  }
-
-  .estado-badge {
-    border: 1px solid transparent;
-  }
-
-  .mantencion-header {
-    border-bottom-color: var(--ion-border-color);
-  }
-
-  .mantencion-fecha,
-  .estado-label,
-  .estado-valor,
-  .empty-state-modern p {
-    color: #dfeaff !important;
-  }
-
-  .precio-badge {
-    background: rgba(34, 197, 94, 0.18);
-    color: #b7f7d1;
-  }
-
-  .pago-button {
-    &.pendiente {
-      background: linear-gradient(135deg, #1b8b50, #0f763e);
-      color: #ffffff;
-    }
-
-    &.pagado {
-      background: rgba(34, 197, 94, 0.12);
-      color: #d7ffe7;
-      border-color: rgba(34, 197, 94, 0.5);
-    }
-  }
-
-  .borrar-button {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  .empty-state-modern {
-    background: var(--ion-card-background);
-
-    ion-icon {
-      color: var(--ion-color-medium);
-    }
-  }
+/* ---------- Filtro, búsqueda y orden ---------- */
+.herramientas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
 }
 
-// Header con filtros
-.historial-header {
-  margin-bottom: 24px;
-  
-  .historial-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 20px 0;
-    
-    ion-icon {
-      color: var(--ion-color-primary);
-      font-size: 1.8rem;
-    }
-  }
-  
-  .filter-tabs {
-    display: flex;
-    gap: 8px;
-    padding: 4px;
-    background: #e2e8f0;
-    border-radius: 20px;
-    position: relative;
-    
-    .filter-tab {
-      flex: 1;
-      padding: 12px 20px;
-      border: none;
-      background: transparent;
-      border-radius: 16px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #64748b;
-      cursor: pointer;
-      position: relative;
-      
-      &.active {
-        background: var(--ion-color-primary);
-        color: white;
-      }
-    }
-  }
-}
-
-// Card principal - diseño minimalista
-.mantencion-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: none;
-  margin-bottom: 16px;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-// Sub-cards - bloques visuales independientes
-.sub-card {
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 14px;
-  margin-top: 12px;
-  border: 1px solid #e2e8f0;
-  
-  &:first-of-type {
-    margin-top: 16px;
-  }
-}
-
-// Header de sub-cards
-.sub-card-header {
+.busqueda-fila {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  
-  ion-icon {
-    color: var(--ion-color-primary);
+  gap: var(--sp-2);
+}
+
+.busqueda-input {
+  flex: 1;
+  min-width: 0;
+  height: var(--tap);
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ion-border-color);
+  background: var(--app-surface);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+
+  > ion-icon {
+    flex-shrink: 0;
     font-size: 18px;
-  }
-  
-  .sub-card-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #374151;
-    margin: 0;
-  }
-}
-
-// Header compacto
-.mantencion-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  
-  .mantencion-info {
-    flex: 1;
-    
-    .cliente-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      position: relative;
-      
-      .cliente-nombre {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0;
-        line-height: 1.2;
-        flex: 1;
-        overflow: hidden;
-        white-space: nowrap;
-        // Nombre largo: se desvanece hacia el precio en vez de cortar con "..."
-        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
-        mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
-        padding-right: 8px;
-      }
-      
-      .precio-badge {
-        background: #dcfce7;
-        color: #15803d;
-        padding: 8px 16px;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 1rem;
-        border: none;
-        flex-shrink: 0;
-        position: relative;
-        z-index: 2;
-      }
-      
-    }
-    
-    .mantencion-fecha {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.85rem;
-      color: #64748b;
-      
-      ion-icon {
-        color: #64748b;
-        font-size: 16px;
-      }
-
-      .suspendida-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        margin-left: 6px;
-        padding: 3px 10px;
-        border-radius: 999px;
-        background: #fef3c7;
-        color: #b45309;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-      }
-    }
+    color: var(--texto-suave);
   }
 
-  .precio-badge.suspendida-precio {
-    background: #f1f5f9;
-    color: #94a3b8;
-    text-decoration: line-through;
-  }
-}
-
-// Mantención suspendida
-.suspendida-card {
-  .suspendida-text {
-    margin: 4px 0 0;
-    color: #64748b;
-    font-size: 0.9rem;
-    font-style: italic;
-  }
-}
-
-// Estado del agua - dentro de sub-card
-// Cloro y pH van uno al lado del otro; el estado (Ideal/Bajo/Alto) va debajo,
-// centrado dentro de cada recuadro
-.estado-agua {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 10px;
-
-  .estado-item {
+  input {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 8px 10px;
-    border-radius: 12px;
-    background: var(--ion-color-light, #f1f5f9);
-    border: 1px solid var(--ion-border-color, #e2e8f0);
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--ion-text-color);
+    font: inherit;
+    font-size: var(--fs-sm);
 
-    .estado-fila {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .estado-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-weight: 600;
-      color: #475569;
-      font-size: 0.8rem;
-      white-space: nowrap;
-
-      ion-icon {
-        font-size: 14px;
-        color: var(--ion-color-primary);
-      }
-    }
-
-    .estado-valor {
-      font-weight: 800;
-      font-size: 0.95rem;
-      color: #1e293b;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      margin-left: auto;
-
-      small {
-        font-size: 0.65rem;
-        font-weight: 600;
-        color: #64748b;
-        margin-left: 2px;
-      }
-    }
-
-    .estado-badge {
-      align-self: center;
-      font-weight: 600;
-      font-size: 0.6rem;
-      padding: 2px 10px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-
-      // Colores específicos para los estados
-      &[color="danger"] {
-        --background: #fee2e2;
-        --color: #dc2626;
-      }
-
-      &[color="success"] {
-        --background: #dcfce7;
-        --color: #15803d;
-      }
-
-      &[color="warning"] {
-        --background: #fef3c7;
-        --color: #d97706;
-      }
+    &::placeholder {
+      color: var(--texto-suave);
     }
   }
-}
 
-// Productos grid - dentro de sub-card
-.productos-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 10px;
-  width: 100%;
-  
-  .producto-item {
-    // Producto no usado (0): se atenúa para que no compita con los que sí se aplicaron
-    &.vacio {
-      opacity: 0.4;
-      filter: grayscale(1);
-    }
+  &:focus-within {
+    border-color: var(--ion-color-primary);
+  }
 
-    --producto-color: #64748b;
+  .limpiar {
+    width: 32px;
+    height: 32px;
+    margin-right: -8px;
+    border: 0;
+    background: transparent;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: #f1f5f9;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    text-align: left;
-    min-height: 56px;
-    width: 100%;
-    box-sizing: border-box;
+    justify-content: center;
 
-    &.cloro { --producto-color: #0ea5e9; }
-    &.baja { --producto-color: #f97316; }
-    &.sube { --producto-color: #8b5cf6; }
-    &.pastillas { --producto-color: #10b981; }
-
-    .producto-icon {
-      width: 30px;
-      height: 30px;
-      flex-shrink: 0;
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: color-mix(in srgb, var(--producto-color) 16%, transparent);
-      color: var(--producto-color);
-
-      ion-icon {
-        font-size: 17px;
-      }
-    }
-
-    .producto-texto {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      line-height: 1.2;
-    }
-
-    .producto-nombre {
-      font-weight: 600;
-      color: #475569;
-      font-size: 0.75rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .producto-valor {
-      font-weight: 800;
-      color: #1e293b;
-      font-size: 1rem;
-      font-variant-numeric: tabular-nums;
-
-      small {
-        font-size: 0.68rem;
-        font-weight: 700;
-        color: #64748b;
-        margin-left: 2px;
-      }
-    }
-
-    .producto-sub {
-      font-size: 0.68rem;
-      color: #94a3b8;
-      font-variant-numeric: tabular-nums;
+    ion-icon {
+      font-size: 18px;
+      color: var(--texto-suave);
     }
   }
 }
 
-// Botones de acción
-.pago-button {
+// Un solo cliente: cuántas se ven, a la izquierda del orden
+.resultado {
   flex: 1;
+  min-width: 0;
+  padding-left: var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.orden-wrap {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+  z-index: 30;
+}
+
+.orden-btn {
+  flex-shrink: 0;
+  height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ion-border-color);
+  background: var(--app-surface);
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  ion-icon {
+    font-size: 18px;
+  }
+
+  .orden-chevron {
+    font-size: 14px;
+    transition: transform 0.2s ease;
+  }
+
+  // Sin buscador al lado: texto liviano, sin recuadro
+  &.suelto {
+    height: 36px;
+    padding: 0 var(--sp-2);
+    border-color: transparent;
+    background: transparent;
+    font-size: var(--fs-xs);
+
+    ion-icon {
+      font-size: 16px;
+    }
+  }
+
+  &.abierto {
+    border-color: var(--ion-color-primary);
+
+    .orden-chevron {
+      transform: rotate(180deg);
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.orden-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: var(--r-md);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-2);
+  animation: desplegarMenu 0.16s ease-out;
+
+  .orden-menu-titulo {
+    display: block;
+    padding: 6px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+
+  button {
+    width: 100%;
+    min-height: var(--tap);
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--ion-text-color);
+    font: inherit;
+    font-size: var(--fs-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+
+    ion-icon {
+      font-size: 18px;
+      color: var(--ion-color-primary);
+    }
+
+    &.activo {
+      background: rgba(var(--ion-color-primary-rgb), 0.1);
+      color: var(--ion-color-primary);
+      font-weight: 700;
+    }
+  }
+}
+
+@keyframes desplegarMenu {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+// Capa invisible: tocar fuera cierra el menú
+.orden-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+/* ---------- Grupos por mes ---------- */
+.grupo-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: var(--sp-5) var(--sp-1) var(--sp-2);
+}
+
+.grupo-titulo {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.grupo-resumen {
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+
+  .precio-tag {
+    margin-left: 4px;
+  }
+}
+
+.grupo:first-of-type .grupo-head {
+  margin-top: var(--sp-2);
+}
+
+.lista {
+  border-radius: var(--r-lg);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-1);
+  overflow: hidden;
+}
+
+/* ---------- Fila ---------- */
+.fila + .fila {
+  border-top: 1px solid var(--ion-border-color);
+}
+
+.fila-resumen {
+  min-height: 60px;
+  padding: 10px var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    background: var(--ion-color-light);
+  }
+
+  .chevron {
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--texto-suave);
+    transition: transform 0.2s ease;
+  }
+}
+
+.abierta .fila-resumen .chevron {
+  transform: rotate(180deg);
+}
+
+// Recuadro de fecha: un solo tono para todas
+.fecha-tile {
+  width: 42px;
   height: 44px;
+  flex-shrink: 0;
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  color: var(--ion-color-primary);
+  line-height: 1;
+
+  .fecha-dia {
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fecha-mes {
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+}
+
+.fila-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fila-titulo {
+  font-size: var(--fs-md);
   font-weight: 600;
-  cursor: pointer;
-  box-shadow: none;
-  
-  .pago-icon {
-    margin-right: 6px;
-    font-size: 18px;
+  color: var(--ion-text-color);
+  overflow: hidden;
+  white-space: nowrap;
+  @include desvanecer;
+}
+
+.fila-sub {
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+  overflow: hidden;
+  white-space: nowrap;
+  @include desvanecer;
+}
+
+.fila-lado {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.fila-precio {
+  font-size: var(--fs-md);
+}
+
+.estado-pago {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+
+  ion-icon {
+    font-size: 14px;
   }
-  
-  .pago-text {
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-  
-  // Estado pendiente (estilo actual verde)
-  &.pendiente {
-    background: #16a34a;
-    color: white;
-    
-    .pago-icon {
-      color: white;
-    }
-  }
-  
-  // Estado pagado (fondo blanco, texto verde oscuro)
+
   &.pagado {
-    background: white;
-    color: #15803d;
-    border: 2px solid #22c55e;
-    box-shadow: none;
-    
-    .pago-icon {
-      color: #15803d;
+    color: var(--estado-hecho);
+  }
+
+  // "Cobrar": acción directa sin abrir la fila
+  &.cobrar {
+    min-height: 24px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    color: var(--ion-color-primary);
+    font-family: inherit;
+  }
+
+  &.suspendida {
+    color: var(--estado-suspendido);
+
+    ion-icon {
+      font-size: 20px;
+    }
+
+    // Cambiada de día: violeta, como su punto en el calendario
+    &.movida {
+      color: var(--estado-movido);
     }
   }
 }
 
-.borrar-button {
-  width: 44px;
-  height: 44px;
-  background: white;
-  border: 1px solid #e5e7eb;
+.fila.suspendida {
+  .fecha-tile {
+    background: var(--ion-color-light);
+    color: var(--texto-suave);
+  }
+
+  .fila-titulo {
+    color: var(--texto-suave);
+  }
+}
+
+/* ---------- Fila abierta: se separa de la lista y se marca con el color de la marca ---------- */
+.fila.abierta {
+  margin: var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--app-surface);
+  box-shadow: 0 0 0 2px rgba(var(--ion-color-primary-rgb), 0.5), var(--sombra-2);
+  overflow: hidden;
+
+  .fila-resumen {
+    background: rgba(var(--ion-color-primary-rgb), 0.08);
+    border-bottom: 1px solid rgba(var(--ion-color-primary-rgb), 0.18);
+
+    .chevron {
+      color: var(--ion-color-primary);
+    }
+  }
+
+  .fecha-tile {
+    background: var(--ion-color-primary);
+    color: var(--ion-color-primary-contrast);
+  }
+}
+
+// Sin línea divisoria junto a la fila abierta: ya tiene su propio margen
+.fila.abierta + .fila,
+.fila + .fila.abierta {
+  border-top: 0;
+}
+
+/* ---------- Detalle ---------- */
+.fila-detalle {
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: abrirDetalle 0.18s ease-out;
+}
+
+@keyframes abrirDetalle {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.detalle-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.detalle-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+// Agua: tarjeta neutra; el color de la muestra va solo en el punto
+.agua {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+.agua-item {
+  --muestra: #ffffff;
+  padding: 8px 10px 8px 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--ion-border-color);
+  background: var(--app-surface);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// Punto con el color de la muestra, sólido; el borde hace visible el amarillo claro
+.punto-muestra {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
   border-radius: 50%;
+  background: var(--muestra);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.18);
+}
+
+.agua-texto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.agua-etiqueta {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.agua-estado {
+  font-size: var(--fs-md);
+  font-weight: 800;
+  color: var(--ion-text-color);
+}
+
+.agua-valor {
+  font-size: var(--fs-xs);
+  color: var(--texto-suave);
+}
+
+// Productos: tarjeta neutra; el color de cada uno va en el icono y el nombre
+.productos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+
+  .sin-productos {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-style: italic;
+    color: var(--texto-suave);
+  }
+
+  &:empty {
+    display: none;
+  }
+}
+
+.producto-item {
+  --producto-color: var(--ion-color-primary);
+  min-height: 52px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--ion-border-color);
+  background: var(--app-surface);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+
+  &.texto {
+    grid-column: 1 / -1;
+
+    .producto-valor {
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      white-space: normal;
+    }
+  }
+}
+
+.producto-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  
-  .borrar-icon {
-    color: #ef4444;
+  background: var(--producto-color);
+  color: #ffffff;
+
+  ion-icon {
+    font-size: 17px;
+  }
+}
+
+.producto-texto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.producto-nombre {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: color-mix(in srgb, var(--producto-color) 80%, var(--ion-text-color));
+  overflow: hidden;
+  white-space: nowrap;
+  @include desvanecer;
+}
+
+.producto-valor {
+  font-size: var(--fs-md);
+  font-weight: 800;
+  color: var(--ion-text-color);
+  font-variant-numeric: tabular-nums;
+
+  small {
+    margin-left: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--texto-suave);
+  }
+}
+
+.costos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--texto-suave);
+
+  .alerta {
+    flex-basis: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--ion-color-danger);
+    font-weight: 600;
+  }
+}
+
+.nota-suspendida {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--texto-suave);
+}
+
+.acciones {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.accion {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 0 var(--sp-3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  ion-icon {
     font-size: 18px;
   }
-  
-  &:hover {
-    background: #fef2f2;
-    border-color: #fecaca;
-    
-    .borrar-icon {
-      color: #dc2626;
-    }
-  }
-}
 
-// Empty state moderno
-.empty-state-modern {
-  text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  margin: 20px 0;
-  
-  ion-icon {
-    font-size: 4rem;
-    color: #cbd5e1;
-    margin-bottom: 20px;
-  }
-  
-  h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 8px 0;
-  }
-  
-  p {
-    color: #64748b;
-    font-size: 0.95rem;
-    margin: 0;
-    line-height: 1.5;
-  }
-}
-
-// Responsive design
-@media (max-width: 768px) {
-  .historial-container {
-    padding: 16px;
-  }
-  
-  .historial-header {
-    .filter-tabs {
-      .filter-tab {
-        padding: 10px 16px;
-        font-size: 0.85rem;
-      }
-    }
-  }
-  
-  .mantencion-card {
-    padding: 14px;
-    
-    .mantencion-header {
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
-      
-      .precio-badge {
-        align-self: flex-start;
-      }
-    }
-    
-    // Mantener 2 columnas en tablets
-    .productos-grid {
-      grid-template-columns: 1fr 1fr !important;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .historial-header {
-    .historial-title {
-      font-size: 1.3rem;
-    }
-  }
-  
-  .mantencion-card {
-    .productos-grid {
-      grid-template-columns: 1fr 1fr !important;
-    }
-    
-    .estado-agua {
-      flex-direction: row;
-      gap: 8px;
-      align-items: center;
-      
-      .estado-item {
-        flex: 1;
-        min-width: 0;
-        gap: 4px;
-
-        .estado-label {
-          font-size: 0.85rem;
-        }
-      }
-    }
-  }
-}
-
-:host-context(body.dark),
-:host-context(html.dark) {
-  .mantencion-fecha .suspendida-badge {
-    background: rgba(245, 158, 11, 0.18);
-    color: #fbbf24;
+  &:active {
+    transform: scale(0.98);
   }
 
-  .precio-badge.suspendida-precio {
-    background: rgba(148, 163, 184, 0.15);
-    color: #94a3b8;
+  // Ya pagada: verde suave; tocar deshace
+  &.pagado {
+    background: color-mix(in srgb, var(--estado-hecho) 14%, transparent);
+    color: var(--estado-hecho);
   }
 
-  .suspendida-card .suspendida-text {
-    color: #94a3b8;
+  &.borrar {
+    flex: 0 0 var(--tap);
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--ion-border-color);
+    color: var(--ion-color-danger);
   }
-}
-
-// Papelera junto al título de una mantención suspendida
-.sub-card-header .borrar-button.borrar-inline {
-  margin-left: auto;
-  width: 34px;
-  height: 34px;
-}
-
-.sub-card-header .sub-card-title {
-  min-width: 0;
 }

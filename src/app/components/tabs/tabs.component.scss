@@ -3,7 +3,7 @@
 .smart-navbar {
   --background: transparent;
   --color: #8e8e93;
-  --color-selected: var(--ion-color-primary, #5145ff);
+  --color-selected: var(--ion-color-primary, #0277b6);
   position: absolute;
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   left: 50%;
@@ -16,7 +16,7 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: #ffffff;
+  background: var(--app-surface);
   border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: 20px;
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
@@ -40,7 +40,7 @@
       position: absolute;
       inset: 0;
       border-radius: 16px;
-      background: rgba(var(--ion-color-primary-rgb, 81, 69, 255), 0.12);
+      background: rgba(var(--ion-color-primary-rgb, 2, 119, 182), 0.12);
       opacity: 0;
       transform: scale(0.72);
       pointer-events: none;
@@ -51,7 +51,7 @@
     .tab-icono {
       position: relative;
       font-size: 23px;
-      color: #8e8e93;
+      color: var(--texto-suave);
       transition: color 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
@@ -66,7 +66,7 @@
 
       ion-icon,
       .tab-icono {
-        color: var(--ion-color-primary, #5145ff);
+        color: var(--ion-color-primary, #0277b6);
         transform: translateY(-2px) scale(1.18);
       }
     }
@@ -77,7 +77,7 @@
 :host-context(body.dark),
 :host-context(html.dark) {
   .smart-navbar {
-    --color-selected: var(--ion-color-primary, #7c6dff);
+    --color-selected: var(--ion-color-primary, #1d8fcf);
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
@@ -85,22 +85,18 @@
 
     ion-tab-button {
       --color: #94a3b8;
-      --color-selected: var(--ion-color-primary, #7c6dff);
+      --color-selected: var(--ion-color-primary, #1d8fcf);
 
       .tab-fondo {
-        background: rgba(var(--ion-color-primary-rgb, 124, 109, 255), 0.22);
+        background: rgba(var(--ion-color-primary-rgb, 29, 143, 207), 0.22);
       }
 
-      ion-icon,
-      .tab-icono {
-        color: #94a3b8;
-      }
 
       &.activo,
       &.tab-selected {
         ion-icon,
         .tab-icono {
-          color: var(--ion-color-primary, #7c6dff);
+          color: var(--ion-color-primary, #1d8fcf);
         }
       }
     }

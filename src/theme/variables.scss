@@ -3,19 +3,21 @@
 
 :root {
   /* Tema claro base */
-  --ion-color-primary: #5145fffa;
-  --ion-color-primary-rgb: 81, 69, 255;
+  /* Marca: azul piscina. Es el único color "de adorno"; los demás significan algo */
+  --ion-color-primary: #0277b6;
+  --ion-color-primary-rgb: 2, 119, 182;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #463ce6;
-  --ion-color-primary-tint: #665cff;
+  --ion-color-primary-shade: #0269a0;
+  --ion-color-primary-tint: #1b85bd;
 
-  --ion-color-secondary: #53a2d4;
-  --ion-color-secondary-rgb: 83, 162, 212;
+  /* Secundario: el mismo azul, más claro (degradados y acentos) */
+  --ion-color-secondary: #0ea5e9;
+  --ion-color-secondary-rgb: 14, 165, 233;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #4789b9;
-  --ion-color-secondary-tint: #73b9ea;
+  --ion-color-secondary-shade: #0c91cd;
+  --ion-color-secondary-tint: #26aeeb;
 
   --ion-color-tertiary: #14b8a6;
   --ion-color-tertiary-rgb: 20, 184, 166;
@@ -75,27 +77,69 @@
   --ion-item-background: #ffffff;
   --ion-border-color: #dfeafc;
 
-  --my-gradient: linear-gradient(90deg, rgba(83, 162, 212, 1) 0%, rgba(125, 235, 255, 1) 100%);
+  --my-gradient: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
   --app-gradient: var(--my-gradient);
   --app-surface: #ffffff;
   --app-surface-soft: #f2f8ff;
-  --app-shadow-soft: 0 10px 24px rgba(81, 69, 255, 0.12);
+  --app-shadow-soft: 0 10px 24px rgba(2, 119, 182, 0.12);
+
+  /* ===== Sistema de diseño ===== */
+  /* Fuente del sistema: funciona sin conexión y es Roboto en Android */
+  --ion-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Escala tipográfica: usar solo estos tamaños */
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+
+  /* Espaciado de 4 en 4 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+
+  --sombra-1: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --sombra-2: 0 10px 24px rgba(2, 119, 182, 0.12);
+
+  /* Mínimo táctil */
+  --tap: 44px;
+
+  /* Estados de una mantención (puntos del calendario, filtros, tarjetas).
+     Regla: azul = por hacer, verde = hecho, violeta = cambiada de día,
+     rojo = suspendida. Tonos bien separados para distinguirlos en un punto chico. */
+  --estado-pendiente: var(--ion-color-primary);
+  --estado-hecho: #16a34a;
+  --estado-suspendido: #ef4444;
+  --estado-movido: #8b5cf6;
+
+  /* Superficie de controles (inputs, selects, chips) */
+  --control-bg: var(--ion-color-light);
+  --texto-suave: var(--ion-color-medium);
 }
 
 body.dark {
-  --ion-color-primary: #7c6dff;
-  --ion-color-primary-rgb: 124, 109, 255;
+  --ion-color-primary: #1d8fcf;
+  --ion-color-primary-rgb: 29, 143, 207;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #685fe6;
-  --ion-color-primary-tint: #917eff;
+  --ion-color-primary-shade: #1a7eb6;
+  --ion-color-primary-tint: #349ad4;
 
-  --ion-color-secondary: #59b7ff;
-  --ion-color-secondary-rgb: 89, 183, 255;
+  --ion-color-secondary: #38bdf8;
+  --ion-color-secondary-rgb: 56, 189, 248;
   --ion-color-secondary-contrast: #06121c;
   --ion-color-secondary-contrast-rgb: 6, 18, 28;
-  --ion-color-secondary-shade: #4aa0df;
-  --ion-color-secondary-tint: #75c0ff;
+  --ion-color-secondary-shade: #31a6da;
+  --ion-color-secondary-tint: #4cc4f9;
 
   --ion-background-color: #08131d;
   --ion-background-color-rgb: 8, 19, 29;
@@ -115,11 +159,26 @@ body.dark {
   --ion-color-light-shade: #13223a;
   --ion-color-light-tint: #2d3c4f;
 
-  --my-gradient: linear-gradient(90deg, #7c6dff 0%, #59b7ff 100%);
+  --my-gradient: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
   --app-gradient: var(--my-gradient);
   --app-surface: #101d2d;
   --app-surface-soft: #0d1b2a;
   --app-shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.6);
+
+  --sombra-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --sombra-2: 0 10px 24px rgba(0, 0, 0, 0.45);
+  /* En oscuro "dark" es el color de texto fuerte: se invierte como "light" */
+  --ion-color-dark: #e5f2ff;
+  --ion-color-dark-rgb: 229, 242, 255;
+  --ion-color-dark-contrast: #08131d;
+  --ion-color-dark-contrast-rgb: 8, 19, 29;
+  --ion-color-dark-shade: #c9d5e0;
+  --ion-color-dark-tint: #e8f3ff;
+
+  --ion-color-medium: #94a3b8;
+  --ion-color-medium-rgb: 148, 163, 184;
+  --estado-suspendido: #f87171;
+  --estado-movido: #a78bfa;
 }
 
 .ion-color-favorite {

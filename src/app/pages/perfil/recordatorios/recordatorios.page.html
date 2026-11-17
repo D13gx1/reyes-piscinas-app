@@ -1,0 +1,219 @@
+<ion-header class="encabezado ion-no-border">
+  <ion-toolbar>
+    <app-encabezado titulo="Recordatorios" subtitulo="Perfil" volver="/tabs/perfil"></app-encabezado>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="shell">
+
+    <!-- ============ A QUIÉN ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon"><ion-icon name="people-outline"></ion-icon></div>
+        <div class="card-header-texto">
+          <h2>¿A quién se envía?</h2>
+          <p>Prueba primero contigo antes de enviarlo a tus clientes</p>
+        </div>
+      </div>
+
+      <div class="segmentos">
+        <button type="button" [class.activo]="modo === 'prueba'" (click)="modo = 'prueba'">
+          <ion-icon name="person-outline"></ion-icon>
+          Solo a mí (prueba)
+        </button>
+        <button type="button" [class.activo]="modo === 'clientes'" (click)="modo = 'clientes'">
+          <ion-icon name="people-outline"></ion-icon>
+          Clientes
+        </button>
+      </div>
+
+      <!-- Solo a mí -->
+      <div *ngIf="modo === 'prueba'" class="bloque">
+        <label class="label" for="mi-numero">Mi número de WhatsApp</label>
+        <div class="caja" [class.invalida]="miNumero && !miNumeroValido">
+          <ion-icon name="logo-whatsapp"></ion-icon>
+          <input
+            id="mi-numero"
+            type="tel"
+            inputmode="tel"
+            placeholder="+56 9 1234 5678"
+            [value]="miNumero"
+            (input)="onMiNumero($any($event.target).value)">
+        </div>
+        <p class="ayuda">Se guarda en este teléfono. Los mensajes de prueba te llegan solo a ti.</p>
+      </div>
+
+      <!-- Clientes -->
+      <div *ngIf="modo === 'clientes'" class="bloque">
+        <div class="aviso-sensible">
+          <ion-icon name="shield-checkmark-outline"></ion-icon>
+          <span>Nada se envía solo: WhatsApp se abre para cada cliente y tú apruebas cada mensaje.</span>
+        </div>
+
+        <div class="lista-head">
+          <span>{{ seleccionados.length }} de {{ destinatarios.length }} clientes</span>
+          <div class="lista-acciones">
+            <button type="button" (click)="marcarTodos(true)">Todos</button>
+            <button type="button" (click)="marcarTodos(false)">Ninguno</button>
+          </div>
+        </div>
+
+        <div class="lista">
+          <button
+            *ngFor="let d of destinatarios"
+            type="button"
+            class="destinatario"
+            [class.marcado]="d.seleccionado"
+            [attr.aria-pressed]="d.seleccionado"
+            (click)="toggleDestinatario(d)">
+            <ion-icon [name]="d.seleccionado ? 'checkmark-circle' : 'ellipse-outline'" class="check"></ion-icon>
+            <span class="dest-nombre">{{ d.nombre }}</span>
+            <span class="dest-tel">{{ d.telefono }}</span>
+          </button>
+          <p class="vacio" *ngIf="destinatarios.length === 0">No hay clientes activos con teléfono.</p>
+        </div>
+        <p class="ayuda" *ngIf="clientesSinTelefono > 0">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          {{ clientesSinTelefono }} {{ clientesSinTelefono === 1 ? 'cliente activo no tiene' : 'clientes activos no tienen' }}
+          un teléfono válido y no aparecen.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ MENSAJE ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon mensaje"><ion-icon name="chatbubble-ellipses-outline"></ion-icon></div>
+        <div class="card-header-texto">
+          <h2>Mensaje</h2>
+          <p>Elige una frase y ajústala si quieres</p>
+        </div>
+      </div>
+
+      <div class="frases">
+        <button
+          *ngFor="let p of plantillas"
+          type="button"
+          class="frase"
+          [class.activa]="plantillaId === p.id"
+          (click)="elegirPlantilla(p)">
+          {{ p.titulo }}
+          <span class="frase-borrar" *ngIf="!p.predefinida" role="button" aria-label="Borrar frase"
+                (click)="borrarFrase(p, $event)">
+            <ion-icon name="close-outline"></ion-icon>
+          </span>
+        </button>
+      </div>
+
+      <textarea
+        #areaTexto
+        class="texto"
+        rows="6"
+        [value]="texto"
+        (input)="onTexto($any($event.target).value)"
+        placeholder="Escribe tu mensaje..."></textarea>
+
+      <div class="marcadores">
+        <span>Insertar:</span>
+        <button type="button" (click)="insertarMarcador(MARCADOR_NOMBRE)">Nombre del cliente</button>
+        <button type="button" class="guardar" (click)="guardarComoFrase()">
+          <ion-icon name="bookmark-outline"></ion-icon>
+          Guardar frase
+        </button>
+      </div>
+
+      <div class="preview">
+        <span class="preview-titulo">Así se verá</span>
+        <div class="burbuja">{{ vistaPrevia || '—' }}</div>
+      </div>
+    </section>
+
+    <!-- ============ ENVIAR ============ -->
+    <button
+      *ngIf="modo === 'prueba'"
+      type="button"
+      class="enviar"
+      [disabled]="!miNumeroValido || !texto.trim()"
+      (click)="enviarPrueba()">
+      <ion-icon name="logo-whatsapp"></ion-icon>
+      Enviarme la prueba
+    </button>
+
+    <button
+      *ngIf="modo === 'clientes' && !cola"
+      type="button"
+      class="enviar clientes"
+      [disabled]="seleccionados.length === 0 || !texto.trim()"
+      (click)="empezarEnvioClientes()">
+      <ion-icon name="send-outline"></ion-icon>
+      Enviar a {{ seleccionados.length }} {{ seleccionados.length === 1 ? 'cliente' : 'clientes' }}
+    </button>
+
+    <!-- Envío en curso: de uno en uno -->
+    <section class="card cola" *ngIf="cola">
+      <div class="cola-head">
+        <span>Enviando "{{ tituloMensaje }}"</span>
+        <span class="cola-progreso">{{ cola.indice }}/{{ cola.lista.length }}</span>
+      </div>
+      <div class="barra"><div class="barra-relleno" [style.width.%]="cola.indice / cola.lista.length * 100"></div></div>
+
+      <ng-container *ngIf="actual as d; else terminado">
+        <p class="cola-siguiente">Siguiente: <strong>{{ d.nombre }}</strong></p>
+        <div class="cola-botones">
+          <button type="button" class="enviar" (click)="enviarActual()">
+            <ion-icon name="logo-whatsapp"></ion-icon>
+            Abrir WhatsApp
+          </button>
+          <button type="button" class="secundario" (click)="saltarActual()">
+            <ion-icon name="play-skip-forward-outline"></ion-icon>
+            Saltar
+          </button>
+        </div>
+        <button type="button" class="link" (click)="terminarEnvio()">Detener</button>
+      </ng-container>
+      <ng-template #terminado>
+        <p class="cola-siguiente">¡Listo! Se abrió WhatsApp para {{ cola.enviados }} de {{ cola.lista.length }} clientes.</p>
+        <button type="button" class="secundario" (click)="terminarEnvio()">Cerrar</button>
+      </ng-template>
+    </section>
+
+    <!-- ============ AVISOS PROGRAMADOS ============ -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-header-icon aviso"><ion-icon name="alarm-outline"></ion-icon></div>
+        <div class="card-header-texto">
+          <h2>Avisarme en una fecha</h2>
+          <p>Te llega una notificación para enviar este mensaje (ej: 1 de diciembre, inicio de verano)</p>
+        </div>
+      </div>
+
+      <p class="ayuda alerta" *ngIf="!notificacionesActivas">
+        <ion-icon name="information-circle-outline"></ion-icon>
+        Activa las notificaciones en Perfil para recibir estos avisos.
+      </p>
+
+      <div class="aviso-form">
+        <input type="date" [min]="hoy" [value]="avisoFecha" (change)="avisoFecha = $any($event.target).value" aria-label="Fecha del aviso">
+        <input type="time" [value]="avisoHora" (change)="avisoHora = $any($event.target).value" aria-label="Hora del aviso">
+        <button type="button" (click)="agregarAviso()" aria-label="Programar aviso">
+          <ion-icon name="add-outline"></ion-icon>
+        </button>
+      </div>
+      <p class="ayuda">Se programa con el mensaje que tienes escrito arriba: "{{ tituloMensaje }}".</p>
+
+      <div class="avisos">
+        <div class="aviso-item" *ngFor="let a of avisos" [class.pasado]="esPasado(a)">
+          <button type="button" class="aviso-info" (click)="usarAviso(a)">
+            <span class="aviso-titulo">{{ a.titulo }}</span>
+            <span class="aviso-fecha">{{ formatearFechaAviso(a) }}{{ esPasado(a) ? ' · ya pasó' : '' }}</span>
+          </button>
+          <button type="button" class="aviso-borrar" (click)="borrarAviso(a)" aria-label="Borrar aviso">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </div>
+        <p class="vacio" *ngIf="avisos.length === 0">No tienes avisos programados.</p>
+      </div>
+    </section>
+  </div>
+</ion-content>

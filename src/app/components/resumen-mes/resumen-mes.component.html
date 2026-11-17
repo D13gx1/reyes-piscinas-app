@@ -1,0 +1,100 @@
+<!-- ===== CAMPANA: lista de resúmenes de cada mes ===== -->
+<ng-container *ngIf="panelAbierto()">
+  <div class="panel-fondo" (click)="cerrarPanel()"></div>
+  <section class="panel" role="dialog" aria-label="Resúmenes del mes">
+    <header class="panel-head">
+      <h3>Resúmenes del mes</h3>
+      <button type="button" class="cerrar chico" (click)="cerrarPanel()" aria-label="Cerrar">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </header>
+
+    <p class="panel-vacio" *ngIf="!avisos().length">
+      Aún no hay resúmenes. Al cerrar el mes aparecerá aquí cómo te fue.
+    </p>
+
+    <ul class="panel-lista" *ngIf="avisos().length">
+      <li *ngFor="let a of avisos()">
+        <button type="button" class="aviso" [class.bajo]="!subioMes(a)" [class.nuevo]="esNuevo(a)" (click)="abrirAviso(a)">
+          <span class="aviso-icono" aria-hidden="true">
+            <ion-icon [name]="subioMes(a) ? 'trending-up-outline' : 'trending-down-outline'"></ion-icon>
+          </span>
+          <span class="aviso-texto">
+            <span class="aviso-titulo">
+              Resumen de {{ a.mes | lowercase }}
+              <span class="aviso-nuevo" *ngIf="esNuevo(a)">Nuevo</span>
+            </span>
+            <span class="aviso-sub">{{ resumenCorto(a) }}</span>
+          </span>
+          <span class="precio-tag aviso-monto">{{ monto(a.total) }}</span>
+        </button>
+      </li>
+    </ul>
+  </section>
+</ng-container>
+
+<!-- ===== CIERRE DE MES ===== -->
+<div class="capa" *ngIf="resumen() as r" (click)="cerrar()">
+  <!-- Confeti solo cuando se celebra -->
+  <div class="confeti" *ngIf="subio()" aria-hidden="true">
+    <i *ngFor="let c of confeti" [style.left.%]="c.izquierda" [style.background]="c.color"
+       [style.animation-delay.s]="c.retraso" [style.animation-duration.s]="c.duracion"
+       [style.--giro]="c.giro + 'deg'"></i>
+  </div>
+
+  <section class="tarjeta" [class.subio]="subio()" [class.bajo]="!subio()" role="dialog" aria-modal="true"
+           [attr.aria-label]="'Resumen de ' + r.mes" (click)="$event.stopPropagation()">
+    <button type="button" class="cerrar" (click)="cerrar()" aria-label="Cerrar">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+
+    <span class="ejemplo" *ngIf="r.ejemplo">Vista previa</span>
+
+    <span class="emoji" aria-hidden="true">{{ subio() ? '🎉' : '🌤️' }}</span>
+    <h2>{{ subio() ? '¡Felicidades!' : 'Cerraste ' + r.mes }}</h2>
+    <p class="titular">{{ titular(r) }}</p>
+
+    <!-- Lo recaudado y cuánto cambió -->
+    <div class="monto">
+      <span class="monto-etiqueta">Recaudado en {{ r.mes | lowercase }}</span>
+      <strong class="precio-tag">{{ monto(r.total) }}</strong>
+      <span class="cambio" *ngIf="r.totalAnterior">
+        <ion-icon [name]="subio() ? 'trending-up-outline' : 'trending-down-outline'"></ion-icon>
+        <ng-container *ngIf="porcentaje(r) as p; else sinCambio">{{ p > 0 ? '+' : '' }}{{ p }}%</ng-container>
+        <ng-template #sinCambio>0%</ng-template>
+        · {{ monto(diferencia(r)) }} {{ subio() ? 'más' : 'menos' }} que {{ r.mesAnterior }}
+      </span>
+    </div>
+
+    <div class="datos">
+      <div class="dato">
+        <strong>{{ r.cantidad }}</strong>
+        <span>{{ r.cantidad === 1 ? 'mantención' : 'mantenciones' }}</span>
+        <small>{{ cambioCantidad(r) }}</small>
+      </div>
+      <div class="dato">
+        <strong>{{ monto(r.cantidad ? r.total / r.cantidad : 0) }}</strong>
+        <span>por visita</span>
+        <small>promedio</small>
+      </div>
+    </div>
+
+    <p class="trofeo" *ngIf="r.mejorDelAnio && subio()">
+      <ion-icon name="trophy-outline"></ion-icon>
+      Tu mejor mes del año
+    </p>
+
+    <p class="mensaje" *ngIf="!subio()">
+      Cada mes es distinto: el clima y las vacaciones también cuentan. Lo importante es seguir sumando.
+    </p>
+
+    <p class="consejo">
+      <ion-icon name="bulb-outline"></ion-icon>
+      <span>{{ consejo(r) }}</span>
+    </p>
+
+    <button type="button" class="seguir" (click)="cerrar()">
+      {{ subio() ? '¡Vamos por ' + r.mesSiguiente + '!' : 'Vamos con todo en ' + r.mesSiguiente }}
+    </button>
+  </section>
+</div>

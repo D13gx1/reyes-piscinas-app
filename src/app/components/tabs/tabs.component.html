@@ -4,13 +4,17 @@
       *ngFor="let item of tabs"
       [tab]="item.tab"
       [routerLink]="['/tabs', item.tab]"
-      [attr.aria-label]="item.tab"
+      [attr.aria-label]="item.etiqueta"
       [attr.aria-current]="esActivo(item.tab) ? 'page' : null"
-      [class.activo]="esActivo(item.tab)">
+      [class.activo]="esActivo(item.tab)"
+      (click)="alTocar(item.tab)">
 
       <!-- Fondo del tab seleccionado: se escala y aparece con transición -->
       <span class="tab-fondo" aria-hidden="true"></span>
-      <ion-icon [name]="item.icono" class="tab-icono"></ion-icon>
+      <ion-icon [name]="item.icono" class="tab-icono" aria-hidden="true"></ion-icon>
     </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>
+
+<!-- Cierre de mes: aparece una vez al entrar en un mes nuevo (o desde Perfil) -->
+<app-resumen-mes></app-resumen-mes>

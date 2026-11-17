@@ -73,6 +73,17 @@ export function precioEfectivoMantencion(
   return m.precioCobrado || precioActualCliente || 0;
 }
 
+/**
+ * Todo lo que se ha ganado: lo pagado de todos los clientes, desde siempre.
+ * Es el monto que sube en el chip verde al marcar un pago.
+ */
+export function totalCobrado(clientes: { precio?: number; historial?: MantencionPagoCampos[] }[]): number {
+  return clientes.reduce((suma, c) =>
+    suma + (c.historial || [])
+      .filter(h => !esMantencionSaltada(h) && esMantencionPagada(h))
+      .reduce((s, h) => s + precioEfectivoMantencion(h, c.precio || 0), 0), 0);
+}
+
 /** Cómo se identifica un registro del historial desde las pantallas. */
 export interface RegistroRef {
   /** `id` del registro. Los registros anteriores a este campo no lo tienen. */

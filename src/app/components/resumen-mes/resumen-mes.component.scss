@@ -1,0 +1,437 @@
+// ===== CIERRE DE MES =====
+// Tarjeta centrada sobre una capa oscura; verde si se celebra, ámbar si fue menos.
+
+:host {
+  display: contents;
+}
+
+.capa {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: var(--sp-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  animation: aparecer 0.25s ease-out;
+}
+
+.tarjeta {
+  --acento: #16a34a;
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--sp-6) var(--sp-5) var(--sp-5);
+  border-radius: 24px;
+  background: var(--app-surface);
+  border-top: 6px solid var(--acento);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+  color: var(--ion-text-color);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  animation: entrar 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &.bajo {
+    --acento: #f59e0b;
+  }
+}
+
+.cerrar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ion-color-light);
+  color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 20px;
+  }
+}
+
+.ejemplo {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--ion-color-light);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+
+.emoji {
+  font-size: 52px;
+  line-height: 1;
+  animation: salto 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+h2 {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  color: var(--acento);
+}
+
+.titular {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.monto {
+  width: 100%;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--ion-color-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+
+  strong {
+    font-size: 30px;
+    font-weight: 800;
+  }
+}
+
+.monto-etiqueta {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+// Variación: verde si subió, rojo si bajó (igual que en Estadísticas)
+.cambio {
+  padding: 4px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  background: color-mix(in srgb, #16a34a 14%, transparent);
+  color: #15803d;
+
+  ion-icon {
+    font-size: 15px;
+  }
+
+  .bajo & {
+    background: color-mix(in srgb, #dc2626 12%, transparent);
+    color: #b91c1c;
+  }
+}
+
+.datos {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+.dato {
+  padding: 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--ion-border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  strong {
+    font-size: var(--fs-lg);
+    font-weight: 800;
+  }
+
+  span {
+    font-size: var(--fs-xs);
+    color: var(--texto-suave);
+  }
+
+  small {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--texto-suave);
+  }
+}
+
+.trofeo {
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  color: #b45309;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  ion-icon {
+    font-size: 18px;
+  }
+}
+
+.mensaje {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--texto-suave);
+}
+
+.consejo {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+
+  ion-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 18px;
+    color: var(--ion-color-primary);
+  }
+}
+
+.seguir {
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--sp-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--acento);
+  color: #ffffff;
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 800;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ---------- Campana: lista de meses ---------- */
+.panel-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 990;
+}
+
+// Bajo la campana, arriba a la derecha
+.panel {
+  position: fixed;
+  z-index: 995;
+  top: calc(var(--ion-safe-area-top, 0px) + 68px);
+  right: 12px;
+  width: min(360px, calc(100vw - 24px));
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: var(--sp-2);
+  border-radius: 20px;
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+  transform-origin: top right;
+  animation: desplegar 0.2s ease-out;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 6px 10px;
+
+  h3 {
+    margin: 0;
+    font-size: var(--fs-md);
+    font-weight: 800;
+    color: var(--ion-text-color);
+  }
+}
+
+.cerrar.chico {
+  position: static;
+  width: 32px;
+  height: 32px;
+}
+
+.panel-vacio {
+  margin: 0;
+  padding: 14px 10px 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ion-color-medium);
+  text-align: center;
+}
+
+.panel-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// Cada mes: verde si mejoró, rojo si bajó
+.aviso {
+  --tono: #16a34a;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ion-text-color);
+  font: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &.bajo {
+    --tono: #dc2626;
+  }
+
+  // Sin abrir: fondo suave para que se distinga de los ya vistos
+  &.nuevo {
+    background: rgba(239, 68, 68, 0.07);
+  }
+
+  &:active {
+    background: var(--ion-color-light);
+  }
+}
+
+.aviso-icono {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--tono) 14%, transparent);
+  color: var(--tono);
+
+  ion-icon {
+    font-size: 18px;
+  }
+}
+
+.aviso-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.aviso-titulo {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aviso-nuevo {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.aviso-sub {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--tono);
+}
+
+.aviso-monto {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+}
+
+@keyframes desplegar {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Confeti ---------- */
+.confeti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+
+  i {
+    --giro: 0deg;
+    position: absolute;
+    top: -20px;
+    width: 8px;
+    height: 14px;
+    border-radius: 2px;
+    opacity: 0;
+    animation-name: caer;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+}
+
+@keyframes caer {
+  0% { opacity: 1; transform: translateY(0) rotate(var(--giro)); }
+  100% { opacity: 0.9; transform: translateY(105vh) rotate(calc(var(--giro) + 540deg)); }
+}
+
+@keyframes aparecer {
+  from { opacity: 0; }
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(24px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes salto {
+  0% { transform: scale(0.3); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capa,
+  .tarjeta,
+  .emoji {
+    animation: none;
+  }
+
+  .confeti {
+    display: none;
+  }
+}

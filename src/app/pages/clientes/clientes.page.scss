@@ -1,13 +1,29 @@
+@use '../../../theme/texto' as *;
+
 // Ajuste para tabs flotantes y la burbuja de crear cliente
 ion-content {
   --padding-bottom: 170px;
+}
+
+.container {
+  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+}
+
+/* Búsqueda + filtro: quedan arriba al recorrer la lista */
+.barra-fija {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 calc(-1 * var(--sp-4));
+  padding: var(--sp-2) var(--sp-4) var(--sp-2);
+  background: var(--ion-background-color);
 }
 
 .busqueda-section {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 20px 0 16px;
+  margin-bottom: var(--sp-2);
 }
 
 .busqueda-input {
@@ -76,6 +92,104 @@ ion-content {
   }
 }
 
+// Menú "Ordenar por" desplegado desde su botón
+.orden-wrap {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 30;
+}
+
+.orden-criterio {
+  .orden-chevron {
+    font-size: 14px;
+    transition: transform 0.2s ease;
+  }
+
+  &.abierto {
+    border-color: var(--ion-color-primary);
+
+    .orden-chevron {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.orden-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--ion-card-background, #ffffff);
+  border: 1px solid var(--ion-border-color, #dfeafc);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+  transform-origin: top right;
+  animation: desplegarMenu 0.16s ease-out;
+
+  .orden-menu-titulo {
+    display: block;
+    padding: 6px 10px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--ion-color-medium);
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ion-text-color, #0f172a);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+
+    ion-icon {
+      font-size: 18px;
+      color: var(--ion-color-primary);
+    }
+
+    &:active {
+      background: rgba(var(--ion-color-primary-rgb), 0.08);
+    }
+
+    &.activo {
+      background: rgba(var(--ion-color-primary-rgb), 0.1);
+      color: var(--ion-color-primary);
+      font-weight: 700;
+    }
+  }
+}
+
+@keyframes desplegarMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Capa invisible: tocar fuera cierra el menú
+.orden-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
 // Sobre la barra de navegación flotante (62px + 16px de margen)
 .crear-fab {
   bottom: calc(92px + env(safe-area-inset-bottom, 0px));
@@ -87,443 +201,185 @@ ion-content {
   }
 }
 
-.header-content {
+.busqueda-input .limpiar {
+  width: 32px;
+  height: 32px;
+  margin-right: -8px;
+  border: 0;
+  background: transparent;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-// Título de clientes
-h1 {
-  margin: 0;
-  font-size: 1.2em;
-  font-weight: 600;
-}
-
-// Sección de estadísticas
-.stats-section {
-  margin-bottom: 24px;
-  
-  .stats-container {
-    background: var(--ion-color-light);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    
-    .stat-item {
-      text-align: center;
-      flex: 1;
-      
-      .stat-number {
-        font-size: 2em;
-        font-weight: 700;
-        color: var(--ion-color-secondary);
-        margin-bottom: 4px;
-      }
-      
-      .stat-label {
-        font-size: 0.9em;
-        color: var(--ion-color-medium);
-        font-weight: 500;
-      }
-    }
-    
-    .stat-divider {
-      width: 1px;
-      height: 40px;
-      background: var(--ion-color-light-shade);
-      margin: 0 16px;
-    }
-  }
-}
-
-.header-container {
-  background: var(--ion-color-light);
-}
-
-.contenido-container {
-  background: var(--ion-color-light);
-}
-
-.cliente-card {
-  margin-bottom: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  
-  &.inactivo {
-    border-left: 4px solid var(--ion-color-danger);
-    opacity: 0.8;
-  }
-  
-  .cliente-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    
-    .cliente-info {
-      flex: 1;
-      // Ancho completo también cuando la cabecera pasa a columna en móvil:
-      // así precio y estado quedan siempre fijos arriba a la derecha
-      width: 100%;
-      min-width: 0;
-      
-      .cliente-title {
-        font-size: 1.1em;
-        font-weight: 600;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-
-        .cliente-nombre {
-          flex: 1;
-          min-width: 0;
-          overflow: hidden;
-          white-space: nowrap;
-          // Nombre largo: se desvanece hacia el precio en vez de cortar con "..."
-          -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-          mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-        }
-
-        .cliente-badges {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          flex: 0 0 auto;
-          margin-left: auto;
-          align-self: flex-start;
-        }
-
-        .precio-badge {
-          padding: 7px 10px;
-          border-radius: 999px;
-          font-size: 0.8em;
-          font-weight: 700;
-          line-height: 1;
-          white-space: nowrap;
-          font-variant-numeric: tabular-nums;
-          background: rgba(var(--ion-color-primary-rgb), 0.1);
-          color: var(--ion-color-primary);
-        }
-
-        .estado-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          border: none;
-          font-family: inherit;
-          font-weight: 600;
-          cursor: pointer;
-          transition: transform 0.12s ease;
-
-          &:active {
-            transform: scale(0.94);
-          }
-          flex: 0 0 auto;
-          padding: 7px 10px;
-          border-radius: 999px;
-          font-size: 0.8em;
-          line-height: 1;
-          white-space: nowrap;
-
-          &.activo {
-            background: #dcfce7;
-            color: #15803d;
-          }
-
-          &.inactivo {
-            background: #fee2e2;
-            color: #dc2626;
-          }
-        }
-      }
-      
-      ion-card-subtitle {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.9em;
-        color: var(--ion-color-medium);
-        
-        ion-icon {
-          font-size: 0.9em;
-        }
-      }
-    }
-    
-    .action-buttons {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      ion-button {
-        --padding-start: 8px;
-        --padding-end: 8px;
-        
-        ion-icon {
-          font-size: 1.1em;
-        }
-      }
-    }
-  }
-  
-  .detalles-cliente {
-    margin-bottom: 16px;
-    
-    .detalle-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-size: 0.9em;
-      color: var(--ion-color-dark);
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-      
-      ion-icon {
-        font-size: 1em;
-        color: var(--ion-color-medium);
-        flex-shrink: 0;
-      }
-      
-      strong {
-        color: var(--ion-color-medium);
-        font-weight: 500;
-        margin-right: 4px;
-      }
-    }
-  }
-  
-  ion-button {
-    margin-top: 8px;
-    font-weight: 600;
-    
-    &[size="small"] {
-      --padding-top: 8px;
-      --padding-bottom: 8px;
-      font-size: 0.85em;
-    }
-  }
-}
-
-.inactivos-section {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--ion-color-light-shade);
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .container {
-    padding: 12px;
-  }
-  
-  .stats-container {
-    padding: 16px;
-    
-    .stat-item .stat-number {
-      font-size: 1.6em;
-    }
-    
-    .stat-divider {
-      height: 30px;
-      margin: 0 12px;
-    }
-  }
-  
-  .cliente-header {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .detalles-cliente .detalle-item {
-    flex-wrap: wrap;
-  }
-}
-
-// Dark theme support
-:host-context(body.dark),
-:host-context(html.dark) {
-  .stats-container {
-    background: var(--ion-color-dark);
-    
-    .stat-divider {
-      background: var(--ion-color-medium);
-    }
-  }
-}
-
-:host-context(body.dark),
-:host-context(html.dark) {
-  .stats-section {
-    .stats-container {
-      background: #101827 !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22) !important;
-
-      .stat-item {
-        background: transparent !important;
-        border-radius: 20px !important;
-
-        .stat-number,
-        .stat-label {
-          color: #ffffff !important;
-        }
-      }
-
-      .stat-divider {
-        background: rgba(255, 255, 255, 0.12) !important;
-      }
-    }
-  }
-
-  .cliente-card,
-  .cliente-card .header-container,
-  .cliente-card .cliente-header,
-  .cliente-card .cliente-info,
-  .cliente-card ion-card-header,
-  .cliente-card ion-card-content,
-  .cliente-card .contenido-container,
-  .cliente-card .detalles-cliente,
-  .cliente-card .action-buttons {
-    background: var(--ion-card-background) !important;
-    border-color: var(--ion-border-color) !important;
-    color: #ffffff !important;
-  }
-
-  .cliente-card .cliente-title,
-  .cliente-card ion-card-subtitle,
-  .cliente-card .detalle-item,
-  .cliente-card .detalle-item strong,
-  .cliente-card .detalle-item ion-icon,
-  .cliente-card .action-buttons ion-button,
-  .cliente-card .action-buttons ion-button ion-icon,
-  .section-header h3,
-  .section-header ion-badge,
-  .cliente-card .cliente-header .cliente-info,
-  .cliente-card .cliente-header .cliente-info .cliente-title,
-  .cliente-card .cliente-header .cliente-info ion-card-subtitle {
-    color: #ffffff !important;
-  }
-
-  .cliente-card .estado-badge.activo {
-    color: var(--ion-color-success-contrast) !important;
-    background: var(--ion-color-success) !important;
-  }
-
-  .cliente-card .estado-badge.inactivo {
-    color: var(--ion-color-danger-contrast) !important;
-    background: var(--ion-color-danger) !important;
-  }
-
-  .cliente-card .cliente-title,
-  .cliente-card ion-card-subtitle,
-  .cliente-card .detalle-item,
-  .cliente-card .detalle-item strong,
-  .cliente-card .detalle-item ion-icon,
-  .cliente-card .cliente-header .cliente-info {
-    --color: #ffffff !important;
-    color: #ffffff !important;
-  }
-
-  .cliente-card .detalle-item strong {
-    opacity: 1;
-  }
-
-  .header-container,
-  .contenido-container {
-    background: transparent !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .cliente-card {
-    .cliente-title {
-      gap: 8px;
-
-      .estado-badge,
-      .precio-badge {
-        padding: 6px 8px;
-        font-size: 0.75em;
-      }
-    }
-  }
-}
-
-// Botones Editar / Historial de cada tarjeta
-.acciones-cliente {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--ion-border-color, #dfeafc);
-}
-
-.accion-btn {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  height: 42px;
-  border-radius: 12px;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.18s ease;
 
   ion-icon {
-    font-size: 17px;
-  }
-
-  &:active {
-    transform: scale(0.97);
-  }
-
-  // Secundario: contorno
-  &.editar {
-    background: transparent;
-    border: 1.5px solid var(--ion-border-color, #dfeafc);
-    color: var(--ion-text-color, #0f172a);
-
-    ion-icon {
-      color: var(--ion-color-primary);
-    }
-  }
-
-  // Principal: relleno suave con el color de la app
-  &.historial {
-    background: rgba(var(--ion-color-primary-rgb), 0.12);
-    border: 1.5px solid transparent;
-    color: var(--ion-color-primary);
+    font-size: 18px;
+    color: var(--texto-suave);
   }
 }
 
-:host-context(body.dark),
-:host-context(html.dark) {
-  .cliente-card .precio-badge {
-    background: rgba(var(--ion-color-primary-rgb), 0.22);
-    color: var(--ion-color-primary-tint);
+
+/* ==================== */
+/* Lista tipo contactos  */
+/* ==================== */
+.grupo .lista-titulo {
+  margin-top: var(--sp-4);
+}
+
+.lista {
+  border-radius: var(--r-lg);
+  background: var(--app-surface);
+  border: 1px solid var(--ion-border-color);
+  box-shadow: var(--sombra-1);
+  overflow: hidden;
+}
+
+.cliente-fila {
+  display: block;
+
+  & + .cliente-fila .fila-item::part(native) {
+    border-top: 1px solid var(--ion-border-color);
   }
 
-  .accion-btn.editar {
-    border-color: var(--ion-border-color);
-    color: var(--ion-text-color);
+  ion-item-option {
+    min-width: 76px;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: none;
 
     ion-icon {
-      color: var(--ion-color-primary-tint);
+      font-size: 20px;
+      margin-bottom: 4px;
     }
   }
 
-  .accion-btn.historial {
-    background: rgba(var(--ion-color-primary-rgb), 0.22);
-    color: var(--ion-color-primary-tint);
+  .op-editar {
+    --background: var(--ion-color-primary);
+    --color: var(--ion-color-primary-contrast);
+  }
+
+  // Celeste propio: no es un estado, solo la acción de llamar
+  .op-llamar {
+    --background: #7dc3e6;
+    --color: #ffffff;
+  }
+
+  &.inactivo {
+    .avatar {
+      filter: grayscale(1);
+      opacity: 0.6;
+    }
+
+    .fila-nombre,
+    .fila-precio {
+      color: var(--texto-suave);
+    }
+  }
+}
+
+.fila-item {
+  --background: var(--app-surface);
+  --background-activated: var(--ion-color-light);
+  --background-activated-opacity: 1;
+  --padding-start: var(--sp-3);
+  --inner-padding-end: var(--sp-1);
+  --min-height: 68px;
+  --color: var(--ion-text-color);
+  cursor: pointer;
+
+  &:active {
+    --background: var(--ion-color-light);
+  }
+}
+
+.avatar {
+  --avatar-color: var(--ion-color-primary);
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  margin-right: var(--sp-3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--avatar-color) 16%, transparent);
+  color: var(--avatar-color);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.fila-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) 0;
+}
+
+.fila-nombre {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--ion-text-color);
+  overflow: hidden;
+  white-space: nowrap;
+  @include desvanecer;
+}
+
+.fila-sub {
+  font-size: var(--fs-sm);
+  color: var(--texto-suave);
+  overflow: hidden;
+  white-space: nowrap;
+  @include desvanecer;
+}
+
+.fila-lado {
+  flex-shrink: 0;
+  margin-left: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.fila-precio {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ion-text-color);
+  white-space: nowrap;
+}
+
+.fila-etiqueta {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.btn-icono.plano {
+  border-color: transparent;
+  background: transparent;
+  color: var(--texto-suave);
+  margin: 0;
+}
+
+/* Filtro: activos en verde, inactivos en rojo (punto y opción elegida) */
+.seg button.seg-activos {
+  --seg-color: var(--estado-hecho);
+}
+
+.seg button.seg-inactivos {
+  --seg-color: var(--estado-suspendido);
+}
+
+.seg button.seg-activos,
+.seg button.seg-inactivos {
+  &.activo {
+    background: color-mix(in srgb, var(--seg-color) 12%, transparent);
+    color: var(--seg-color);
+
+    .seg-num {
+      background: var(--seg-color);
+      color: #ffffff;
+    }
   }
 }

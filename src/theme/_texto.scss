@@ -1,0 +1,19 @@
+// Texto que no cabe en una línea: se desvanece hacia la derecha en vez de
+// cortarse con "…". El degradado va ligado al scroll del propio elemento: si el
+// texto cabe no hay nada que desplazar, la animación no corre y no se desvanece
+// nada. Donde el navegador no soporta eso, se mantiene el "…" de siempre.
+// La animación `desvanecer-borde` está en global.scss.
+@mixin desvanecer {
+  overflow: hidden;
+  white-space: nowrap;
+
+  @supports (animation-timeline: scroll()) {
+    text-overflow: clip;
+    animation: desvanecer-borde linear both;
+    animation-timeline: scroll(self inline);
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    text-overflow: ellipsis;
+  }
+}

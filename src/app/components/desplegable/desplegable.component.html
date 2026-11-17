@@ -1,0 +1,20 @@
+<!-- Toque fuera: cierra -->
+<div class="fondo" *ngIf="abierto" (click)="abierto = false"></div>
+
+<div class="campo" [class.abierto]="abierto">
+  <span class="etiqueta" *ngIf="etiqueta">{{ etiqueta }}</span>
+  <button type="button" class="disparador" (click)="alternar()"
+          aria-haspopup="listbox" [attr.aria-expanded]="abierto" [attr.aria-label]="etiqueta">
+    <span class="texto">{{ textoSeleccionado }}</span>
+    <ion-icon name="chevron-down-outline" class="chevron"></ion-icon>
+  </button>
+
+  <div class="menu" *ngIf="abierto" role="listbox">
+    <button type="button" class="opcion" role="option" *ngFor="let o of opciones"
+            [class.activa]="o.valor === valor" [attr.aria-selected]="o.valor === valor"
+            (click)="elegir(o)">
+      <span>{{ o.texto }}</span>
+      <ion-icon name="checkmark-outline" *ngIf="o.valor === valor"></ion-icon>
+    </button>
+  </div>
+</div>

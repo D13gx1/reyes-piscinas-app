@@ -1,16 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonIcon, IonButton } from '@ionic/angular/standalone';
+import { IonIcon, IonButton, ToastController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { checkmarkCircleOutline } from 'ionicons/icons';
+import { checkmarkCircleOutline, checkmarkCircle, cashOutline, ellipseOutline } from 'ionicons/icons';
 import { logoWhatsapp } from 'ionicons/icons';
 import { formatearKgParaTexto, formatearUnidades } from '../../utils/unidades';
+import { SERVICIO_MANTENCION } from '../../utils/servicios';
+import { ClienteService } from '../../services/cliente.service';
+import { quitarPago, registrarPago } from '../../utils/pago-reciente';
 
 addIcons({
-  'checkmark-circle-outline': checkmarkCircleOutline
-  , 'logo-whatsapp': logoWhatsapp
+  'checkmark-circle-outline': checkmarkCircleOutline,
+  'checkmark-circle': checkmarkCircle,
+  'cash-outline': cashOutline,
+  'ellipse-outline': ellipseOutline,
+  'logo-whatsapp': logoWhatsapp
 });
 
 @Component({
@@ -24,6 +30,55 @@ export class MantenimientoExitosoPage implements OnInit {
 
   cliente: any = null;
   mantencion: any = null;
+  pagado = false;
+  guardandoPago = false;
+
+  private readonly clienteService = inject(ClienteService);
+  private readonly toastController = inject(ToastController);
+  private readonly formatoMonto = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+  /** Lo que quedó cobrado en el registro (incluye materiales y mano de obra) */
+  get montoCobrado(): number {
+    return this.mantencion?.precioCobrado ?? this.cliente?.precio ?? 0;
+  }
+
+  formatearMonto(valor: number): string {
+    return '$' + this.formatoMonto.format(valor || 0);
+  }
+
+  /** Marca o desmarca como pagado el registro recién guardado (mismo servicio que el historial). */
+  alternarPago() {
+    if (!this.cliente?.id || !this.mantencion?.id || this.guardandoPago) return;
+    const ref = { registroId: this.mantencion.id, fecha: this.mantencion.fecha, hora: this.mantencion.hora };
+    const marcar = !this.pagado;
+    this.guardandoPago = true;
+    this.pagado = marcar; // Respuesta inmediata; se revierte si falla
+
+    const operacion = marcar
+      ? this.clienteService.marcarPagoHistorial(this.cliente.id, ref)
+      : this.clienteService.deshacerPagoHistorial(this.cliente.id, ref);
+
+    operacion.subscribe({
+      next: () => {
+        this.guardandoPago = false;
+        // El inicio lo celebra al volver (chip con lo cobrado hoy)
+        if (marcar) registrarPago(this.montoCobrado);
+        else quitarPago(this.montoCobrado);
+      },
+      error: async (err) => {
+        console.error('Error al actualizar el pago:', err);
+        this.pagado = !marcar;
+        this.guardandoPago = false;
+        const toast = await this.toastController.create({
+          message: 'No se pudo guardar el pago ❌',
+          duration: 2200,
+          position: 'top',
+          color: 'danger'
+        });
+        await toast.present();
+      }
+    });
+  }
 
   constructor(private router: Router) {
     // intentar leer estado de navegación
@@ -59,9 +114,12 @@ export class MantenimientoExitosoPage implements OnInit {
     }
 
     const lines: string[] = [];
-    lines.push('*Detalles de la Mantención de Piscina 🏊‍♂️*\n');
+    const servicio = this.mantencion?.servicio || SERVICIO_MANTENCION;
+    const monto = (v: number) => '$' + new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(v || 0);
+
+    lines.push(`*Detalles del servicio: ${servicio} 🏊‍♂️*\n`);
     lines.push(`Hola ${this.cliente?.nombre || ''},`);
-    lines.push('te envío el resumen de la mantención realizada:\n');
+    lines.push('te envío el resumen del trabajo realizado:\n');
     
     if (this.mantencion) {
       // Fecha y hora (formato DD/MM/YYYY)
@@ -83,24 +141,57 @@ export class MantenimientoExitosoPage implements OnInit {
       }
       lines.push('');
       
-      // Parámetros del agua
-      lines.push('*Parámetros del agua:*');
-      lines.push('• Cloro: ' + (this.mantencion.estadoCloro || ''));
-      lines.push('• pH: ' + (this.mantencion.estadoPh || ''));
-      lines.push('');
-      
-      // Químicos utilizados (las cantidades llegan en kilos)
-      lines.push('*Químicos utilizados:*');
+      // Cambio de cuarzo
+      const cuarzo = this.mantencion.cuarzo;
+      if (cuarzo) {
+        lines.push('*Cambio de cuarzo:*');
+        if (cuarzo.tipo) lines.push('• Tipo: ' + cuarzo.tipo);
+        if (cuarzo.kilos) lines.push('• Cantidad: ' + cuarzo.kilos + ' kg');
+        if (cuarzo.precioCuarzo) lines.push('• Cuarzo: ' + monto(cuarzo.precioCuarzo));
+        if (cuarzo.manoObra) lines.push('• Mano de obra: ' + monto(cuarzo.manoObra));
+        lines.push('');
+      }
+
+      // Reparación de bomba
+      const bomba = this.mantencion.bomba;
+      if (bomba) {
+        lines.push('*Reparación de bomba:*');
+        if (bomba.marcaModelo) lines.push('• Bomba: ' + bomba.marcaModelo);
+        if (bomba.reparaciones?.length) lines.push('• Reparado: ' + bomba.reparaciones.join(', '));
+        if (bomba.repuestos) lines.push('• Repuestos: ' + bomba.repuestos);
+        if (bomba.costoRepuestos) lines.push('• Costo repuestos: ' + monto(bomba.costoRepuestos));
+        if (bomba.manoObra) lines.push('• Mano de obra: ' + monto(bomba.manoObra));
+        lines.push('• Quedó funcionando: ' + (bomba.quedoFuncionando ? 'Sí ✅' : 'No ⚠️'));
+        lines.push('');
+      }
+
+      // Parámetros del agua (cuarzo / bomba pueden no llevar medición)
+      if (this.mantencion.estadoCloro || this.mantencion.estadoPh) {
+        lines.push('*Parámetros del agua:*');
+        lines.push('• Cloro: ' + (this.mantencion.estadoCloro || '—'));
+        lines.push('• pH: ' + (this.mantencion.estadoPh || '—'));
+        lines.push('');
+      }
+
+      // Químicos utilizados (kilos; pastillas en unidades; algicida en litros)
       const cloro = formatearKgParaTexto(this.mantencion.cantidadCloro);
       const subePh = formatearKgParaTexto(this.mantencion.cantidadSubePh);
       const bajaPh = formatearKgParaTexto(this.mantencion.cantidadBajaPh);
-      if (cloro) lines.push('• Cloro granulado: ' + cloro);
-      if (subePh) lines.push('• Sube pH: ' + subePh);
-      if (bajaPh) lines.push('• Baja pH: ' + bajaPh);
+      const quimicos: string[] = [];
+      if (cloro) quimicos.push('• Cloro granulado: ' + cloro);
+      if (subePh) quimicos.push('• Sube pH: ' + subePh);
+      if (bajaPh) quimicos.push('• Baja pH: ' + bajaPh);
       if (this.mantencion.cantidadPastillas) {
-        lines.push('• Pastillas: ' + formatearUnidades(this.mantencion.cantidadPastillas) + ' unidad(es)');
+        quimicos.push('• Pastillas: ' + formatearUnidades(this.mantencion.cantidadPastillas) + ' unidad(es)');
       }
-      lines.push('');
+      if (this.mantencion.cantidadAlgicida) {
+        quimicos.push('• Algicida: ' + formatearUnidades(this.mantencion.cantidadAlgicida) + ' L');
+      }
+      if (quimicos.length) {
+        lines.push('*Químicos utilizados:*');
+        lines.push(...quimicos);
+        lines.push('');
+      }
       
       // Estado de la piscina
       if (this.mantencion.piscinarLlenando || this.mantencion.horaCorte) {
@@ -122,10 +213,11 @@ export class MantenimientoExitosoPage implements OnInit {
       }
     }
 
-    // Valor
-    if (this.cliente?.precio) {
-      lines.push('* Valor de la mantención:*');
-      lines.push('$' + new Intl.NumberFormat('es-CL', { minimumFractionDigits: 0 }).format(this.cliente.precio));
+    // Valor: lo que quedó cobrado en el registro (incluye materiales y mano de obra)
+    const valor = this.mantencion?.precioCobrado ?? this.cliente?.precio;
+    if (valor) {
+      lines.push('*Valor total:*');
+      lines.push(monto(valor) + (this.pagado ? ' — Pagado ✅' : ''));
     }
     
 

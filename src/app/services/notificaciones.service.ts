@@ -7,6 +7,7 @@ import {
 import { Cliente, ClienteService } from './cliente.service';
 import { AuthService } from './auth.service';
 import { firstValueFrom } from 'rxjs';
+import { leerAvisos } from '../utils/recordatorios';
 
 /** Preferencias de notificaciones que el usuario ajusta desde Perfil. */
 export interface ConfigNotificaciones {
@@ -160,6 +161,8 @@ export class NotificacionesService {
     if (config.avisoCobro) {
       notificaciones.push(...this.notificacionesFinDeMes(usuario, config.diaCobro, config.horaCobro));
     }
+    // Van aquí porque programarTodo cancela todas las pendientes antes de volver a programar
+    notificaciones.push(...this.notificacionesRecordatorios());
 
     if (notificaciones.length === 0) {
       return;
@@ -261,6 +264,31 @@ export class NotificacionesService {
     }
 
     return notificaciones;
+  }
+
+  /**
+   * Avisos que programé en "Recordatorios a clientes": me recuerdan enviar una
+   * frase en su fecha. Al tocarlos se abre la pantalla con esa frase cargada.
+   */
+  private notificacionesRecordatorios(): LocalNotificationSchema[] {
+    const ahora = Date.now();
+    return leerAvisos()
+      .map((aviso, i) => {
+        const [anio, mes, dia] = aviso.fecha.split('-').map(Number);
+        const [horas, minutos] = this.separarHora(aviso.hora);
+        const fecha = new Date(anio, mes - 1, dia, horas, minutos, 0, 0);
+        return { aviso, i, fecha };
+      })
+      .filter(({ fecha }) => !isNaN(fecha.getTime()) && fecha.getTime() > ahora)
+      .slice(0, 50)
+      .map(({ aviso, i, fecha }) => ({
+        id: 3000 + i,
+        title: `📣 Hoy toca enviar: ${aviso.titulo}`,
+        body: 'Toca para abrir el mensaje y enviarlo a tus clientes.',
+        schedule: { at: fecha, allowWhileIdle: true },
+        channelId: 'recordatorios',
+        extra: { ruta: `/tabs/perfil/recordatorios?aviso=${aviso.id}` },
+      }));
   }
 
   /** "HH:mm" → [horas, minutos]; si viene mal formada usa las 20:00. */

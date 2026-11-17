@@ -1,20 +1,9 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonButton,
-  IonCard,
-  IonCardContent,
-  IonText,
-  IonSpinner
-} from '@ionic/angular/standalone';
+import { IonContent, IonButton, IonSpinner, IonIcon } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { alertCircleOutline } from 'ionicons/icons';
 import { Platform } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth.service';
 import { Subscription } from 'rxjs';
@@ -27,8 +16,7 @@ import { Subscription } from 'rxjs';
   imports: [
     CommonModule,
     FormsModule,
-    IonContent, IonHeader, IonTitle, IonToolbar,
-    IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardContent, IonText, IonSpinner
+    IonContent, IonButton, IonSpinner, IonIcon
   ]
 })
 export class LoginPage implements OnInit, OnDestroy {
@@ -42,26 +30,23 @@ export class LoginPage implements OnInit, OnDestroy {
   isLoading: boolean = false;
   isMobile: boolean = false;
 
-  ngOnInit() {
-    // AGREGAR LOGS
-    console.log('Platform detection:', {
-      isMobile: this.platform.is('mobile'),
-      isTablet: this.platform.is('tablet'),
-      isCapacitor: this.platform.is('capacitor'),
-      isAndroid: this.platform.is('android'),
-      platforms: this.platform.platforms()
-    });
+  constructor() {
+    addIcons({ alertCircleOutline });
+  }
 
-    // Detectar si es móvil
+  async ngOnInit() {
     this.isMobile = this.platform.is('mobile') || this.platform.is('tablet');
-
-    // Manejar el resultado de la redirección de Google (para móviles)
-    this.auth.handleRedirectResult();
 
     // Suscribirse al estado de carga
     this.loadingSubscription = this.auth.getLoadingState().subscribe(loading => {
       this.isLoading = loading;
     });
+
+    // Resultado del login por redirección (navegador en móvil)
+    const error = await this.auth.handleRedirectResult();
+    if (error) {
+      this.errorMessage = error.message;
+    }
   }
 
   ngOnDestroy() {
@@ -71,13 +56,10 @@ export class LoginPage implements OnInit, OnDestroy {
   }
 
   async loginWithGoogle(): Promise<void> {
-  // ALERT TEMPORAL PARA DEBUG
-  console.log('Login button clicked');
-  const error = await this.auth.googleLogin();
-  if (error) {
-    this.errorMessage = error.message;
-    console.error('Login error:', error);
+    this.errorMessage = null;
+    const error = await this.auth.googleLogin();
+    if (error) {
+      this.errorMessage = error.message;
+    }
   }
-}
-
 }

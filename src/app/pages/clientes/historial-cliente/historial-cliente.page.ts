@@ -1,13 +1,13 @@
 import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonSpinner, IonIcon, AlertController, ToastController } from '@ionic/angular/standalone';
-import { ActivatedRoute } from '@angular/router';
+import { IonContent, IonHeader, IonToolbar, IonSpinner, IonIcon, AlertController, ToastController } from '@ionic/angular/standalone';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ClienteService, Cliente } from '../../../services/cliente.service';
 import { addIcons } from 'ionicons';
-import { timeOutline, constructOutline, beakerOutline, flaskOutline, cashOutline, trashOutline, logoWhatsapp } from 'ionicons/icons';
+import { timeOutline, constructOutline, beakerOutline, flaskOutline, cashOutline, trashOutline, logoWhatsapp, locationOutline, pencilOutline } from 'ionicons/icons';
 import { HistorialMantencionesComponent } from '../../../components/historial-mantenciones/historial-mantenciones.component';
 import { ResumenDeudaComponent } from '../../../components/resumen-deuda/resumen-deuda.component';
 import { formatearKgParaTexto, formatearUnidades } from '../../../utils/unidades';
@@ -15,6 +15,7 @@ import {
   esMantencionPagada,
   esMantencionSaltada,
   precioEfectivoMantencion,
+  totalCobrado,
 } from '../../../utils/mantencion';
 
 addIcons({
@@ -24,8 +25,13 @@ addIcons({
   'flask-outline': flaskOutline,
   'cash-outline': cashOutline,
   'trash-outline': trashOutline,
+  'location-outline': locationOutline,
+  'pencil-outline': pencilOutline,
   'logo-whatsapp': logoWhatsapp,
 });
+
+import { EncabezadoComponent } from '../../../components/encabezado/encabezado.component';
+import { ContadorGanancia } from '../../../utils/celebracion';
 
 @Component({
   selector: 'app-historial-cliente',
@@ -33,8 +39,8 @@ addIcons({
   styleUrls: ['./historial-cliente.page.scss'],
   standalone: true,
   imports: [
-    IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton,
-    IonSpinner, IonIcon,
+    EncabezadoComponent,
+    IonContent, IonHeader, IonToolbar, IonSpinner, IonIcon,
     HistorialMantencionesComponent,
     ResumenDeudaComponent,
     CommonModule, FormsModule
@@ -42,7 +48,12 @@ addIcons({
 })
 export class HistorialClientePage implements OnInit {
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
   clienteId!: string;
+  /** Números del cliente para la ficha de arriba */
+  stats = { visitas: 0, generado: 0, ultima: '' };
+  /** Chip del encabezado que cuenta todo lo ganado al marcar un pago */
+  readonly contadorGanancia = new ContadorGanancia();
   cliente?: Cliente;
   isLoading = true;
   error?: string;
@@ -172,6 +183,36 @@ export class HistorialClientePage implements OnInit {
 
   private refrescarMantencionesParaComponente() {
     this.mantencionesParaComponente = this.transformarHistorialParaComponente(this.historialOrdenado);
+    const hechas = this.mantencionesParaComponente.filter(m => !m.suspendida);
+    this.stats = {
+      visitas: hechas.length,
+      generado: hechas.reduce((t, m) => t + (m.precio || 0), 0),
+      // Lo por cobrar ya lo muestra la tarjeta de deuda: aquí va la última visita
+      ultima: this.formatearUltima(hechas.reduce((max, m) => (m.fecha > max ? m.fecha : max), '')),
+    };
+  }
+
+  /** "14 oct" (con año si no es el actual) a partir de "2026-10-14" */
+  private formatearUltima(fecha: string): string {
+    const [a, m, d] = String(fecha || '').split('-').map(Number);
+    if (!a || !m || !d) return '–';
+    const opciones: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    if (a !== new Date().getFullYear()) opciones.year = '2-digit';
+    return new Date(a, m - 1, d).toLocaleDateString('es-CL', opciones).replace('.', '');
+  }
+
+  urlMapa(direccion: string): string {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(direccion || '');
+  }
+
+  editarCliente() {
+    this.router.navigate(['/tabs/clientes/crear-clientes', this.clienteId]);
+  }
+
+  private readonly montoFormatter = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+  formatearMonto(valor: number): string {
+    return '$' + this.montoFormatter.format(valor || 0);
   }
 
   // Método para transformar los datos del historial al formato esperado por el componente
@@ -188,13 +229,19 @@ export class HistorialClientePage implements OnInit {
         servicio: item.servicio || 'Mantenimiento',
         cloro: item.cloro || 0,
         ph: item.ph || 0,
+        estadoCloro: item.estadoCloro,
+        estadoPh: item.estadoPh,
         cantidadCloro: item.cantidadCloro,
         cantidadBajaPh: item.cantidadBajaPh,
         cantidadSubePh: item.cantidadSubePh,
         cantidadPastillas: item.cantidadPastillas,
+        cantidadAlgicida: item.cantidadAlgicida,
+        cuarzo: item.cuarzo,
+        bomba: item.bomba,
         hora: item.hora,
         pagado: esMantencionPagada(item),
-        suspendida: esSaltada || undefined
+        suspendida: esSaltada || undefined,
+        movidaA: item.movidaA
       };
     });
   }
@@ -272,9 +319,12 @@ export class HistorialClientePage implements OnInit {
 
   // La vista se actualiza sola vía clientes$
   marcarPago(mantencion: any) {
+    const monto = mantencion.precio || 0;
     this.clienteService.marcarPagoHistorial(this.clienteId, mantencion).subscribe({
       next: () => {
-        this.mostrarToast('Pago registrado correctamente');
+        // La animación del dinero subiendo es la confirmación
+        this.clienteService.getClientes().pipe(take(1))
+          .subscribe(clientes => this.contadorGanancia.mostrar(totalCobrado(clientes), monto));
       },
       error: (err) => {
         console.error('Error marcando pago:', err);

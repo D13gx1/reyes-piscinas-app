@@ -4,6 +4,7 @@ import { map, take } from 'rxjs/operators';
 import { Auth, user } from '@angular/fire/auth';
 import { ClienteService } from './cliente.service';
 import { esMantencionPagada, esMantencionSaltada, precioEfectivoMantencion } from '../utils/mantencion';
+import { CamposServicio } from '../utils/servicios';
 
 export interface EstadisticasRecaudacion {
   total: number;
@@ -38,7 +39,7 @@ export interface EstadisticasQuimicas {
   cantidadMantenciones: number;
 }
 
-export interface Mantencion {
+export interface Mantencion extends CamposServicio {
   id: string;
   /** `id` del registro en el historial (ausente en registros antiguos) */
   registroId?: string;
@@ -48,6 +49,9 @@ export interface Mantencion {
   precio: number;
   cloro: number;
   ph: number;
+  /** Estado elegido al completar ("ideal alto", "bajo"...) */
+  estadoCloro?: string;
+  estadoPh?: string;
   /** Kilos */
   cantidadCloro?: number;
   /** Kilos */
@@ -66,6 +70,22 @@ export interface Mantencion {
   fechaPago?: string;
   // Mantención suspendida (no realizada, precio 0)
   suspendida?: boolean;
+  /** Si se cambió de día: a qué fecha (YYYY-MM-DD) */
+  movidaA?: string;
+}
+
+/** Dinero ganado y mantenciones realizadas de un mes o un año. */
+export interface IngresoPeriodo {
+  total: number;
+  cantidad: number;
+}
+
+/** Ingresos de un año: el total y el desglose de sus 12 meses (índice 0 = enero). */
+export interface IngresosAnio {
+  anio: number;
+  total: number;
+  cantidad: number;
+  meses: IngresoPeriodo[];
 }
 
 @Injectable({
@@ -105,12 +125,14 @@ export class EstadisticasService {
     );
   }
 
-  // Obtener estadísticas por mes
+  // Obtener estadísticas por mes. `mes` es 0-based (0 = enero), como en Date.
   getEstadisticasMes(anio: number, mes: number): Observable<EstadisticasRecaudacion> {
-    const mesTexto = mes.toString().padStart(2, '0');
+    // En las fechas guardadas el mes va de 01 a 12: se suma 1. Sin esto, elegir
+    // septiembre (8) buscaba en agosto ("08").
+    const mesTexto = (mes + 1).toString().padStart(2, '0');
     const fechaInicio = `${anio}-${mesTexto}-01`;
 
-    // Calcular el último día correcto del mes (mes es 0-based, así que el día 0 del mes siguiente)
+    // Último día del mes: el día 0 del mes siguiente
     const ultimoDiaMes = new Date(anio, mes + 1, 0).getDate();
     const fechaFin = `${anio}-${mesTexto}-${ultimoDiaMes.toString().padStart(2, '0')}`;
 
@@ -128,6 +150,48 @@ export class EstadisticasService {
     
     return this.getMantencionesPorRango(fechaInicio, fechaFin).pipe(
       map(mantenciones => this.calcularEstadisticas(mantenciones, 'año', fechaInicio, fechaFin))
+    );
+  }
+
+  /**
+   * Ingresos agrupados por año y mes, con el mismo criterio que "Total recaudado":
+   * lo cobrado en cada mantención realizada, sin contar las suspendidas.
+   * Sigue los cambios de los clientes en vivo. Años ordenados de más antiguo a más nuevo.
+   */
+  getIngresosPorAnio(): Observable<IngresosAnio[]> {
+    return this.clienteService.clientes$.pipe(
+      map(clientes => {
+        const porAnio = new Map<number, IngresosAnio>();
+
+        for (const cliente of clientes) {
+          for (const registro of (cliente.historial || []) as any[]) {
+            if (!registro?.fecha || esMantencionSaltada(registro)) continue;
+
+            const anio = Number(String(registro.fecha).slice(0, 4));
+            const mes = Number(String(registro.fecha).slice(5, 7)) - 1;
+            if (!anio || mes < 0 || mes > 11) continue;
+
+            let datos = porAnio.get(anio);
+            if (!datos) {
+              datos = {
+                anio,
+                total: 0,
+                cantidad: 0,
+                meses: Array.from({ length: 12 }, () => ({ total: 0, cantidad: 0 }))
+              };
+              porAnio.set(anio, datos);
+            }
+
+            const monto = precioEfectivoMantencion(registro, cliente.precio || 0);
+            datos.total += monto;
+            datos.cantidad++;
+            datos.meses[mes].total += monto;
+            datos.meses[mes].cantidad++;
+          }
+        }
+
+        return [...porAnio.values()].sort((a, b) => a.anio - b.anio);
+      })
     );
   }
 
@@ -156,19 +220,25 @@ export class EstadisticasService {
               precio: precioEfectivoMantencion(mantencion, cliente.precio || 0),
               cloro: mantencion.cloro || 0,
               ph: mantencion.ph || 0,
+              estadoCloro: mantencion.estadoCloro,
+              estadoPh: mantencion.estadoPh,
               servicio: mantencion.servicio || 'Mantención',
               hora: mantencion.hora,
               cantidadCloro: mantencion.cantidadCloro || 0,
               cantidadBajaPh: mantencion.cantidadBajaPh || 0,
               cantidadSubePh: mantencion.cantidadSubePh || 0,
               cantidadPastillas: mantencion.cantidadPastillas || 0,
+              cantidadAlgicida: mantencion.cantidadAlgicida,
+              cuarzo: mantencion.cuarzo,
+              bomba: mantencion.bomba,
               tipoPh: mantencion.tipoPh,
               // incluir campos de pago si existen en el historial
               pagado: mantencion.pagado,
               pago: mantencion.pago,
               estadoPago: mantencion.estadoPago,
               fechaPago: mantencion.fechaPago,
-              suspendida: esMantencionSaltada(mantencion) || undefined
+              suspendida: esMantencionSaltada(mantencion) || undefined,
+              movidaA: mantencion.movidaA
             });
           }
         }
@@ -218,7 +288,9 @@ export class EstadisticasService {
         // Las suspendidas no usaron productos, se excluyen de los promedios
         const reales = mantenciones.filter(m => !m.suspendida);
         const totalCloro = reales.reduce((sum, m) => sum + (m.cantidadCloro || 0), 0);
-        const totalPh = reales.reduce((sum, m) => sum + m.ph, 0);
+        // Cuarzo / bomba pueden registrarse sin medir el agua: esas no cuentan para los niveles
+        const conLectura = reales.filter(m => m.cloro > 0 || m.ph > 0);
+        const totalPh = conLectura.reduce((sum, m) => sum + m.ph, 0);
         const totalSubePh = reales.reduce((sum, m) => sum + (m.cantidadSubePh || 0), 0);
         const totalBajaPh = reales.reduce((sum, m) => sum + (m.cantidadBajaPh || 0), 0);
         const totalPastillas = reales.reduce((sum, m) => sum + (m.cantidadPastillas || 0), 0);
@@ -227,8 +299,8 @@ export class EstadisticasService {
 
         return {
           // Niveles medidos (ppm / pH)
-          promedioCloro: cantidad > 0 ? reales.reduce((sum, m) => sum + m.cloro, 0) / cantidad : 0,
-          promedioPh: porMantencion(totalPh),
+          promedioCloro: conLectura.length > 0 ? conLectura.reduce((sum, m) => sum + m.cloro, 0) / conLectura.length : 0,
+          promedioPh: conLectura.length > 0 ? totalPh / conLectura.length : 0,
           // Totales de consumo
           totalCloro,
           totalPh,

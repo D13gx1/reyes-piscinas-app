@@ -8,6 +8,11 @@ import { addIcons } from 'ionicons';
 import { homeOutline, peopleOutline, barChartOutline, personOutline, logOutOutline } from 'ionicons/icons';
 import { AuthService } from 'src/app/services/auth.service';
 import { NotificacionesService } from 'src/app/services/notificaciones.service';
+import { ResumenMesService } from 'src/app/services/resumen-mes.service';
+import { TabsToqueService } from 'src/app/services/tabs-toque.service';
+import { ResumenMesComponent } from '../resumen-mes/resumen-mes.component';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 addIcons({
   'home-outline': homeOutline,
@@ -20,12 +25,13 @@ addIcons({
 interface TabItem {
   tab: string;
   icono: string;
+  etiqueta: string;
 }
 
 @Component({
   selector: 'app-tabs',
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterModule],
+  imports: [CommonModule, IonicModule, RouterModule, ResumenMesComponent],
   templateUrl: './tabs.component.html',
   styleUrls: ['./tabs.component.scss']
 })
@@ -33,12 +39,14 @@ export class TabsComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly notificaciones = inject(NotificacionesService);
   private readonly router = inject(Router);
+  private readonly resumenMes = inject(ResumenMesService);
+  private readonly tabsToque = inject(TabsToqueService);
 
   readonly tabs: TabItem[] = [
-    { tab: 'home', icono: 'home-outline' },
-    { tab: 'clientes', icono: 'people-outline' },
-    { tab: 'estadisticas', icono: 'bar-chart-outline' },
-    { tab: 'perfil', icono: 'person-outline' }
+    { tab: 'home', icono: 'home-outline', etiqueta: 'Inicio' },
+    { tab: 'clientes', icono: 'people-outline', etiqueta: 'Clientes' },
+    { tab: 'estadisticas', icono: 'bar-chart-outline', etiqueta: 'Estadísticas' },
+    { tab: 'perfil', icono: 'person-outline', etiqueta: 'Perfil' }
   ];
 
   /**
@@ -65,6 +73,25 @@ export class TabsComponent implements OnInit {
     // Cada vez que se abre la app se re-programan los recordatorios
     // (si están activados).
     this.notificaciones.programarSiActivadas();
+
+    // Si terminó un mes que aún no se mostró: felicitación (o ánimo) con su resumen
+    this.resumenMes.revisarAlEntrar();
+
+    // Al tocar una notificación con ruta (p. ej. un aviso de recordatorio), abrir esa pantalla
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.addListener('localNotificationActionPerformed', (accion) => {
+        const ruta = accion.notification.extra?.ruta;
+        if (typeof ruta === 'string') {
+          this.router.navigateByUrl(ruta);
+        }
+      });
+    }
+  }
+
+  /** Tocar la pestaña en la que ya se está (estando en su pantalla principal) la "reinicia" */
+  alTocar(tab: string) {
+    const enRaiz = this.router.url.split('?')[0] === `/tabs/${tab}`;
+    if (this.tabActivo === tab && enRaiz) this.tabsToque.avisar(tab);
   }
 
   esActivo(tab: string): boolean {
